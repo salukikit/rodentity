@@ -9,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 
 	"github.com/salukikit/rodentity/ent"
+	"github.com/salukikit/rodentity/ent/migrate"
 	_ "github.com/salukikit/rodentity/ent/runtime"
 )
 
@@ -26,8 +27,9 @@ func InitSQLiteMem() (*ent.Client, error) {
 		return nil, fmt.Errorf("failed opening connection to %s: %v\n", dialect.SQLite, err)
 	}
 
-	// Run the auto migration tool.
-	if err = Client.Schema.Create(context.Background()); err != nil {
+	ctx := context.Background()
+	// Run migration.
+	if err := Client.Schema.Create(ctx, migrate.WithGlobalUniqueID(true)); err != nil {
 		return nil, fmt.Errorf("failed creating schema resources: %v\n", err)
 	}
 
@@ -44,8 +46,9 @@ func InitSQLite(db string) (*ent.Client, error) {
 		return nil, fmt.Errorf("failed opening connection to %s: %v\n", dialect.SQLite, err)
 	}
 
-	// Run the auto migration tool.
-	if err = Client.Schema.Create(context.Background()); err != nil {
+	ctx := context.Background()
+	// Run migration.
+	if err := Client.Schema.Create(ctx, migrate.WithGlobalUniqueID(true)); err != nil {
 		return nil, fmt.Errorf("failed creating schema resources: %v\n", err)
 	}
 
@@ -64,8 +67,9 @@ func InitMySQL(user, pass, host, port, db string) (*ent.Client, error) {
 		return nil, fmt.Errorf("failed opening connection to %s: %v\n", dialect.MySQL, err)
 	}
 
-	// Run the auto migration tool.
-	if err = Client.Schema.Create(context.Background()); err != nil {
+	ctx := context.Background()
+	// Run migration.
+	if err := Client.Schema.Create(ctx, migrate.WithGlobalUniqueID(true)); err != nil {
 		return nil, fmt.Errorf("failed creating schema resources: %v\n", err)
 	}
 
@@ -85,8 +89,9 @@ func InitPostGres(user, pass, host, port, db string) (*ent.Client, error) {
 		return nil, fmt.Errorf("failed opening connection to %s: %v\n", dialect.Postgres, err)
 	}
 
-	// Run the auto migration tool.
-	if err = Client.Schema.Create(context.Background()); err != nil {
+	ctx := context.Background()
+	// Run migration.
+	if err := Client.Schema.Create(ctx, migrate.WithGlobalUniqueID(true)); err != nil {
 		return nil, fmt.Errorf("failed creating schema resources: %v\n", err)
 	}
 
