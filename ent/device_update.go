@@ -15,6 +15,7 @@ import (
 	"github.com/salukikit/rodentity/ent/group"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/subnet"
 	"github.com/salukikit/rodentity/ent/user"
 )
 
@@ -75,6 +76,20 @@ func (du *DeviceUpdate) SetVersion(s string) *DeviceUpdate {
 func (du *DeviceUpdate) SetNillableVersion(s *string) *DeviceUpdate {
 	if s != nil {
 		du.SetVersion(*s)
+	}
+	return du
+}
+
+// SetLocaladdress sets the "localaddress" field.
+func (du *DeviceUpdate) SetLocaladdress(s string) *DeviceUpdate {
+	du.mutation.SetLocaladdress(s)
+	return du
+}
+
+// SetNillableLocaladdress sets the "localaddress" field if the given value is not nil.
+func (du *DeviceUpdate) SetNillableLocaladdress(s *string) *DeviceUpdate {
+	if s != nil {
+		du.SetLocaladdress(*s)
 	}
 	return du
 }
@@ -183,6 +198,21 @@ func (du *DeviceUpdate) SetDomain(d *Domain) *DeviceUpdate {
 	return du.SetDomainID(d.ID)
 }
 
+// AddSubnetIDs adds the "subnets" edge to the Subnet entity by IDs.
+func (du *DeviceUpdate) AddSubnetIDs(ids ...int) *DeviceUpdate {
+	du.mutation.AddSubnetIDs(ids...)
+	return du
+}
+
+// AddSubnets adds the "subnets" edges to the Subnet entity.
+func (du *DeviceUpdate) AddSubnets(s ...*Subnet) *DeviceUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return du.AddSubnetIDs(ids...)
+}
+
 // Mutation returns the DeviceMutation object of the builder.
 func (du *DeviceUpdate) Mutation() *DeviceMutation {
 	return du.mutation
@@ -257,6 +287,27 @@ func (du *DeviceUpdate) ClearDomain() *DeviceUpdate {
 	return du
 }
 
+// ClearSubnets clears all "subnets" edges to the Subnet entity.
+func (du *DeviceUpdate) ClearSubnets() *DeviceUpdate {
+	du.mutation.ClearSubnets()
+	return du
+}
+
+// RemoveSubnetIDs removes the "subnets" edge to Subnet entities by IDs.
+func (du *DeviceUpdate) RemoveSubnetIDs(ids ...int) *DeviceUpdate {
+	du.mutation.RemoveSubnetIDs(ids...)
+	return du
+}
+
+// RemoveSubnets removes "subnets" edges to Subnet entities.
+func (du *DeviceUpdate) RemoveSubnets(s ...*Subnet) *DeviceUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return du.RemoveSubnetIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (du *DeviceUpdate) Save(ctx context.Context) (int, error) {
 	return withHooks[int, DeviceMutation](ctx, du.sqlSave, du.mutation, du.hooks)
@@ -285,16 +336,7 @@ func (du *DeviceUpdate) ExecX(ctx context.Context) {
 }
 
 func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   device.Table,
-			Columns: device.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: device.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
 	if ps := du.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -313,6 +355,9 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := du.mutation.Version(); ok {
 		_spec.SetField(device.FieldVersion, field.TypeString, value)
+	}
+	if value, ok := du.mutation.Localaddress(); ok {
+		_spec.SetField(device.FieldLocaladdress, field.TypeString, value)
 	}
 	if value, ok := du.mutation.Machinepass(); ok {
 		_spec.SetField(device.FieldMachinepass, field.TypeString, value)
@@ -523,6 +568,60 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if du.mutation.SubnetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.SubnetsTable,
+			Columns: device.SubnetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: subnet.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := du.mutation.RemovedSubnetsIDs(); len(nodes) > 0 && !du.mutation.SubnetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.SubnetsTable,
+			Columns: device.SubnetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: subnet.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := du.mutation.SubnetsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.SubnetsTable,
+			Columns: device.SubnetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: subnet.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, du.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{device.Label}
@@ -587,6 +686,20 @@ func (duo *DeviceUpdateOne) SetVersion(s string) *DeviceUpdateOne {
 func (duo *DeviceUpdateOne) SetNillableVersion(s *string) *DeviceUpdateOne {
 	if s != nil {
 		duo.SetVersion(*s)
+	}
+	return duo
+}
+
+// SetLocaladdress sets the "localaddress" field.
+func (duo *DeviceUpdateOne) SetLocaladdress(s string) *DeviceUpdateOne {
+	duo.mutation.SetLocaladdress(s)
+	return duo
+}
+
+// SetNillableLocaladdress sets the "localaddress" field if the given value is not nil.
+func (duo *DeviceUpdateOne) SetNillableLocaladdress(s *string) *DeviceUpdateOne {
+	if s != nil {
+		duo.SetLocaladdress(*s)
 	}
 	return duo
 }
@@ -695,6 +808,21 @@ func (duo *DeviceUpdateOne) SetDomain(d *Domain) *DeviceUpdateOne {
 	return duo.SetDomainID(d.ID)
 }
 
+// AddSubnetIDs adds the "subnets" edge to the Subnet entity by IDs.
+func (duo *DeviceUpdateOne) AddSubnetIDs(ids ...int) *DeviceUpdateOne {
+	duo.mutation.AddSubnetIDs(ids...)
+	return duo
+}
+
+// AddSubnets adds the "subnets" edges to the Subnet entity.
+func (duo *DeviceUpdateOne) AddSubnets(s ...*Subnet) *DeviceUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return duo.AddSubnetIDs(ids...)
+}
+
 // Mutation returns the DeviceMutation object of the builder.
 func (duo *DeviceUpdateOne) Mutation() *DeviceMutation {
 	return duo.mutation
@@ -769,6 +897,33 @@ func (duo *DeviceUpdateOne) ClearDomain() *DeviceUpdateOne {
 	return duo
 }
 
+// ClearSubnets clears all "subnets" edges to the Subnet entity.
+func (duo *DeviceUpdateOne) ClearSubnets() *DeviceUpdateOne {
+	duo.mutation.ClearSubnets()
+	return duo
+}
+
+// RemoveSubnetIDs removes the "subnets" edge to Subnet entities by IDs.
+func (duo *DeviceUpdateOne) RemoveSubnetIDs(ids ...int) *DeviceUpdateOne {
+	duo.mutation.RemoveSubnetIDs(ids...)
+	return duo
+}
+
+// RemoveSubnets removes "subnets" edges to Subnet entities.
+func (duo *DeviceUpdateOne) RemoveSubnets(s ...*Subnet) *DeviceUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return duo.RemoveSubnetIDs(ids...)
+}
+
+// Where appends a list predicates to the DeviceUpdate builder.
+func (duo *DeviceUpdateOne) Where(ps ...predicate.Device) *DeviceUpdateOne {
+	duo.mutation.Where(ps...)
+	return duo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (duo *DeviceUpdateOne) Select(field string, fields ...string) *DeviceUpdateOne {
@@ -804,16 +959,7 @@ func (duo *DeviceUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   device.Table,
-			Columns: device.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: device.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
 	id, ok := duo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Device.id" for update`)}
@@ -849,6 +995,9 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 	}
 	if value, ok := duo.mutation.Version(); ok {
 		_spec.SetField(device.FieldVersion, field.TypeString, value)
+	}
+	if value, ok := duo.mutation.Localaddress(); ok {
+		_spec.SetField(device.FieldLocaladdress, field.TypeString, value)
 	}
 	if value, ok := duo.mutation.Machinepass(); ok {
 		_spec.SetField(device.FieldMachinepass, field.TypeString, value)
@@ -1051,6 +1200,60 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: domain.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if duo.mutation.SubnetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.SubnetsTable,
+			Columns: device.SubnetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: subnet.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := duo.mutation.RemovedSubnetsIDs(); len(nodes) > 0 && !duo.mutation.SubnetsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.SubnetsTable,
+			Columns: device.SubnetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: subnet.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := duo.mutation.SubnetsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.SubnetsTable,
+			Columns: device.SubnetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: subnet.FieldID,
 				},
 			},
 		}

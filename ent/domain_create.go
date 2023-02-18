@@ -236,13 +236,7 @@ func (dc *DomainCreate) sqlSave(ctx context.Context) (*Domain, error) {
 func (dc *DomainCreate) createSpec() (*Domain, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Domain{config: dc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: domain.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: domain.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(domain.Table, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeInt))
 	)
 	if value, ok := dc.mutation.Name(); ok {
 		_spec.SetField(domain.FieldName, field.TypeString, value)

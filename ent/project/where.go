@@ -4,6 +4,7 @@ package project
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/salukikit/rodentity/ent/predicate"
 )
 
@@ -50,6 +51,60 @@ func IDLT(id int) predicate.Project {
 // IDLTE applies the LTE predicate on the ID field.
 func IDLTE(id int) predicate.Project {
 	return predicate.Project(sql.FieldLTE(FieldID, id))
+}
+
+// HasOperators applies the HasEdge predicate on the "operators" edge.
+func HasOperators() predicate.Project {
+	return predicate.Project(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, OperatorsTable, OperatorsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOperatorsWith applies the HasEdge predicate on the "operators" edge with a given conditions (other predicates).
+func HasOperatorsWith(preds ...predicate.Operator) predicate.Project {
+	return predicate.Project(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(OperatorsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, OperatorsTable, OperatorsPrimaryKey...),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRodents applies the HasEdge predicate on the "rodents" edge.
+func HasRodents() predicate.Project {
+	return predicate.Project(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RodentsTable, RodentsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRodentsWith applies the HasEdge predicate on the "rodents" edge with a given conditions (other predicates).
+func HasRodentsWith(preds ...predicate.Rodent) predicate.Project {
+	return predicate.Project(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(RodentsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RodentsTable, RodentsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

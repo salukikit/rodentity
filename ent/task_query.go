@@ -4,12 +4,14 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/task"
@@ -18,14 +20,12 @@ import (
 // TaskQuery is the builder for querying Task entities.
 type TaskQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
+	ctx        *QueryContext
 	order      []OrderFunc
-	fields     []string
 	inters     []Interceptor
 	predicates []predicate.Task
 	withRodent *RodentQuery
+	withLoot   *LootQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -40,20 +40,20 @@ func (tq *TaskQuery) Where(ps ...predicate.Task) *TaskQuery {
 
 // Limit the number of records to be returned by this query.
 func (tq *TaskQuery) Limit(limit int) *TaskQuery {
-	tq.limit = &limit
+	tq.ctx.Limit = &limit
 	return tq
 }
 
 // Offset to start from.
 func (tq *TaskQuery) Offset(offset int) *TaskQuery {
-	tq.offset = &offset
+	tq.ctx.Offset = &offset
 	return tq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
 func (tq *TaskQuery) Unique(unique bool) *TaskQuery {
-	tq.unique = &unique
+	tq.ctx.Unique = &unique
 	return tq
 }
 
@@ -85,10 +85,32 @@ func (tq *TaskQuery) QueryRodent() *RodentQuery {
 	return query
 }
 
+// QueryLoot chains the current query on the "loot" edge.
+func (tq *TaskQuery) QueryLoot() *LootQuery {
+	query := (&LootClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(task.Table, task.FieldID, selector),
+			sqlgraph.To(loot.Table, loot.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, task.LootTable, task.LootColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Task entity from the query.
 // Returns a *NotFoundError when no Task was found.
 func (tq *TaskQuery) First(ctx context.Context) (*Task, error) {
-	nodes, err := tq.Limit(1).All(newQueryContext(ctx, TypeTask, "First"))
+	nodes, err := tq.Limit(1).All(setContextOp(ctx, tq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +133,7 @@ func (tq *TaskQuery) FirstX(ctx context.Context) *Task {
 // Returns a *NotFoundError when no Task ID was found.
 func (tq *TaskQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
-	if ids, err = tq.Limit(1).IDs(newQueryContext(ctx, TypeTask, "FirstID")); err != nil {
+	if ids, err = tq.Limit(1).IDs(setContextOp(ctx, tq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -134,7 +156,7 @@ func (tq *TaskQuery) FirstIDX(ctx context.Context) int {
 // Returns a *NotSingularError when more than one Task entity is found.
 // Returns a *NotFoundError when no Task entities are found.
 func (tq *TaskQuery) Only(ctx context.Context) (*Task, error) {
-	nodes, err := tq.Limit(2).All(newQueryContext(ctx, TypeTask, "Only"))
+	nodes, err := tq.Limit(2).All(setContextOp(ctx, tq.ctx, "Only"))
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +184,7 @@ func (tq *TaskQuery) OnlyX(ctx context.Context) *Task {
 // Returns a *NotFoundError when no entities are found.
 func (tq *TaskQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
-	if ids, err = tq.Limit(2).IDs(newQueryContext(ctx, TypeTask, "OnlyID")); err != nil {
+	if ids, err = tq.Limit(2).IDs(setContextOp(ctx, tq.ctx, "OnlyID")); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -187,7 +209,7 @@ func (tq *TaskQuery) OnlyIDX(ctx context.Context) int {
 
 // All executes the query and returns a list of Tasks.
 func (tq *TaskQuery) All(ctx context.Context) ([]*Task, error) {
-	ctx = newQueryContext(ctx, TypeTask, "All")
+	ctx = setContextOp(ctx, tq.ctx, "All")
 	if err := tq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -205,10 +227,12 @@ func (tq *TaskQuery) AllX(ctx context.Context) []*Task {
 }
 
 // IDs executes the query and returns a list of Task IDs.
-func (tq *TaskQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
-	ctx = newQueryContext(ctx, TypeTask, "IDs")
-	if err := tq.Select(task.FieldID).Scan(ctx, &ids); err != nil {
+func (tq *TaskQuery) IDs(ctx context.Context) (ids []int, err error) {
+	if tq.ctx.Unique == nil && tq.path != nil {
+		tq.Unique(true)
+	}
+	ctx = setContextOp(ctx, tq.ctx, "IDs")
+	if err = tq.Select(task.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -225,7 +249,7 @@ func (tq *TaskQuery) IDsX(ctx context.Context) []int {
 
 // Count returns the count of the given query.
 func (tq *TaskQuery) Count(ctx context.Context) (int, error) {
-	ctx = newQueryContext(ctx, TypeTask, "Count")
+	ctx = setContextOp(ctx, tq.ctx, "Count")
 	if err := tq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -243,7 +267,7 @@ func (tq *TaskQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (tq *TaskQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = newQueryContext(ctx, TypeTask, "Exist")
+	ctx = setContextOp(ctx, tq.ctx, "Exist")
 	switch _, err := tq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -271,16 +295,15 @@ func (tq *TaskQuery) Clone() *TaskQuery {
 	}
 	return &TaskQuery{
 		config:     tq.config,
-		limit:      tq.limit,
-		offset:     tq.offset,
+		ctx:        tq.ctx.Clone(),
 		order:      append([]OrderFunc{}, tq.order...),
 		inters:     append([]Interceptor{}, tq.inters...),
 		predicates: append([]predicate.Task{}, tq.predicates...),
 		withRodent: tq.withRodent.Clone(),
+		withLoot:   tq.withLoot.Clone(),
 		// clone intermediate query.
-		sql:    tq.sql.Clone(),
-		path:   tq.path,
-		unique: tq.unique,
+		sql:  tq.sql.Clone(),
+		path: tq.path,
 	}
 }
 
@@ -292,6 +315,17 @@ func (tq *TaskQuery) WithRodent(opts ...func(*RodentQuery)) *TaskQuery {
 		opt(query)
 	}
 	tq.withRodent = query
+	return tq
+}
+
+// WithLoot tells the query-builder to eager-load the nodes that are connected to
+// the "loot" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TaskQuery) WithLoot(opts ...func(*LootQuery)) *TaskQuery {
+	query := (&LootClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withLoot = query
 	return tq
 }
 
@@ -310,9 +344,9 @@ func (tq *TaskQuery) WithRodent(opts ...func(*RodentQuery)) *TaskQuery {
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (tq *TaskQuery) GroupBy(field string, fields ...string) *TaskGroupBy {
-	tq.fields = append([]string{field}, fields...)
+	tq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &TaskGroupBy{build: tq}
-	grbuild.flds = &tq.fields
+	grbuild.flds = &tq.ctx.Fields
 	grbuild.label = task.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -331,10 +365,10 @@ func (tq *TaskQuery) GroupBy(field string, fields ...string) *TaskGroupBy {
 //		Select(task.FieldXid).
 //		Scan(ctx, &v)
 func (tq *TaskQuery) Select(fields ...string) *TaskSelect {
-	tq.fields = append(tq.fields, fields...)
+	tq.ctx.Fields = append(tq.ctx.Fields, fields...)
 	sbuild := &TaskSelect{TaskQuery: tq}
 	sbuild.label = task.Label
-	sbuild.flds, sbuild.scan = &tq.fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &tq.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
@@ -354,7 +388,7 @@ func (tq *TaskQuery) prepareQuery(ctx context.Context) error {
 			}
 		}
 	}
-	for _, f := range tq.fields {
+	for _, f := range tq.ctx.Fields {
 		if !task.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
@@ -374,8 +408,9 @@ func (tq *TaskQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Task, e
 		nodes       = []*Task{}
 		withFKs     = tq.withFKs
 		_spec       = tq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			tq.withRodent != nil,
+			tq.withLoot != nil,
 		}
 	)
 	if tq.withRodent != nil {
@@ -408,6 +443,13 @@ func (tq *TaskQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Task, e
 			return nil, err
 		}
 	}
+	if query := tq.withLoot; query != nil {
+		if err := tq.loadLoot(ctx, query, nodes,
+			func(n *Task) { n.Edges.Loot = []*Loot{} },
+			func(n *Task, e *Loot) { n.Edges.Loot = append(n.Edges.Loot, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -423,6 +465,9 @@ func (tq *TaskQuery) loadRodent(ctx context.Context, query *RodentQuery, nodes [
 			ids = append(ids, fk)
 		}
 		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
 	}
 	query.Where(rodent.IDIn(ids...))
 	neighbors, err := query.All(ctx)
@@ -440,33 +485,56 @@ func (tq *TaskQuery) loadRodent(ctx context.Context, query *RodentQuery, nodes [
 	}
 	return nil
 }
+func (tq *TaskQuery) loadLoot(ctx context.Context, query *LootQuery, nodes []*Task, init func(*Task), assign func(*Task, *Loot)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Task)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Loot(func(s *sql.Selector) {
+		s.Where(sql.InValues(task.LootColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.task_loot
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "task_loot" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "task_loot" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 
 func (tq *TaskQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := tq.querySpec()
-	_spec.Node.Columns = tq.fields
-	if len(tq.fields) > 0 {
-		_spec.Unique = tq.unique != nil && *tq.unique
+	_spec.Node.Columns = tq.ctx.Fields
+	if len(tq.ctx.Fields) > 0 {
+		_spec.Unique = tq.ctx.Unique != nil && *tq.ctx.Unique
 	}
 	return sqlgraph.CountNodes(ctx, tq.driver, _spec)
 }
 
 func (tq *TaskQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := &sqlgraph.QuerySpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   task.Table,
-			Columns: task.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: task.FieldID,
-			},
-		},
-		From:   tq.sql,
-		Unique: true,
-	}
-	if unique := tq.unique; unique != nil {
+	_spec := sqlgraph.NewQuerySpec(task.Table, task.Columns, sqlgraph.NewFieldSpec(task.FieldID, field.TypeInt))
+	_spec.From = tq.sql
+	if unique := tq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
+	} else if tq.path != nil {
+		_spec.Unique = true
 	}
-	if fields := tq.fields; len(fields) > 0 {
+	if fields := tq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, task.FieldID)
 		for i := range fields {
@@ -482,10 +550,10 @@ func (tq *TaskQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if limit := tq.limit; limit != nil {
+	if limit := tq.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := tq.offset; offset != nil {
+	if offset := tq.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
 	if ps := tq.order; len(ps) > 0 {
@@ -501,7 +569,7 @@ func (tq *TaskQuery) querySpec() *sqlgraph.QuerySpec {
 func (tq *TaskQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(tq.driver.Dialect())
 	t1 := builder.Table(task.Table)
-	columns := tq.fields
+	columns := tq.ctx.Fields
 	if len(columns) == 0 {
 		columns = task.Columns
 	}
@@ -510,7 +578,7 @@ func (tq *TaskQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector = tq.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if tq.unique != nil && *tq.unique {
+	if tq.ctx.Unique != nil && *tq.ctx.Unique {
 		selector.Distinct()
 	}
 	for _, p := range tq.predicates {
@@ -519,12 +587,12 @@ func (tq *TaskQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	for _, p := range tq.order {
 		p(selector)
 	}
-	if offset := tq.offset; offset != nil {
+	if offset := tq.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := tq.limit; limit != nil {
+	if limit := tq.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -544,7 +612,7 @@ func (tgb *TaskGroupBy) Aggregate(fns ...AggregateFunc) *TaskGroupBy {
 
 // Scan applies the selector query and scans the result into the given value.
 func (tgb *TaskGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeTask, "GroupBy")
+	ctx = setContextOp(ctx, tgb.build.ctx, "GroupBy")
 	if err := tgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -592,7 +660,7 @@ func (ts *TaskSelect) Aggregate(fns ...AggregateFunc) *TaskSelect {
 
 // Scan applies the selector query and scans the result into the given value.
 func (ts *TaskSelect) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeTask, "Select")
+	ctx = setContextOp(ctx, ts.ctx, "Select")
 	if err := ts.prepareQuery(ctx); err != nil {
 		return err
 	}

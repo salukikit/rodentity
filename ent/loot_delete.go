@@ -40,15 +40,7 @@ func (ld *LootDelete) ExecX(ctx context.Context) int {
 }
 
 func (ld *LootDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := &sqlgraph.DeleteSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table: loot.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
-				Column: loot.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewDeleteSpec(loot.Table, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeInt))
 	if ps := ld.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -69,6 +61,12 @@ type LootDeleteOne struct {
 	ld *LootDelete
 }
 
+// Where appends a list predicates to the LootDelete builder.
+func (ldo *LootDeleteOne) Where(ps ...predicate.Loot) *LootDeleteOne {
+	ldo.ld.mutation.Where(ps...)
+	return ldo
+}
+
 // Exec executes the deletion query.
 func (ldo *LootDeleteOne) Exec(ctx context.Context) error {
 	n, err := ldo.ld.Exec(ctx)
@@ -84,5 +82,7 @@ func (ldo *LootDeleteOne) Exec(ctx context.Context) error {
 
 // ExecX is like Exec, but panics if an error occurs.
 func (ldo *LootDeleteOne) ExecX(ctx context.Context) {
-	ldo.ld.ExecX(ctx)
+	if err := ldo.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

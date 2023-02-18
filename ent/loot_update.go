@@ -14,6 +14,7 @@ import (
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/task"
 )
 
 // LootUpdate is the builder for updating Loot entities.
@@ -26,6 +27,12 @@ type LootUpdate struct {
 // Where appends a list predicates to the LootUpdate builder.
 func (lu *LootUpdate) Where(ps ...predicate.Loot) *LootUpdate {
 	lu.mutation.Where(ps...)
+	return lu
+}
+
+// SetXid sets the "xid" field.
+func (lu *LootUpdate) SetXid(s string) *LootUpdate {
+	lu.mutation.SetXid(s)
 	return lu
 }
 
@@ -61,19 +68,42 @@ func (lu *LootUpdate) SetCollectedon(t time.Time) *LootUpdate {
 	return lu
 }
 
-// AddRodentIDs adds the "rodent" edge to the Rodent entity by IDs.
-func (lu *LootUpdate) AddRodentIDs(ids ...int) *LootUpdate {
-	lu.mutation.AddRodentIDs(ids...)
+// SetRodentID sets the "rodent" edge to the Rodent entity by ID.
+func (lu *LootUpdate) SetRodentID(id int) *LootUpdate {
+	lu.mutation.SetRodentID(id)
 	return lu
 }
 
-// AddRodent adds the "rodent" edges to the Rodent entity.
-func (lu *LootUpdate) AddRodent(r ...*Rodent) *LootUpdate {
-	ids := make([]int, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+// SetNillableRodentID sets the "rodent" edge to the Rodent entity by ID if the given value is not nil.
+func (lu *LootUpdate) SetNillableRodentID(id *int) *LootUpdate {
+	if id != nil {
+		lu = lu.SetRodentID(*id)
 	}
-	return lu.AddRodentIDs(ids...)
+	return lu
+}
+
+// SetRodent sets the "rodent" edge to the Rodent entity.
+func (lu *LootUpdate) SetRodent(r *Rodent) *LootUpdate {
+	return lu.SetRodentID(r.ID)
+}
+
+// SetTaskID sets the "task" edge to the Task entity by ID.
+func (lu *LootUpdate) SetTaskID(id int) *LootUpdate {
+	lu.mutation.SetTaskID(id)
+	return lu
+}
+
+// SetNillableTaskID sets the "task" edge to the Task entity by ID if the given value is not nil.
+func (lu *LootUpdate) SetNillableTaskID(id *int) *LootUpdate {
+	if id != nil {
+		lu = lu.SetTaskID(*id)
+	}
+	return lu
+}
+
+// SetTask sets the "task" edge to the Task entity.
+func (lu *LootUpdate) SetTask(t *Task) *LootUpdate {
+	return lu.SetTaskID(t.ID)
 }
 
 // Mutation returns the LootMutation object of the builder.
@@ -81,25 +111,16 @@ func (lu *LootUpdate) Mutation() *LootMutation {
 	return lu.mutation
 }
 
-// ClearRodent clears all "rodent" edges to the Rodent entity.
+// ClearRodent clears the "rodent" edge to the Rodent entity.
 func (lu *LootUpdate) ClearRodent() *LootUpdate {
 	lu.mutation.ClearRodent()
 	return lu
 }
 
-// RemoveRodentIDs removes the "rodent" edge to Rodent entities by IDs.
-func (lu *LootUpdate) RemoveRodentIDs(ids ...int) *LootUpdate {
-	lu.mutation.RemoveRodentIDs(ids...)
+// ClearTask clears the "task" edge to the Task entity.
+func (lu *LootUpdate) ClearTask() *LootUpdate {
+	lu.mutation.ClearTask()
 	return lu
-}
-
-// RemoveRodent removes "rodent" edges to Rodent entities.
-func (lu *LootUpdate) RemoveRodent(r ...*Rodent) *LootUpdate {
-	ids := make([]int, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
-	}
-	return lu.RemoveRodentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -143,22 +164,16 @@ func (lu *LootUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := lu.check(); err != nil {
 		return n, err
 	}
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   loot.Table,
-			Columns: loot.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
-				Column: loot.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(loot.Table, loot.Columns, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeInt))
 	if ps := lu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := lu.mutation.Xid(); ok {
+		_spec.SetField(loot.FieldXid, field.TypeString, value)
 	}
 	if value, ok := lu.mutation.GetType(); ok {
 		_spec.SetField(loot.FieldType, field.TypeEnum, value)
@@ -174,10 +189,10 @@ func (lu *LootUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if lu.mutation.RodentCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   loot.RodentTable,
-			Columns: loot.RodentPrimaryKey,
+			Columns: []string{loot.RodentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -188,12 +203,12 @@ func (lu *LootUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := lu.mutation.RemovedRodentIDs(); len(nodes) > 0 && !lu.mutation.RodentCleared() {
+	if nodes := lu.mutation.RodentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   loot.RodentTable,
-			Columns: loot.RodentPrimaryKey,
+			Columns: []string{loot.RodentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -205,19 +220,35 @@ func (lu *LootUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nodes := lu.mutation.RodentIDs(); len(nodes) > 0 {
+	if lu.mutation.TaskCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   loot.RodentTable,
-			Columns: loot.RodentPrimaryKey,
+			Table:   loot.TaskTable,
+			Columns: []string{loot.TaskColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: rodent.FieldID,
+					Column: task.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := lu.mutation.TaskIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   loot.TaskTable,
+			Columns: []string{loot.TaskColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
 				},
 			},
 		}
@@ -244,6 +275,12 @@ type LootUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *LootMutation
+}
+
+// SetXid sets the "xid" field.
+func (luo *LootUpdateOne) SetXid(s string) *LootUpdateOne {
+	luo.mutation.SetXid(s)
+	return luo
 }
 
 // SetType sets the "type" field.
@@ -278,19 +315,42 @@ func (luo *LootUpdateOne) SetCollectedon(t time.Time) *LootUpdateOne {
 	return luo
 }
 
-// AddRodentIDs adds the "rodent" edge to the Rodent entity by IDs.
-func (luo *LootUpdateOne) AddRodentIDs(ids ...int) *LootUpdateOne {
-	luo.mutation.AddRodentIDs(ids...)
+// SetRodentID sets the "rodent" edge to the Rodent entity by ID.
+func (luo *LootUpdateOne) SetRodentID(id int) *LootUpdateOne {
+	luo.mutation.SetRodentID(id)
 	return luo
 }
 
-// AddRodent adds the "rodent" edges to the Rodent entity.
-func (luo *LootUpdateOne) AddRodent(r ...*Rodent) *LootUpdateOne {
-	ids := make([]int, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+// SetNillableRodentID sets the "rodent" edge to the Rodent entity by ID if the given value is not nil.
+func (luo *LootUpdateOne) SetNillableRodentID(id *int) *LootUpdateOne {
+	if id != nil {
+		luo = luo.SetRodentID(*id)
 	}
-	return luo.AddRodentIDs(ids...)
+	return luo
+}
+
+// SetRodent sets the "rodent" edge to the Rodent entity.
+func (luo *LootUpdateOne) SetRodent(r *Rodent) *LootUpdateOne {
+	return luo.SetRodentID(r.ID)
+}
+
+// SetTaskID sets the "task" edge to the Task entity by ID.
+func (luo *LootUpdateOne) SetTaskID(id int) *LootUpdateOne {
+	luo.mutation.SetTaskID(id)
+	return luo
+}
+
+// SetNillableTaskID sets the "task" edge to the Task entity by ID if the given value is not nil.
+func (luo *LootUpdateOne) SetNillableTaskID(id *int) *LootUpdateOne {
+	if id != nil {
+		luo = luo.SetTaskID(*id)
+	}
+	return luo
+}
+
+// SetTask sets the "task" edge to the Task entity.
+func (luo *LootUpdateOne) SetTask(t *Task) *LootUpdateOne {
+	return luo.SetTaskID(t.ID)
 }
 
 // Mutation returns the LootMutation object of the builder.
@@ -298,25 +358,22 @@ func (luo *LootUpdateOne) Mutation() *LootMutation {
 	return luo.mutation
 }
 
-// ClearRodent clears all "rodent" edges to the Rodent entity.
+// ClearRodent clears the "rodent" edge to the Rodent entity.
 func (luo *LootUpdateOne) ClearRodent() *LootUpdateOne {
 	luo.mutation.ClearRodent()
 	return luo
 }
 
-// RemoveRodentIDs removes the "rodent" edge to Rodent entities by IDs.
-func (luo *LootUpdateOne) RemoveRodentIDs(ids ...int) *LootUpdateOne {
-	luo.mutation.RemoveRodentIDs(ids...)
+// ClearTask clears the "task" edge to the Task entity.
+func (luo *LootUpdateOne) ClearTask() *LootUpdateOne {
+	luo.mutation.ClearTask()
 	return luo
 }
 
-// RemoveRodent removes "rodent" edges to Rodent entities.
-func (luo *LootUpdateOne) RemoveRodent(r ...*Rodent) *LootUpdateOne {
-	ids := make([]int, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
-	}
-	return luo.RemoveRodentIDs(ids...)
+// Where appends a list predicates to the LootUpdate builder.
+func (luo *LootUpdateOne) Where(ps ...predicate.Loot) *LootUpdateOne {
+	luo.mutation.Where(ps...)
+	return luo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -367,16 +424,7 @@ func (luo *LootUpdateOne) sqlSave(ctx context.Context) (_node *Loot, err error) 
 	if err := luo.check(); err != nil {
 		return _node, err
 	}
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   loot.Table,
-			Columns: loot.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
-				Column: loot.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(loot.Table, loot.Columns, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeInt))
 	id, ok := luo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Loot.id" for update`)}
@@ -401,6 +449,9 @@ func (luo *LootUpdateOne) sqlSave(ctx context.Context) (_node *Loot, err error) 
 			}
 		}
 	}
+	if value, ok := luo.mutation.Xid(); ok {
+		_spec.SetField(loot.FieldXid, field.TypeString, value)
+	}
 	if value, ok := luo.mutation.GetType(); ok {
 		_spec.SetField(loot.FieldType, field.TypeEnum, value)
 	}
@@ -415,10 +466,10 @@ func (luo *LootUpdateOne) sqlSave(ctx context.Context) (_node *Loot, err error) 
 	}
 	if luo.mutation.RodentCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   loot.RodentTable,
-			Columns: loot.RodentPrimaryKey,
+			Columns: []string{loot.RodentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -429,12 +480,12 @@ func (luo *LootUpdateOne) sqlSave(ctx context.Context) (_node *Loot, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := luo.mutation.RemovedRodentIDs(); len(nodes) > 0 && !luo.mutation.RodentCleared() {
+	if nodes := luo.mutation.RodentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   loot.RodentTable,
-			Columns: loot.RodentPrimaryKey,
+			Columns: []string{loot.RodentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -446,19 +497,35 @@ func (luo *LootUpdateOne) sqlSave(ctx context.Context) (_node *Loot, err error) 
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nodes := luo.mutation.RodentIDs(); len(nodes) > 0 {
+	if luo.mutation.TaskCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   loot.RodentTable,
-			Columns: loot.RodentPrimaryKey,
+			Table:   loot.TaskTable,
+			Columns: []string{loot.TaskColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
-					Column: rodent.FieldID,
+					Column: task.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := luo.mutation.TaskIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   loot.TaskTable,
+			Columns: []string{loot.TaskColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
 				},
 			},
 		}

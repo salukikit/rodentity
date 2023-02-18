@@ -167,34 +167,34 @@ func (d *Domain) assignValues(columns []string, values []any) error {
 
 // QueryDevices queries the "devices" edge of the Domain entity.
 func (d *Domain) QueryDevices() *DeviceQuery {
-	return (&DomainClient{config: d.config}).QueryDevices(d)
+	return NewDomainClient(d.config).QueryDevices(d)
 }
 
 // QueryUsers queries the "users" edge of the Domain entity.
 func (d *Domain) QueryUsers() *UserQuery {
-	return (&DomainClient{config: d.config}).QueryUsers(d)
+	return NewDomainClient(d.config).QueryUsers(d)
 }
 
 // QueryGroups queries the "groups" edge of the Domain entity.
 func (d *Domain) QueryGroups() *GroupQuery {
-	return (&DomainClient{config: d.config}).QueryGroups(d)
+	return NewDomainClient(d.config).QueryGroups(d)
 }
 
 // QueryChilddomains queries the "childdomains" edge of the Domain entity.
 func (d *Domain) QueryChilddomains() *DomainQuery {
-	return (&DomainClient{config: d.config}).QueryChilddomains(d)
+	return NewDomainClient(d.config).QueryChilddomains(d)
 }
 
 // QueryParentdomain queries the "parentdomain" edge of the Domain entity.
 func (d *Domain) QueryParentdomain() *DomainQuery {
-	return (&DomainClient{config: d.config}).QueryParentdomain(d)
+	return NewDomainClient(d.config).QueryParentdomain(d)
 }
 
 // Update returns a builder for updating this Domain.
 // Note that you need to call Domain.Unwrap() before calling this method if this Domain
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (d *Domain) Update() *DomainUpdateOne {
-	return (&DomainClient{config: d.config}).UpdateOne(d)
+	return NewDomainClient(d.config).UpdateOne(d)
 }
 
 // Unwrap unwraps the Domain entity that was returned from a transaction after it was closed,
@@ -230,9 +230,3 @@ func (d *Domain) String() string {
 
 // Domains is a parsable slice of Domain.
 type Domains []*Domain
-
-func (d Domains) config(cfg config) {
-	for _i := range d {
-		d[_i].config = cfg
-	}
-}

@@ -27,26 +27,30 @@ type config struct {
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Device  []ent.Hook
-		Domain  []ent.Hook
-		Group   []ent.Hook
-		Loot    []ent.Hook
-		Project []ent.Hook
-		Rodent  []ent.Hook
-		Task    []ent.Hook
-		Ttp     []ent.Hook
-		User    []ent.Hook
+		Device   []ent.Hook
+		Domain   []ent.Hook
+		Group    []ent.Hook
+		Loot     []ent.Hook
+		Operator []ent.Hook
+		Project  []ent.Hook
+		Rodent   []ent.Hook
+		Router   []ent.Hook
+		Subnet   []ent.Hook
+		Task     []ent.Hook
+		User     []ent.Hook
 	}
 	inters struct {
-		Device  []ent.Interceptor
-		Domain  []ent.Interceptor
-		Group   []ent.Interceptor
-		Loot    []ent.Interceptor
-		Project []ent.Interceptor
-		Rodent  []ent.Interceptor
-		Task    []ent.Interceptor
-		Ttp     []ent.Interceptor
-		User    []ent.Interceptor
+		Device   []ent.Interceptor
+		Domain   []ent.Interceptor
+		Group    []ent.Interceptor
+		Loot     []ent.Interceptor
+		Operator []ent.Interceptor
+		Project  []ent.Interceptor
+		Rodent   []ent.Interceptor
+		Router   []ent.Interceptor
+		Subnet   []ent.Interceptor
+		Task     []ent.Interceptor
+		User     []ent.Interceptor
 	}
 )
 

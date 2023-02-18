@@ -280,16 +280,7 @@ func (du *DomainUpdate) ExecX(ctx context.Context) {
 }
 
 func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   domain.Table,
-			Columns: domain.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: domain.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(domain.Table, domain.Columns, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeInt))
 	if ps := du.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -802,6 +793,12 @@ func (duo *DomainUpdateOne) ClearParentdomain() *DomainUpdateOne {
 	return duo
 }
 
+// Where appends a list predicates to the DomainUpdate builder.
+func (duo *DomainUpdateOne) Where(ps ...predicate.Domain) *DomainUpdateOne {
+	duo.mutation.Where(ps...)
+	return duo
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (duo *DomainUpdateOne) Select(field string, fields ...string) *DomainUpdateOne {
@@ -837,16 +834,7 @@ func (duo *DomainUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   domain.Table,
-			Columns: domain.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: domain.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(domain.Table, domain.Columns, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeInt))
 	id, ok := duo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Domain.id" for update`)}

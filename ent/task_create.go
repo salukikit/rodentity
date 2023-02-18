@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/task"
 )
@@ -73,6 +74,20 @@ func (tc *TaskCreate) SetNillableExecuted(b *bool) *TaskCreate {
 	return tc
 }
 
+// SetLooted sets the "looted" field.
+func (tc *TaskCreate) SetLooted(b bool) *TaskCreate {
+	tc.mutation.SetLooted(b)
+	return tc
+}
+
+// SetNillableLooted sets the "looted" field if the given value is not nil.
+func (tc *TaskCreate) SetNillableLooted(b *bool) *TaskCreate {
+	if b != nil {
+		tc.SetLooted(*b)
+	}
+	return tc
+}
+
 // SetRequestedat sets the "requestedat" field.
 func (tc *TaskCreate) SetRequestedat(t time.Time) *TaskCreate {
 	tc.mutation.SetRequestedat(t)
@@ -118,6 +133,21 @@ func (tc *TaskCreate) SetRodent(r *Rodent) *TaskCreate {
 	return tc.SetRodentID(r.ID)
 }
 
+// AddLootIDs adds the "loot" edge to the Loot entity by IDs.
+func (tc *TaskCreate) AddLootIDs(ids ...int) *TaskCreate {
+	tc.mutation.AddLootIDs(ids...)
+	return tc
+}
+
+// AddLoot adds the "loot" edges to the Loot entity.
+func (tc *TaskCreate) AddLoot(l ...*Loot) *TaskCreate {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return tc.AddLootIDs(ids...)
+}
+
 // Mutation returns the TaskMutation object of the builder.
 func (tc *TaskCreate) Mutation() *TaskMutation {
 	return tc.mutation
@@ -161,6 +191,10 @@ func (tc *TaskCreate) defaults() {
 		v := task.DefaultExecuted
 		tc.mutation.SetExecuted(v)
 	}
+	if _, ok := tc.mutation.Looted(); !ok {
+		v := task.DefaultLooted
+		tc.mutation.SetLooted(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -173,6 +207,9 @@ func (tc *TaskCreate) check() error {
 	}
 	if _, ok := tc.mutation.Executed(); !ok {
 		return &ValidationError{Name: "Executed", err: errors.New(`ent: missing required field "Task.Executed"`)}
+	}
+	if _, ok := tc.mutation.Looted(); !ok {
+		return &ValidationError{Name: "looted", err: errors.New(`ent: missing required field "Task.looted"`)}
 	}
 	if _, ok := tc.mutation.Requestedat(); !ok {
 		return &ValidationError{Name: "requestedat", err: errors.New(`ent: missing required field "Task.requestedat"`)}
@@ -201,13 +238,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Task{config: tc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: task.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: task.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(task.Table, sqlgraph.NewFieldSpec(task.FieldID, field.TypeInt))
 	)
 	if value, ok := tc.mutation.Xid(); ok {
 		_spec.SetField(task.FieldXid, field.TypeString, value)
@@ -232,6 +263,10 @@ func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.Executed(); ok {
 		_spec.SetField(task.FieldExecuted, field.TypeBool, value)
 		_node.Executed = value
+	}
+	if value, ok := tc.mutation.Looted(); ok {
+		_spec.SetField(task.FieldLooted, field.TypeBool, value)
+		_node.Looted = value
 	}
 	if value, ok := tc.mutation.Requestedat(); ok {
 		_spec.SetField(task.FieldRequestedat, field.TypeTime, value)
@@ -263,6 +298,25 @@ func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.rodent_tasks = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.LootIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   task.LootTable,
+			Columns: []string{task.LootColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: loot.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

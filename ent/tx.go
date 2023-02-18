@@ -20,14 +20,18 @@ type Tx struct {
 	Group *GroupClient
 	// Loot is the client for interacting with the Loot builders.
 	Loot *LootClient
+	// Operator is the client for interacting with the Operator builders.
+	Operator *OperatorClient
 	// Project is the client for interacting with the Project builders.
 	Project *ProjectClient
 	// Rodent is the client for interacting with the Rodent builders.
 	Rodent *RodentClient
+	// Router is the client for interacting with the Router builders.
+	Router *RouterClient
+	// Subnet is the client for interacting with the Subnet builders.
+	Subnet *SubnetClient
 	// Task is the client for interacting with the Task builders.
 	Task *TaskClient
-	// Ttp is the client for interacting with the Ttp builders.
-	Ttp *TtpClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -165,10 +169,12 @@ func (tx *Tx) init() {
 	tx.Domain = NewDomainClient(tx.config)
 	tx.Group = NewGroupClient(tx.config)
 	tx.Loot = NewLootClient(tx.config)
+	tx.Operator = NewOperatorClient(tx.config)
 	tx.Project = NewProjectClient(tx.config)
 	tx.Rodent = NewRodentClient(tx.config)
+	tx.Router = NewRouterClient(tx.config)
+	tx.Subnet = NewSubnetClient(tx.config)
 	tx.Task = NewTaskClient(tx.config)
-	tx.Ttp = NewTtpClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

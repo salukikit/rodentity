@@ -8,7 +8,9 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/project"
+	"github.com/salukikit/rodentity/ent/rodent"
 )
 
 // ProjectCreate is the builder for creating a Project entity.
@@ -16,6 +18,36 @@ type ProjectCreate struct {
 	config
 	mutation *ProjectMutation
 	hooks    []Hook
+}
+
+// AddOperatorIDs adds the "operators" edge to the Operator entity by IDs.
+func (pc *ProjectCreate) AddOperatorIDs(ids ...int) *ProjectCreate {
+	pc.mutation.AddOperatorIDs(ids...)
+	return pc
+}
+
+// AddOperators adds the "operators" edges to the Operator entity.
+func (pc *ProjectCreate) AddOperators(o ...*Operator) *ProjectCreate {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return pc.AddOperatorIDs(ids...)
+}
+
+// AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
+func (pc *ProjectCreate) AddRodentIDs(ids ...int) *ProjectCreate {
+	pc.mutation.AddRodentIDs(ids...)
+	return pc
+}
+
+// AddRodents adds the "rodents" edges to the Rodent entity.
+func (pc *ProjectCreate) AddRodents(r ...*Rodent) *ProjectCreate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return pc.AddRodentIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -76,14 +108,46 @@ func (pc *ProjectCreate) sqlSave(ctx context.Context) (*Project, error) {
 func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Project{config: pc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: project.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: project.FieldID,
+		_spec = sqlgraph.NewCreateSpec(project.Table, sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt))
+	)
+	if nodes := pc.mutation.OperatorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.OperatorsTable,
+			Columns: project.OperatorsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
+				},
 			},
 		}
-	)
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.RodentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RodentsTable,
+			Columns: []string{project.RodentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: rodent.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 

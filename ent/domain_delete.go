@@ -40,15 +40,7 @@ func (dd *DomainDelete) ExecX(ctx context.Context) int {
 }
 
 func (dd *DomainDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := &sqlgraph.DeleteSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table: domain.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: domain.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewDeleteSpec(domain.Table, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeInt))
 	if ps := dd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -69,6 +61,12 @@ type DomainDeleteOne struct {
 	dd *DomainDelete
 }
 
+// Where appends a list predicates to the DomainDelete builder.
+func (ddo *DomainDeleteOne) Where(ps ...predicate.Domain) *DomainDeleteOne {
+	ddo.dd.mutation.Where(ps...)
+	return ddo
+}
+
 // Exec executes the deletion query.
 func (ddo *DomainDeleteOne) Exec(ctx context.Context) error {
 	n, err := ddo.dd.Exec(ctx)
@@ -84,5 +82,7 @@ func (ddo *DomainDeleteOne) Exec(ctx context.Context) error {
 
 // ExecX is like Exec, but panics if an error occurs.
 func (ddo *DomainDeleteOne) ExecX(ctx context.Context) {
-	ddo.dd.ExecX(ctx)
+	if err := ddo.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

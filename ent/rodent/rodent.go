@@ -31,6 +31,10 @@ const (
 	EdgeDevice = "device"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
+	// EdgeProject holds the string denoting the project edge name in mutations.
+	EdgeProject = "project"
+	// EdgeRouter holds the string denoting the router edge name in mutations.
+	EdgeRouter = "router"
 	// EdgeTasks holds the string denoting the tasks edge name in mutations.
 	EdgeTasks = "tasks"
 	// EdgeLoot holds the string denoting the loot edge name in mutations.
@@ -51,6 +55,20 @@ const (
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
 	UserColumn = "user_rodents"
+	// ProjectTable is the table that holds the project relation/edge.
+	ProjectTable = "rodents"
+	// ProjectInverseTable is the table name for the Project entity.
+	// It exists in this package in order to avoid circular dependency with the "project" package.
+	ProjectInverseTable = "projects"
+	// ProjectColumn is the table column denoting the project relation/edge.
+	ProjectColumn = "project_rodents"
+	// RouterTable is the table that holds the router relation/edge.
+	RouterTable = "rodents"
+	// RouterInverseTable is the table name for the Router entity.
+	// It exists in this package in order to avoid circular dependency with the "router" package.
+	RouterInverseTable = "routers"
+	// RouterColumn is the table column denoting the router relation/edge.
+	RouterColumn = "router_rodents"
 	// TasksTable is the table that holds the tasks relation/edge.
 	TasksTable = "tasks"
 	// TasksInverseTable is the table name for the Task entity.
@@ -58,11 +76,13 @@ const (
 	TasksInverseTable = "tasks"
 	// TasksColumn is the table column denoting the tasks relation/edge.
 	TasksColumn = "rodent_tasks"
-	// LootTable is the table that holds the loot relation/edge. The primary key declared below.
-	LootTable = "rodent_loot"
+	// LootTable is the table that holds the loot relation/edge.
+	LootTable = "loots"
 	// LootInverseTable is the table name for the Loot entity.
 	// It exists in this package in order to avoid circular dependency with the "loot" package.
 	LootInverseTable = "loots"
+	// LootColumn is the table column denoting the loot relation/edge.
+	LootColumn = "rodent_loot"
 )
 
 // Columns holds all SQL columns for rodent fields.
@@ -84,14 +104,10 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"device_rodents",
+	"project_rodents",
+	"router_rodents",
 	"user_rodents",
 }
-
-var (
-	// LootPrimaryKey and LootColumn2 are the table columns denoting the
-	// primary key for the loot relation (M2M).
-	LootPrimaryKey = []string{"rodent_id", "loot_id"}
-)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -14,19 +13,19 @@ import (
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/task"
 )
 
 // LootQuery is the builder for querying Loot entities.
 type LootQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
+	ctx        *QueryContext
 	order      []OrderFunc
-	fields     []string
 	inters     []Interceptor
 	predicates []predicate.Loot
 	withRodent *RodentQuery
+	withTask   *TaskQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -40,20 +39,20 @@ func (lq *LootQuery) Where(ps ...predicate.Loot) *LootQuery {
 
 // Limit the number of records to be returned by this query.
 func (lq *LootQuery) Limit(limit int) *LootQuery {
-	lq.limit = &limit
+	lq.ctx.Limit = &limit
 	return lq
 }
 
 // Offset to start from.
 func (lq *LootQuery) Offset(offset int) *LootQuery {
-	lq.offset = &offset
+	lq.ctx.Offset = &offset
 	return lq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
 func (lq *LootQuery) Unique(unique bool) *LootQuery {
-	lq.unique = &unique
+	lq.ctx.Unique = &unique
 	return lq
 }
 
@@ -77,7 +76,29 @@ func (lq *LootQuery) QueryRodent() *RodentQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(loot.Table, loot.FieldID, selector),
 			sqlgraph.To(rodent.Table, rodent.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, loot.RodentTable, loot.RodentPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, true, loot.RodentTable, loot.RodentColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTask chains the current query on the "task" edge.
+func (lq *LootQuery) QueryTask() *TaskQuery {
+	query := (&TaskClient{config: lq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := lq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := lq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(loot.Table, loot.FieldID, selector),
+			sqlgraph.To(task.Table, task.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, loot.TaskTable, loot.TaskColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
 		return fromU, nil
@@ -88,7 +109,7 @@ func (lq *LootQuery) QueryRodent() *RodentQuery {
 // First returns the first Loot entity from the query.
 // Returns a *NotFoundError when no Loot was found.
 func (lq *LootQuery) First(ctx context.Context) (*Loot, error) {
-	nodes, err := lq.Limit(1).All(newQueryContext(ctx, TypeLoot, "First"))
+	nodes, err := lq.Limit(1).All(setContextOp(ctx, lq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
@@ -109,9 +130,9 @@ func (lq *LootQuery) FirstX(ctx context.Context) *Loot {
 
 // FirstID returns the first Loot ID from the query.
 // Returns a *NotFoundError when no Loot ID was found.
-func (lq *LootQuery) FirstID(ctx context.Context) (id string, err error) {
-	var ids []string
-	if ids, err = lq.Limit(1).IDs(newQueryContext(ctx, TypeLoot, "FirstID")); err != nil {
+func (lq *LootQuery) FirstID(ctx context.Context) (id int, err error) {
+	var ids []int
+	if ids, err = lq.Limit(1).IDs(setContextOp(ctx, lq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -122,7 +143,7 @@ func (lq *LootQuery) FirstID(ctx context.Context) (id string, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (lq *LootQuery) FirstIDX(ctx context.Context) string {
+func (lq *LootQuery) FirstIDX(ctx context.Context) int {
 	id, err := lq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -134,7 +155,7 @@ func (lq *LootQuery) FirstIDX(ctx context.Context) string {
 // Returns a *NotSingularError when more than one Loot entity is found.
 // Returns a *NotFoundError when no Loot entities are found.
 func (lq *LootQuery) Only(ctx context.Context) (*Loot, error) {
-	nodes, err := lq.Limit(2).All(newQueryContext(ctx, TypeLoot, "Only"))
+	nodes, err := lq.Limit(2).All(setContextOp(ctx, lq.ctx, "Only"))
 	if err != nil {
 		return nil, err
 	}
@@ -160,9 +181,9 @@ func (lq *LootQuery) OnlyX(ctx context.Context) *Loot {
 // OnlyID is like Only, but returns the only Loot ID in the query.
 // Returns a *NotSingularError when more than one Loot ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (lq *LootQuery) OnlyID(ctx context.Context) (id string, err error) {
-	var ids []string
-	if ids, err = lq.Limit(2).IDs(newQueryContext(ctx, TypeLoot, "OnlyID")); err != nil {
+func (lq *LootQuery) OnlyID(ctx context.Context) (id int, err error) {
+	var ids []int
+	if ids, err = lq.Limit(2).IDs(setContextOp(ctx, lq.ctx, "OnlyID")); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -177,7 +198,7 @@ func (lq *LootQuery) OnlyID(ctx context.Context) (id string, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (lq *LootQuery) OnlyIDX(ctx context.Context) string {
+func (lq *LootQuery) OnlyIDX(ctx context.Context) int {
 	id, err := lq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -187,7 +208,7 @@ func (lq *LootQuery) OnlyIDX(ctx context.Context) string {
 
 // All executes the query and returns a list of Loots.
 func (lq *LootQuery) All(ctx context.Context) ([]*Loot, error) {
-	ctx = newQueryContext(ctx, TypeLoot, "All")
+	ctx = setContextOp(ctx, lq.ctx, "All")
 	if err := lq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -205,17 +226,19 @@ func (lq *LootQuery) AllX(ctx context.Context) []*Loot {
 }
 
 // IDs executes the query and returns a list of Loot IDs.
-func (lq *LootQuery) IDs(ctx context.Context) ([]string, error) {
-	var ids []string
-	ctx = newQueryContext(ctx, TypeLoot, "IDs")
-	if err := lq.Select(loot.FieldID).Scan(ctx, &ids); err != nil {
+func (lq *LootQuery) IDs(ctx context.Context) (ids []int, err error) {
+	if lq.ctx.Unique == nil && lq.path != nil {
+		lq.Unique(true)
+	}
+	ctx = setContextOp(ctx, lq.ctx, "IDs")
+	if err = lq.Select(loot.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (lq *LootQuery) IDsX(ctx context.Context) []string {
+func (lq *LootQuery) IDsX(ctx context.Context) []int {
 	ids, err := lq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -225,7 +248,7 @@ func (lq *LootQuery) IDsX(ctx context.Context) []string {
 
 // Count returns the count of the given query.
 func (lq *LootQuery) Count(ctx context.Context) (int, error) {
-	ctx = newQueryContext(ctx, TypeLoot, "Count")
+	ctx = setContextOp(ctx, lq.ctx, "Count")
 	if err := lq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -243,7 +266,7 @@ func (lq *LootQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (lq *LootQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = newQueryContext(ctx, TypeLoot, "Exist")
+	ctx = setContextOp(ctx, lq.ctx, "Exist")
 	switch _, err := lq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -271,16 +294,15 @@ func (lq *LootQuery) Clone() *LootQuery {
 	}
 	return &LootQuery{
 		config:     lq.config,
-		limit:      lq.limit,
-		offset:     lq.offset,
+		ctx:        lq.ctx.Clone(),
 		order:      append([]OrderFunc{}, lq.order...),
 		inters:     append([]Interceptor{}, lq.inters...),
 		predicates: append([]predicate.Loot{}, lq.predicates...),
 		withRodent: lq.withRodent.Clone(),
+		withTask:   lq.withTask.Clone(),
 		// clone intermediate query.
-		sql:    lq.sql.Clone(),
-		path:   lq.path,
-		unique: lq.unique,
+		sql:  lq.sql.Clone(),
+		path: lq.path,
 	}
 }
 
@@ -295,24 +317,35 @@ func (lq *LootQuery) WithRodent(opts ...func(*RodentQuery)) *LootQuery {
 	return lq
 }
 
+// WithTask tells the query-builder to eager-load the nodes that are connected to
+// the "task" edge. The optional arguments are used to configure the query builder of the edge.
+func (lq *LootQuery) WithTask(opts ...func(*TaskQuery)) *LootQuery {
+	query := (&TaskClient{config: lq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	lq.withTask = query
+	return lq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
 //
 //	var v []struct {
-//		Type loot.Type `json:"type,omitempty"`
+//		Xid string `json:"xid,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Loot.Query().
-//		GroupBy(loot.FieldType).
+//		GroupBy(loot.FieldXid).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (lq *LootQuery) GroupBy(field string, fields ...string) *LootGroupBy {
-	lq.fields = append([]string{field}, fields...)
+	lq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &LootGroupBy{build: lq}
-	grbuild.flds = &lq.fields
+	grbuild.flds = &lq.ctx.Fields
 	grbuild.label = loot.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -324,17 +357,17 @@ func (lq *LootQuery) GroupBy(field string, fields ...string) *LootGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Type loot.Type `json:"type,omitempty"`
+//		Xid string `json:"xid,omitempty"`
 //	}
 //
 //	client.Loot.Query().
-//		Select(loot.FieldType).
+//		Select(loot.FieldXid).
 //		Scan(ctx, &v)
 func (lq *LootQuery) Select(fields ...string) *LootSelect {
-	lq.fields = append(lq.fields, fields...)
+	lq.ctx.Fields = append(lq.ctx.Fields, fields...)
 	sbuild := &LootSelect{LootQuery: lq}
 	sbuild.label = loot.Label
-	sbuild.flds, sbuild.scan = &lq.fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &lq.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
@@ -354,7 +387,7 @@ func (lq *LootQuery) prepareQuery(ctx context.Context) error {
 			}
 		}
 	}
-	for _, f := range lq.fields {
+	for _, f := range lq.ctx.Fields {
 		if !loot.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
@@ -372,11 +405,19 @@ func (lq *LootQuery) prepareQuery(ctx context.Context) error {
 func (lq *LootQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loot, error) {
 	var (
 		nodes       = []*Loot{}
+		withFKs     = lq.withFKs
 		_spec       = lq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			lq.withRodent != nil,
+			lq.withTask != nil,
 		}
 	)
+	if lq.withRodent != nil || lq.withTask != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, loot.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Loot).scanValues(nil, columns)
 	}
@@ -396,9 +437,14 @@ func (lq *LootQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loot, e
 		return nodes, nil
 	}
 	if query := lq.withRodent; query != nil {
-		if err := lq.loadRodent(ctx, query, nodes,
-			func(n *Loot) { n.Edges.Rodent = []*Rodent{} },
-			func(n *Loot, e *Rodent) { n.Edges.Rodent = append(n.Edges.Rodent, e) }); err != nil {
+		if err := lq.loadRodent(ctx, query, nodes, nil,
+			func(n *Loot, e *Rodent) { n.Edges.Rodent = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := lq.withTask; query != nil {
+		if err := lq.loadTask(ctx, query, nodes, nil,
+			func(n *Loot, e *Task) { n.Edges.Task = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -406,59 +452,65 @@ func (lq *LootQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loot, e
 }
 
 func (lq *LootQuery) loadRodent(ctx context.Context, query *RodentQuery, nodes []*Loot, init func(*Loot), assign func(*Loot, *Rodent)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[string]*Loot)
-	nids := make(map[int]map[*Loot]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
-		if init != nil {
-			init(node)
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Loot)
+	for i := range nodes {
+		if nodes[i].rodent_loot == nil {
+			continue
 		}
+		fk := *nodes[i].rodent_loot
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(loot.RodentTable)
-		s.Join(joinT).On(s.C(rodent.FieldID), joinT.C(loot.RodentPrimaryKey[0]))
-		s.Where(sql.InValues(joinT.C(loot.RodentPrimaryKey[1]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(loot.RodentPrimaryKey[1]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
+	if len(ids) == 0 {
+		return nil
 	}
-	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-		assign := spec.Assign
-		values := spec.ScanValues
-		spec.ScanValues = func(columns []string) ([]any, error) {
-			values, err := values(columns[1:])
-			if err != nil {
-				return nil, err
-			}
-			return append([]any{new(sql.NullString)}, values...), nil
-		}
-		spec.Assign = func(columns []string, values []any) error {
-			outValue := values[0].(*sql.NullString).String
-			inValue := int(values[1].(*sql.NullInt64).Int64)
-			if nids[inValue] == nil {
-				nids[inValue] = map[*Loot]struct{}{byID[outValue]: {}}
-				return assign(columns[1:], values[1:])
-			}
-			nids[inValue][byID[outValue]] = struct{}{}
-			return nil
-		}
-	})
+	query.Where(rodent.IDIn(ids...))
+	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected "rodent" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "rodent_loot" returned %v`, n.ID)
 		}
-		for kn := range nodes {
-			assign(kn, n)
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (lq *LootQuery) loadTask(ctx context.Context, query *TaskQuery, nodes []*Loot, init func(*Loot), assign func(*Loot, *Task)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Loot)
+	for i := range nodes {
+		if nodes[i].task_loot == nil {
+			continue
+		}
+		fk := *nodes[i].task_loot
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(task.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "task_loot" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
 		}
 	}
 	return nil
@@ -466,30 +518,22 @@ func (lq *LootQuery) loadRodent(ctx context.Context, query *RodentQuery, nodes [
 
 func (lq *LootQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := lq.querySpec()
-	_spec.Node.Columns = lq.fields
-	if len(lq.fields) > 0 {
-		_spec.Unique = lq.unique != nil && *lq.unique
+	_spec.Node.Columns = lq.ctx.Fields
+	if len(lq.ctx.Fields) > 0 {
+		_spec.Unique = lq.ctx.Unique != nil && *lq.ctx.Unique
 	}
 	return sqlgraph.CountNodes(ctx, lq.driver, _spec)
 }
 
 func (lq *LootQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := &sqlgraph.QuerySpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   loot.Table,
-			Columns: loot.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
-				Column: loot.FieldID,
-			},
-		},
-		From:   lq.sql,
-		Unique: true,
-	}
-	if unique := lq.unique; unique != nil {
+	_spec := sqlgraph.NewQuerySpec(loot.Table, loot.Columns, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeInt))
+	_spec.From = lq.sql
+	if unique := lq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
+	} else if lq.path != nil {
+		_spec.Unique = true
 	}
-	if fields := lq.fields; len(fields) > 0 {
+	if fields := lq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, loot.FieldID)
 		for i := range fields {
@@ -505,10 +549,10 @@ func (lq *LootQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if limit := lq.limit; limit != nil {
+	if limit := lq.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := lq.offset; offset != nil {
+	if offset := lq.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
 	if ps := lq.order; len(ps) > 0 {
@@ -524,7 +568,7 @@ func (lq *LootQuery) querySpec() *sqlgraph.QuerySpec {
 func (lq *LootQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(lq.driver.Dialect())
 	t1 := builder.Table(loot.Table)
-	columns := lq.fields
+	columns := lq.ctx.Fields
 	if len(columns) == 0 {
 		columns = loot.Columns
 	}
@@ -533,7 +577,7 @@ func (lq *LootQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector = lq.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if lq.unique != nil && *lq.unique {
+	if lq.ctx.Unique != nil && *lq.ctx.Unique {
 		selector.Distinct()
 	}
 	for _, p := range lq.predicates {
@@ -542,12 +586,12 @@ func (lq *LootQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	for _, p := range lq.order {
 		p(selector)
 	}
-	if offset := lq.offset; offset != nil {
+	if offset := lq.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := lq.limit; limit != nil {
+	if limit := lq.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -567,7 +611,7 @@ func (lgb *LootGroupBy) Aggregate(fns ...AggregateFunc) *LootGroupBy {
 
 // Scan applies the selector query and scans the result into the given value.
 func (lgb *LootGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeLoot, "GroupBy")
+	ctx = setContextOp(ctx, lgb.build.ctx, "GroupBy")
 	if err := lgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -615,7 +659,7 @@ func (ls *LootSelect) Aggregate(fns ...AggregateFunc) *LootSelect {
 
 // Scan applies the selector query and scans the result into the given value.
 func (ls *LootSelect) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeLoot, "Select")
+	ctx = setContextOp(ctx, ls.ctx, "Select")
 	if err := ls.prepareQuery(ctx); err != nil {
 		return err
 	}

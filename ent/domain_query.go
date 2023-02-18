@@ -21,11 +21,8 @@ import (
 // DomainQuery is the builder for querying Domain entities.
 type DomainQuery struct {
 	config
-	limit            *int
-	offset           *int
-	unique           *bool
+	ctx              *QueryContext
 	order            []OrderFunc
-	fields           []string
 	inters           []Interceptor
 	predicates       []predicate.Domain
 	withDevices      *DeviceQuery
@@ -47,20 +44,20 @@ func (dq *DomainQuery) Where(ps ...predicate.Domain) *DomainQuery {
 
 // Limit the number of records to be returned by this query.
 func (dq *DomainQuery) Limit(limit int) *DomainQuery {
-	dq.limit = &limit
+	dq.ctx.Limit = &limit
 	return dq
 }
 
 // Offset to start from.
 func (dq *DomainQuery) Offset(offset int) *DomainQuery {
-	dq.offset = &offset
+	dq.ctx.Offset = &offset
 	return dq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
 func (dq *DomainQuery) Unique(unique bool) *DomainQuery {
-	dq.unique = &unique
+	dq.ctx.Unique = &unique
 	return dq
 }
 
@@ -183,7 +180,7 @@ func (dq *DomainQuery) QueryParentdomain() *DomainQuery {
 // First returns the first Domain entity from the query.
 // Returns a *NotFoundError when no Domain was found.
 func (dq *DomainQuery) First(ctx context.Context) (*Domain, error) {
-	nodes, err := dq.Limit(1).All(newQueryContext(ctx, TypeDomain, "First"))
+	nodes, err := dq.Limit(1).All(setContextOp(ctx, dq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +203,7 @@ func (dq *DomainQuery) FirstX(ctx context.Context) *Domain {
 // Returns a *NotFoundError when no Domain ID was found.
 func (dq *DomainQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
-	if ids, err = dq.Limit(1).IDs(newQueryContext(ctx, TypeDomain, "FirstID")); err != nil {
+	if ids, err = dq.Limit(1).IDs(setContextOp(ctx, dq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -229,7 +226,7 @@ func (dq *DomainQuery) FirstIDX(ctx context.Context) int {
 // Returns a *NotSingularError when more than one Domain entity is found.
 // Returns a *NotFoundError when no Domain entities are found.
 func (dq *DomainQuery) Only(ctx context.Context) (*Domain, error) {
-	nodes, err := dq.Limit(2).All(newQueryContext(ctx, TypeDomain, "Only"))
+	nodes, err := dq.Limit(2).All(setContextOp(ctx, dq.ctx, "Only"))
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +254,7 @@ func (dq *DomainQuery) OnlyX(ctx context.Context) *Domain {
 // Returns a *NotFoundError when no entities are found.
 func (dq *DomainQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
-	if ids, err = dq.Limit(2).IDs(newQueryContext(ctx, TypeDomain, "OnlyID")); err != nil {
+	if ids, err = dq.Limit(2).IDs(setContextOp(ctx, dq.ctx, "OnlyID")); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -282,7 +279,7 @@ func (dq *DomainQuery) OnlyIDX(ctx context.Context) int {
 
 // All executes the query and returns a list of Domains.
 func (dq *DomainQuery) All(ctx context.Context) ([]*Domain, error) {
-	ctx = newQueryContext(ctx, TypeDomain, "All")
+	ctx = setContextOp(ctx, dq.ctx, "All")
 	if err := dq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -300,10 +297,12 @@ func (dq *DomainQuery) AllX(ctx context.Context) []*Domain {
 }
 
 // IDs executes the query and returns a list of Domain IDs.
-func (dq *DomainQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
-	ctx = newQueryContext(ctx, TypeDomain, "IDs")
-	if err := dq.Select(domain.FieldID).Scan(ctx, &ids); err != nil {
+func (dq *DomainQuery) IDs(ctx context.Context) (ids []int, err error) {
+	if dq.ctx.Unique == nil && dq.path != nil {
+		dq.Unique(true)
+	}
+	ctx = setContextOp(ctx, dq.ctx, "IDs")
+	if err = dq.Select(domain.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -320,7 +319,7 @@ func (dq *DomainQuery) IDsX(ctx context.Context) []int {
 
 // Count returns the count of the given query.
 func (dq *DomainQuery) Count(ctx context.Context) (int, error) {
-	ctx = newQueryContext(ctx, TypeDomain, "Count")
+	ctx = setContextOp(ctx, dq.ctx, "Count")
 	if err := dq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -338,7 +337,7 @@ func (dq *DomainQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (dq *DomainQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = newQueryContext(ctx, TypeDomain, "Exist")
+	ctx = setContextOp(ctx, dq.ctx, "Exist")
 	switch _, err := dq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -366,8 +365,7 @@ func (dq *DomainQuery) Clone() *DomainQuery {
 	}
 	return &DomainQuery{
 		config:           dq.config,
-		limit:            dq.limit,
-		offset:           dq.offset,
+		ctx:              dq.ctx.Clone(),
 		order:            append([]OrderFunc{}, dq.order...),
 		inters:           append([]Interceptor{}, dq.inters...),
 		predicates:       append([]predicate.Domain{}, dq.predicates...),
@@ -377,9 +375,8 @@ func (dq *DomainQuery) Clone() *DomainQuery {
 		withChilddomains: dq.withChilddomains.Clone(),
 		withParentdomain: dq.withParentdomain.Clone(),
 		// clone intermediate query.
-		sql:    dq.sql.Clone(),
-		path:   dq.path,
-		unique: dq.unique,
+		sql:  dq.sql.Clone(),
+		path: dq.path,
 	}
 }
 
@@ -453,9 +450,9 @@ func (dq *DomainQuery) WithParentdomain(opts ...func(*DomainQuery)) *DomainQuery
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (dq *DomainQuery) GroupBy(field string, fields ...string) *DomainGroupBy {
-	dq.fields = append([]string{field}, fields...)
+	dq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &DomainGroupBy{build: dq}
-	grbuild.flds = &dq.fields
+	grbuild.flds = &dq.ctx.Fields
 	grbuild.label = domain.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -474,10 +471,10 @@ func (dq *DomainQuery) GroupBy(field string, fields ...string) *DomainGroupBy {
 //		Select(domain.FieldName).
 //		Scan(ctx, &v)
 func (dq *DomainQuery) Select(fields ...string) *DomainSelect {
-	dq.fields = append(dq.fields, fields...)
+	dq.ctx.Fields = append(dq.ctx.Fields, fields...)
 	sbuild := &DomainSelect{DomainQuery: dq}
 	sbuild.label = domain.Label
-	sbuild.flds, sbuild.scan = &dq.fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &dq.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
@@ -497,7 +494,7 @@ func (dq *DomainQuery) prepareQuery(ctx context.Context) error {
 			}
 		}
 	}
-	for _, f := range dq.fields {
+	for _, f := range dq.ctx.Fields {
 		if !domain.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
@@ -723,6 +720,9 @@ func (dq *DomainQuery) loadParentdomain(ctx context.Context, query *DomainQuery,
 		}
 		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
+	if len(ids) == 0 {
+		return nil
+	}
 	query.Where(domain.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -742,30 +742,22 @@ func (dq *DomainQuery) loadParentdomain(ctx context.Context, query *DomainQuery,
 
 func (dq *DomainQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := dq.querySpec()
-	_spec.Node.Columns = dq.fields
-	if len(dq.fields) > 0 {
-		_spec.Unique = dq.unique != nil && *dq.unique
+	_spec.Node.Columns = dq.ctx.Fields
+	if len(dq.ctx.Fields) > 0 {
+		_spec.Unique = dq.ctx.Unique != nil && *dq.ctx.Unique
 	}
 	return sqlgraph.CountNodes(ctx, dq.driver, _spec)
 }
 
 func (dq *DomainQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := &sqlgraph.QuerySpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   domain.Table,
-			Columns: domain.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: domain.FieldID,
-			},
-		},
-		From:   dq.sql,
-		Unique: true,
-	}
-	if unique := dq.unique; unique != nil {
+	_spec := sqlgraph.NewQuerySpec(domain.Table, domain.Columns, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeInt))
+	_spec.From = dq.sql
+	if unique := dq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
+	} else if dq.path != nil {
+		_spec.Unique = true
 	}
-	if fields := dq.fields; len(fields) > 0 {
+	if fields := dq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, domain.FieldID)
 		for i := range fields {
@@ -781,10 +773,10 @@ func (dq *DomainQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if limit := dq.limit; limit != nil {
+	if limit := dq.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := dq.offset; offset != nil {
+	if offset := dq.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
 	if ps := dq.order; len(ps) > 0 {
@@ -800,7 +792,7 @@ func (dq *DomainQuery) querySpec() *sqlgraph.QuerySpec {
 func (dq *DomainQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(dq.driver.Dialect())
 	t1 := builder.Table(domain.Table)
-	columns := dq.fields
+	columns := dq.ctx.Fields
 	if len(columns) == 0 {
 		columns = domain.Columns
 	}
@@ -809,7 +801,7 @@ func (dq *DomainQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector = dq.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if dq.unique != nil && *dq.unique {
+	if dq.ctx.Unique != nil && *dq.ctx.Unique {
 		selector.Distinct()
 	}
 	for _, p := range dq.predicates {
@@ -818,12 +810,12 @@ func (dq *DomainQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	for _, p := range dq.order {
 		p(selector)
 	}
-	if offset := dq.offset; offset != nil {
+	if offset := dq.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := dq.limit; limit != nil {
+	if limit := dq.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -843,7 +835,7 @@ func (dgb *DomainGroupBy) Aggregate(fns ...AggregateFunc) *DomainGroupBy {
 
 // Scan applies the selector query and scans the result into the given value.
 func (dgb *DomainGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeDomain, "GroupBy")
+	ctx = setContextOp(ctx, dgb.build.ctx, "GroupBy")
 	if err := dgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -891,7 +883,7 @@ func (ds *DomainSelect) Aggregate(fns ...AggregateFunc) *DomainSelect {
 
 // Scan applies the selector query and scans the result into the given value.
 func (ds *DomainSelect) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeDomain, "Select")
+	ctx = setContextOp(ctx, ds.ctx, "Select")
 	if err := ds.prepareQuery(ctx); err != nil {
 		return err
 	}

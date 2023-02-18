@@ -73,6 +73,11 @@ func Version(v string) predicate.Device {
 	return predicate.Device(sql.FieldEQ(FieldVersion, v))
 }
 
+// Localaddress applies equality check predicate on the "localaddress" field. It's identical to LocaladdressEQ.
+func Localaddress(v string) predicate.Device {
+	return predicate.Device(sql.FieldEQ(FieldLocaladdress, v))
+}
+
 // Machinepass applies equality check predicate on the "machinepass" field. It's identical to MachinepassEQ.
 func Machinepass(v string) predicate.Device {
 	return predicate.Device(sql.FieldEQ(FieldMachinepass, v))
@@ -343,6 +348,71 @@ func VersionContainsFold(v string) predicate.Device {
 	return predicate.Device(sql.FieldContainsFold(FieldVersion, v))
 }
 
+// LocaladdressEQ applies the EQ predicate on the "localaddress" field.
+func LocaladdressEQ(v string) predicate.Device {
+	return predicate.Device(sql.FieldEQ(FieldLocaladdress, v))
+}
+
+// LocaladdressNEQ applies the NEQ predicate on the "localaddress" field.
+func LocaladdressNEQ(v string) predicate.Device {
+	return predicate.Device(sql.FieldNEQ(FieldLocaladdress, v))
+}
+
+// LocaladdressIn applies the In predicate on the "localaddress" field.
+func LocaladdressIn(vs ...string) predicate.Device {
+	return predicate.Device(sql.FieldIn(FieldLocaladdress, vs...))
+}
+
+// LocaladdressNotIn applies the NotIn predicate on the "localaddress" field.
+func LocaladdressNotIn(vs ...string) predicate.Device {
+	return predicate.Device(sql.FieldNotIn(FieldLocaladdress, vs...))
+}
+
+// LocaladdressGT applies the GT predicate on the "localaddress" field.
+func LocaladdressGT(v string) predicate.Device {
+	return predicate.Device(sql.FieldGT(FieldLocaladdress, v))
+}
+
+// LocaladdressGTE applies the GTE predicate on the "localaddress" field.
+func LocaladdressGTE(v string) predicate.Device {
+	return predicate.Device(sql.FieldGTE(FieldLocaladdress, v))
+}
+
+// LocaladdressLT applies the LT predicate on the "localaddress" field.
+func LocaladdressLT(v string) predicate.Device {
+	return predicate.Device(sql.FieldLT(FieldLocaladdress, v))
+}
+
+// LocaladdressLTE applies the LTE predicate on the "localaddress" field.
+func LocaladdressLTE(v string) predicate.Device {
+	return predicate.Device(sql.FieldLTE(FieldLocaladdress, v))
+}
+
+// LocaladdressContains applies the Contains predicate on the "localaddress" field.
+func LocaladdressContains(v string) predicate.Device {
+	return predicate.Device(sql.FieldContains(FieldLocaladdress, v))
+}
+
+// LocaladdressHasPrefix applies the HasPrefix predicate on the "localaddress" field.
+func LocaladdressHasPrefix(v string) predicate.Device {
+	return predicate.Device(sql.FieldHasPrefix(FieldLocaladdress, v))
+}
+
+// LocaladdressHasSuffix applies the HasSuffix predicate on the "localaddress" field.
+func LocaladdressHasSuffix(v string) predicate.Device {
+	return predicate.Device(sql.FieldHasSuffix(FieldLocaladdress, v))
+}
+
+// LocaladdressEqualFold applies the EqualFold predicate on the "localaddress" field.
+func LocaladdressEqualFold(v string) predicate.Device {
+	return predicate.Device(sql.FieldEqualFold(FieldLocaladdress, v))
+}
+
+// LocaladdressContainsFold applies the ContainsFold predicate on the "localaddress" field.
+func LocaladdressContainsFold(v string) predicate.Device {
+	return predicate.Device(sql.FieldContainsFold(FieldLocaladdress, v))
+}
+
 // MachinepassEQ applies the EQ predicate on the "machinepass" field.
 func MachinepassEQ(v string) predicate.Device {
 	return predicate.Device(sql.FieldEQ(FieldMachinepass, v))
@@ -592,6 +662,33 @@ func HasDomainWith(preds ...predicate.Domain) predicate.Device {
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(DomainInverseTable, FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, DomainTable, DomainColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasSubnets applies the HasEdge predicate on the "subnets" edge.
+func HasSubnets() predicate.Device {
+	return predicate.Device(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, SubnetsTable, SubnetsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSubnetsWith applies the HasEdge predicate on the "subnets" edge with a given conditions (other predicates).
+func HasSubnetsWith(preds ...predicate.Subnet) predicate.Device {
+	return predicate.Device(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(SubnetsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, SubnetsTable, SubnetsPrimaryKey...),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

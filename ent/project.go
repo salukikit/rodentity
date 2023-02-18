@@ -15,6 +15,38 @@ type Project struct {
 	config
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ProjectQuery when eager-loading is set.
+	Edges ProjectEdges `json:"edges"`
+}
+
+// ProjectEdges holds the relations/edges for other nodes in the graph.
+type ProjectEdges struct {
+	// Operators holds the value of the operators edge.
+	Operators []*Operator `json:"operators,omitempty"`
+	// Rodents holds the value of the rodents edge.
+	Rodents []*Rodent `json:"rodents,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// OperatorsOrErr returns the Operators value or an error if the edge
+// was not loaded in eager-loading.
+func (e ProjectEdges) OperatorsOrErr() ([]*Operator, error) {
+	if e.loadedTypes[0] {
+		return e.Operators, nil
+	}
+	return nil, &NotLoadedError{edge: "operators"}
+}
+
+// RodentsOrErr returns the Rodents value or an error if the edge
+// was not loaded in eager-loading.
+func (e ProjectEdges) RodentsOrErr() ([]*Rodent, error) {
+	if e.loadedTypes[1] {
+		return e.Rodents, nil
+	}
+	return nil, &NotLoadedError{edge: "rodents"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -50,11 +82,21 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 	return nil
 }
 
+// QueryOperators queries the "operators" edge of the Project entity.
+func (pr *Project) QueryOperators() *OperatorQuery {
+	return NewProjectClient(pr.config).QueryOperators(pr)
+}
+
+// QueryRodents queries the "rodents" edge of the Project entity.
+func (pr *Project) QueryRodents() *RodentQuery {
+	return NewProjectClient(pr.config).QueryRodents(pr)
+}
+
 // Update returns a builder for updating this Project.
 // Note that you need to call Project.Unwrap() before calling this method if this Project
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (pr *Project) Update() *ProjectUpdateOne {
-	return (&ProjectClient{config: pr.config}).UpdateOne(pr)
+	return NewProjectClient(pr.config).UpdateOne(pr)
 }
 
 // Unwrap unwraps the Project entity that was returned from a transaction after it was closed,
@@ -79,9 +121,3 @@ func (pr *Project) String() string {
 
 // Projects is a parsable slice of Project.
 type Projects []*Project
-
-func (pr Projects) config(cfg config) {
-	for _i := range pr {
-		pr[_i].config = cfg
-	}
-}

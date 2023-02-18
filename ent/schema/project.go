@@ -1,6 +1,9 @@
 package schema
 
-import "entgo.io/ent"
+import (
+	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
+)
 
 // Project holds the schema definition for the Project entity.
 type Project struct {
@@ -14,5 +17,8 @@ func (Project) Fields() []ent.Field {
 
 // Edges of the Project.
 func (Project) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("operators", Operator.Type),
+		edge.To("rodents", Rodent.Type),
+	}
 }

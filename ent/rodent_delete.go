@@ -40,15 +40,7 @@ func (rd *RodentDelete) ExecX(ctx context.Context) int {
 }
 
 func (rd *RodentDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := &sqlgraph.DeleteSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table: rodent.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: rodent.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewDeleteSpec(rodent.Table, sqlgraph.NewFieldSpec(rodent.FieldID, field.TypeInt))
 	if ps := rd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -69,6 +61,12 @@ type RodentDeleteOne struct {
 	rd *RodentDelete
 }
 
+// Where appends a list predicates to the RodentDelete builder.
+func (rdo *RodentDeleteOne) Where(ps ...predicate.Rodent) *RodentDeleteOne {
+	rdo.rd.mutation.Where(ps...)
+	return rdo
+}
+
 // Exec executes the deletion query.
 func (rdo *RodentDeleteOne) Exec(ctx context.Context) error {
 	n, err := rdo.rd.Exec(ctx)
@@ -84,5 +82,7 @@ func (rdo *RodentDeleteOne) Exec(ctx context.Context) error {
 
 // ExecX is like Exec, but panics if an error occurs.
 func (rdo *RodentDeleteOne) ExecX(ctx context.Context) {
-	rdo.rd.ExecX(ctx)
+	if err := rdo.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

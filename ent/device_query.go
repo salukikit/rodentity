@@ -16,23 +16,22 @@ import (
 	"github.com/salukikit/rodentity/ent/group"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/subnet"
 	"github.com/salukikit/rodentity/ent/user"
 )
 
 // DeviceQuery is the builder for querying Device entities.
 type DeviceQuery struct {
 	config
-	limit       *int
-	offset      *int
-	unique      *bool
+	ctx         *QueryContext
 	order       []OrderFunc
-	fields      []string
 	inters      []Interceptor
 	predicates  []predicate.Device
 	withUsers   *UserQuery
 	withRodents *RodentQuery
 	withGroups  *GroupQuery
 	withDomain  *DomainQuery
+	withSubnets *SubnetQuery
 	withFKs     bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -47,20 +46,20 @@ func (dq *DeviceQuery) Where(ps ...predicate.Device) *DeviceQuery {
 
 // Limit the number of records to be returned by this query.
 func (dq *DeviceQuery) Limit(limit int) *DeviceQuery {
-	dq.limit = &limit
+	dq.ctx.Limit = &limit
 	return dq
 }
 
 // Offset to start from.
 func (dq *DeviceQuery) Offset(offset int) *DeviceQuery {
-	dq.offset = &offset
+	dq.ctx.Offset = &offset
 	return dq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
 func (dq *DeviceQuery) Unique(unique bool) *DeviceQuery {
-	dq.unique = &unique
+	dq.ctx.Unique = &unique
 	return dq
 }
 
@@ -158,10 +157,32 @@ func (dq *DeviceQuery) QueryDomain() *DomainQuery {
 	return query
 }
 
+// QuerySubnets chains the current query on the "subnets" edge.
+func (dq *DeviceQuery) QuerySubnets() *SubnetQuery {
+	query := (&SubnetClient{config: dq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := dq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := dq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(device.Table, device.FieldID, selector),
+			sqlgraph.To(subnet.Table, subnet.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, device.SubnetsTable, device.SubnetsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(dq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Device entity from the query.
 // Returns a *NotFoundError when no Device was found.
 func (dq *DeviceQuery) First(ctx context.Context) (*Device, error) {
-	nodes, err := dq.Limit(1).All(newQueryContext(ctx, TypeDevice, "First"))
+	nodes, err := dq.Limit(1).All(setContextOp(ctx, dq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +205,7 @@ func (dq *DeviceQuery) FirstX(ctx context.Context) *Device {
 // Returns a *NotFoundError when no Device ID was found.
 func (dq *DeviceQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
-	if ids, err = dq.Limit(1).IDs(newQueryContext(ctx, TypeDevice, "FirstID")); err != nil {
+	if ids, err = dq.Limit(1).IDs(setContextOp(ctx, dq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -207,7 +228,7 @@ func (dq *DeviceQuery) FirstIDX(ctx context.Context) int {
 // Returns a *NotSingularError when more than one Device entity is found.
 // Returns a *NotFoundError when no Device entities are found.
 func (dq *DeviceQuery) Only(ctx context.Context) (*Device, error) {
-	nodes, err := dq.Limit(2).All(newQueryContext(ctx, TypeDevice, "Only"))
+	nodes, err := dq.Limit(2).All(setContextOp(ctx, dq.ctx, "Only"))
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +256,7 @@ func (dq *DeviceQuery) OnlyX(ctx context.Context) *Device {
 // Returns a *NotFoundError when no entities are found.
 func (dq *DeviceQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
-	if ids, err = dq.Limit(2).IDs(newQueryContext(ctx, TypeDevice, "OnlyID")); err != nil {
+	if ids, err = dq.Limit(2).IDs(setContextOp(ctx, dq.ctx, "OnlyID")); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -260,7 +281,7 @@ func (dq *DeviceQuery) OnlyIDX(ctx context.Context) int {
 
 // All executes the query and returns a list of Devices.
 func (dq *DeviceQuery) All(ctx context.Context) ([]*Device, error) {
-	ctx = newQueryContext(ctx, TypeDevice, "All")
+	ctx = setContextOp(ctx, dq.ctx, "All")
 	if err := dq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -278,10 +299,12 @@ func (dq *DeviceQuery) AllX(ctx context.Context) []*Device {
 }
 
 // IDs executes the query and returns a list of Device IDs.
-func (dq *DeviceQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
-	ctx = newQueryContext(ctx, TypeDevice, "IDs")
-	if err := dq.Select(device.FieldID).Scan(ctx, &ids); err != nil {
+func (dq *DeviceQuery) IDs(ctx context.Context) (ids []int, err error) {
+	if dq.ctx.Unique == nil && dq.path != nil {
+		dq.Unique(true)
+	}
+	ctx = setContextOp(ctx, dq.ctx, "IDs")
+	if err = dq.Select(device.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -298,7 +321,7 @@ func (dq *DeviceQuery) IDsX(ctx context.Context) []int {
 
 // Count returns the count of the given query.
 func (dq *DeviceQuery) Count(ctx context.Context) (int, error) {
-	ctx = newQueryContext(ctx, TypeDevice, "Count")
+	ctx = setContextOp(ctx, dq.ctx, "Count")
 	if err := dq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -316,7 +339,7 @@ func (dq *DeviceQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (dq *DeviceQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = newQueryContext(ctx, TypeDevice, "Exist")
+	ctx = setContextOp(ctx, dq.ctx, "Exist")
 	switch _, err := dq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -344,8 +367,7 @@ func (dq *DeviceQuery) Clone() *DeviceQuery {
 	}
 	return &DeviceQuery{
 		config:      dq.config,
-		limit:       dq.limit,
-		offset:      dq.offset,
+		ctx:         dq.ctx.Clone(),
 		order:       append([]OrderFunc{}, dq.order...),
 		inters:      append([]Interceptor{}, dq.inters...),
 		predicates:  append([]predicate.Device{}, dq.predicates...),
@@ -353,10 +375,10 @@ func (dq *DeviceQuery) Clone() *DeviceQuery {
 		withRodents: dq.withRodents.Clone(),
 		withGroups:  dq.withGroups.Clone(),
 		withDomain:  dq.withDomain.Clone(),
+		withSubnets: dq.withSubnets.Clone(),
 		// clone intermediate query.
-		sql:    dq.sql.Clone(),
-		path:   dq.path,
-		unique: dq.unique,
+		sql:  dq.sql.Clone(),
+		path: dq.path,
 	}
 }
 
@@ -404,6 +426,17 @@ func (dq *DeviceQuery) WithDomain(opts ...func(*DomainQuery)) *DeviceQuery {
 	return dq
 }
 
+// WithSubnets tells the query-builder to eager-load the nodes that are connected to
+// the "subnets" edge. The optional arguments are used to configure the query builder of the edge.
+func (dq *DeviceQuery) WithSubnets(opts ...func(*SubnetQuery)) *DeviceQuery {
+	query := (&SubnetClient{config: dq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	dq.withSubnets = query
+	return dq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -419,9 +452,9 @@ func (dq *DeviceQuery) WithDomain(opts ...func(*DomainQuery)) *DeviceQuery {
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (dq *DeviceQuery) GroupBy(field string, fields ...string) *DeviceGroupBy {
-	dq.fields = append([]string{field}, fields...)
+	dq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &DeviceGroupBy{build: dq}
-	grbuild.flds = &dq.fields
+	grbuild.flds = &dq.ctx.Fields
 	grbuild.label = device.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -440,10 +473,10 @@ func (dq *DeviceQuery) GroupBy(field string, fields ...string) *DeviceGroupBy {
 //		Select(device.FieldHostname).
 //		Scan(ctx, &v)
 func (dq *DeviceQuery) Select(fields ...string) *DeviceSelect {
-	dq.fields = append(dq.fields, fields...)
+	dq.ctx.Fields = append(dq.ctx.Fields, fields...)
 	sbuild := &DeviceSelect{DeviceQuery: dq}
 	sbuild.label = device.Label
-	sbuild.flds, sbuild.scan = &dq.fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &dq.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
@@ -463,7 +496,7 @@ func (dq *DeviceQuery) prepareQuery(ctx context.Context) error {
 			}
 		}
 	}
-	for _, f := range dq.fields {
+	for _, f := range dq.ctx.Fields {
 		if !device.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
@@ -483,11 +516,12 @@ func (dq *DeviceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Devic
 		nodes       = []*Device{}
 		withFKs     = dq.withFKs
 		_spec       = dq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			dq.withUsers != nil,
 			dq.withRodents != nil,
 			dq.withGroups != nil,
 			dq.withDomain != nil,
+			dq.withSubnets != nil,
 		}
 	)
 	if dq.withDomain != nil {
@@ -541,6 +575,13 @@ func (dq *DeviceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Devic
 			return nil, err
 		}
 	}
+	if query := dq.withSubnets; query != nil {
+		if err := dq.loadSubnets(ctx, query, nodes,
+			func(n *Device) { n.Edges.Subnets = []*Subnet{} },
+			func(n *Device, e *Subnet) { n.Edges.Subnets = append(n.Edges.Subnets, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -567,27 +608,30 @@ func (dq *DeviceQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []
 	if err := query.prepareQuery(ctx); err != nil {
 		return err
 	}
-	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-		assign := spec.Assign
-		values := spec.ScanValues
-		spec.ScanValues = func(columns []string) ([]any, error) {
-			values, err := values(columns[1:])
-			if err != nil {
-				return nil, err
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
 			}
-			return append([]any{new(sql.NullInt64)}, values...), nil
-		}
-		spec.Assign = func(columns []string, values []any) error {
-			outValue := int(values[0].(*sql.NullInt64).Int64)
-			inValue := int(values[1].(*sql.NullInt64).Int64)
-			if nids[inValue] == nil {
-				nids[inValue] = map[*Device]struct{}{byID[outValue]: {}}
-				return assign(columns[1:], values[1:])
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Device]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
 			}
-			nids[inValue][byID[outValue]] = struct{}{}
-			return nil
-		}
+		})
 	})
+	neighbors, err := withInterceptors[[]*User](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}
@@ -656,27 +700,30 @@ func (dq *DeviceQuery) loadGroups(ctx context.Context, query *GroupQuery, nodes 
 	if err := query.prepareQuery(ctx); err != nil {
 		return err
 	}
-	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-		assign := spec.Assign
-		values := spec.ScanValues
-		spec.ScanValues = func(columns []string) ([]any, error) {
-			values, err := values(columns[1:])
-			if err != nil {
-				return nil, err
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
 			}
-			return append([]any{new(sql.NullInt64)}, values...), nil
-		}
-		spec.Assign = func(columns []string, values []any) error {
-			outValue := int(values[0].(*sql.NullInt64).Int64)
-			inValue := int(values[1].(*sql.NullInt64).Int64)
-			if nids[inValue] == nil {
-				nids[inValue] = map[*Device]struct{}{byID[outValue]: {}}
-				return assign(columns[1:], values[1:])
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Device]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
 			}
-			nids[inValue][byID[outValue]] = struct{}{}
-			return nil
-		}
+		})
 	})
+	neighbors, err := withInterceptors[[]*Group](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}
@@ -704,6 +751,9 @@ func (dq *DeviceQuery) loadDomain(ctx context.Context, query *DomainQuery, nodes
 		}
 		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
+	if len(ids) == 0 {
+		return nil
+	}
 	query.Where(domain.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -720,33 +770,86 @@ func (dq *DeviceQuery) loadDomain(ctx context.Context, query *DomainQuery, nodes
 	}
 	return nil
 }
+func (dq *DeviceQuery) loadSubnets(ctx context.Context, query *SubnetQuery, nodes []*Device, init func(*Device), assign func(*Device, *Subnet)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Device)
+	nids := make(map[int]map[*Device]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(device.SubnetsTable)
+		s.Join(joinT).On(s.C(subnet.FieldID), joinT.C(device.SubnetsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(device.SubnetsPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(device.SubnetsPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Device]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Subnet](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "subnets" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
 
 func (dq *DeviceQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := dq.querySpec()
-	_spec.Node.Columns = dq.fields
-	if len(dq.fields) > 0 {
-		_spec.Unique = dq.unique != nil && *dq.unique
+	_spec.Node.Columns = dq.ctx.Fields
+	if len(dq.ctx.Fields) > 0 {
+		_spec.Unique = dq.ctx.Unique != nil && *dq.ctx.Unique
 	}
 	return sqlgraph.CountNodes(ctx, dq.driver, _spec)
 }
 
 func (dq *DeviceQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := &sqlgraph.QuerySpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   device.Table,
-			Columns: device.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: device.FieldID,
-			},
-		},
-		From:   dq.sql,
-		Unique: true,
-	}
-	if unique := dq.unique; unique != nil {
+	_spec := sqlgraph.NewQuerySpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
+	_spec.From = dq.sql
+	if unique := dq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
+	} else if dq.path != nil {
+		_spec.Unique = true
 	}
-	if fields := dq.fields; len(fields) > 0 {
+	if fields := dq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, device.FieldID)
 		for i := range fields {
@@ -762,10 +865,10 @@ func (dq *DeviceQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if limit := dq.limit; limit != nil {
+	if limit := dq.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := dq.offset; offset != nil {
+	if offset := dq.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
 	if ps := dq.order; len(ps) > 0 {
@@ -781,7 +884,7 @@ func (dq *DeviceQuery) querySpec() *sqlgraph.QuerySpec {
 func (dq *DeviceQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(dq.driver.Dialect())
 	t1 := builder.Table(device.Table)
-	columns := dq.fields
+	columns := dq.ctx.Fields
 	if len(columns) == 0 {
 		columns = device.Columns
 	}
@@ -790,7 +893,7 @@ func (dq *DeviceQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector = dq.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if dq.unique != nil && *dq.unique {
+	if dq.ctx.Unique != nil && *dq.ctx.Unique {
 		selector.Distinct()
 	}
 	for _, p := range dq.predicates {
@@ -799,12 +902,12 @@ func (dq *DeviceQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	for _, p := range dq.order {
 		p(selector)
 	}
-	if offset := dq.offset; offset != nil {
+	if offset := dq.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := dq.limit; limit != nil {
+	if limit := dq.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -824,7 +927,7 @@ func (dgb *DeviceGroupBy) Aggregate(fns ...AggregateFunc) *DeviceGroupBy {
 
 // Scan applies the selector query and scans the result into the given value.
 func (dgb *DeviceGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeDevice, "GroupBy")
+	ctx = setContextOp(ctx, dgb.build.ctx, "GroupBy")
 	if err := dgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -872,7 +975,7 @@ func (ds *DeviceSelect) Aggregate(fns ...AggregateFunc) *DeviceSelect {
 
 // Scan applies the selector query and scans the result into the given value.
 func (ds *DeviceSelect) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeDevice, "Select")
+	ctx = setContextOp(ctx, ds.ctx, "Select")
 	if err := ds.prepareQuery(ctx); err != nil {
 		return err
 	}

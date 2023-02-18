@@ -14,10 +14,12 @@ import (
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
 	"github.com/salukikit/rodentity/ent/loot"
+	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/router"
+	"github.com/salukikit/rodentity/ent/subnet"
 	"github.com/salukikit/rodentity/ent/task"
-	"github.com/salukikit/rodentity/ent/ttp"
 	"github.com/salukikit/rodentity/ent/user"
 
 	"entgo.io/ent/dialect"
@@ -38,14 +40,18 @@ type Client struct {
 	Group *GroupClient
 	// Loot is the client for interacting with the Loot builders.
 	Loot *LootClient
+	// Operator is the client for interacting with the Operator builders.
+	Operator *OperatorClient
 	// Project is the client for interacting with the Project builders.
 	Project *ProjectClient
 	// Rodent is the client for interacting with the Rodent builders.
 	Rodent *RodentClient
+	// Router is the client for interacting with the Router builders.
+	Router *RouterClient
+	// Subnet is the client for interacting with the Subnet builders.
+	Subnet *SubnetClient
 	// Task is the client for interacting with the Task builders.
 	Task *TaskClient
-	// Ttp is the client for interacting with the Ttp builders.
-	Ttp *TtpClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -65,10 +71,12 @@ func (c *Client) init() {
 	c.Domain = NewDomainClient(c.config)
 	c.Group = NewGroupClient(c.config)
 	c.Loot = NewLootClient(c.config)
+	c.Operator = NewOperatorClient(c.config)
 	c.Project = NewProjectClient(c.config)
 	c.Rodent = NewRodentClient(c.config)
+	c.Router = NewRouterClient(c.config)
+	c.Subnet = NewSubnetClient(c.config)
 	c.Task = NewTaskClient(c.config)
-	c.Ttp = NewTtpClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -101,17 +109,19 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:     ctx,
-		config:  cfg,
-		Device:  NewDeviceClient(cfg),
-		Domain:  NewDomainClient(cfg),
-		Group:   NewGroupClient(cfg),
-		Loot:    NewLootClient(cfg),
-		Project: NewProjectClient(cfg),
-		Rodent:  NewRodentClient(cfg),
-		Task:    NewTaskClient(cfg),
-		Ttp:     NewTtpClient(cfg),
-		User:    NewUserClient(cfg),
+		ctx:      ctx,
+		config:   cfg,
+		Device:   NewDeviceClient(cfg),
+		Domain:   NewDomainClient(cfg),
+		Group:    NewGroupClient(cfg),
+		Loot:     NewLootClient(cfg),
+		Operator: NewOperatorClient(cfg),
+		Project:  NewProjectClient(cfg),
+		Rodent:   NewRodentClient(cfg),
+		Router:   NewRouterClient(cfg),
+		Subnet:   NewSubnetClient(cfg),
+		Task:     NewTaskClient(cfg),
+		User:     NewUserClient(cfg),
 	}, nil
 }
 
@@ -129,17 +139,19 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:     ctx,
-		config:  cfg,
-		Device:  NewDeviceClient(cfg),
-		Domain:  NewDomainClient(cfg),
-		Group:   NewGroupClient(cfg),
-		Loot:    NewLootClient(cfg),
-		Project: NewProjectClient(cfg),
-		Rodent:  NewRodentClient(cfg),
-		Task:    NewTaskClient(cfg),
-		Ttp:     NewTtpClient(cfg),
-		User:    NewUserClient(cfg),
+		ctx:      ctx,
+		config:   cfg,
+		Device:   NewDeviceClient(cfg),
+		Domain:   NewDomainClient(cfg),
+		Group:    NewGroupClient(cfg),
+		Loot:     NewLootClient(cfg),
+		Operator: NewOperatorClient(cfg),
+		Project:  NewProjectClient(cfg),
+		Rodent:   NewRodentClient(cfg),
+		Router:   NewRouterClient(cfg),
+		Subnet:   NewSubnetClient(cfg),
+		Task:     NewTaskClient(cfg),
+		User:     NewUserClient(cfg),
 	}, nil
 }
 
@@ -172,10 +184,12 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Domain.Use(hooks...)
 	c.Group.Use(hooks...)
 	c.Loot.Use(hooks...)
+	c.Operator.Use(hooks...)
 	c.Project.Use(hooks...)
 	c.Rodent.Use(hooks...)
+	c.Router.Use(hooks...)
+	c.Subnet.Use(hooks...)
 	c.Task.Use(hooks...)
-	c.Ttp.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
@@ -186,10 +200,12 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Domain.Intercept(interceptors...)
 	c.Group.Intercept(interceptors...)
 	c.Loot.Intercept(interceptors...)
+	c.Operator.Intercept(interceptors...)
 	c.Project.Intercept(interceptors...)
 	c.Rodent.Intercept(interceptors...)
+	c.Router.Intercept(interceptors...)
+	c.Subnet.Intercept(interceptors...)
 	c.Task.Intercept(interceptors...)
-	c.Ttp.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
 
@@ -204,14 +220,18 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Group.mutate(ctx, m)
 	case *LootMutation:
 		return c.Loot.mutate(ctx, m)
+	case *OperatorMutation:
+		return c.Operator.mutate(ctx, m)
 	case *ProjectMutation:
 		return c.Project.mutate(ctx, m)
 	case *RodentMutation:
 		return c.Rodent.mutate(ctx, m)
+	case *RouterMutation:
+		return c.Router.mutate(ctx, m)
+	case *SubnetMutation:
+		return c.Subnet.mutate(ctx, m)
 	case *TaskMutation:
 		return c.Task.mutate(ctx, m)
-	case *TtpMutation:
-		return c.Ttp.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -235,7 +255,7 @@ func (c *DeviceClient) Use(hooks ...Hook) {
 	c.hooks.Device = append(c.hooks.Device, hooks...)
 }
 
-// Use adds a list of query interceptors to the interceptors stack.
+// Intercept adds a list of query interceptors to the interceptors stack.
 // A call to `Intercept(f, g, h)` equals to `device.Intercept(f(g(h())))`.
 func (c *DeviceClient) Intercept(interceptors ...Interceptor) {
 	c.inters.Device = append(c.inters.Device, interceptors...)
@@ -293,6 +313,7 @@ func (c *DeviceClient) DeleteOneID(id int) *DeviceDeleteOne {
 func (c *DeviceClient) Query() *DeviceQuery {
 	return &DeviceQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeDevice},
 		inters: c.Interceptors(),
 	}
 }
@@ -375,6 +396,22 @@ func (c *DeviceClient) QueryDomain(d *Device) *DomainQuery {
 	return query
 }
 
+// QuerySubnets queries the subnets edge of a Device.
+func (c *DeviceClient) QuerySubnets(d *Device) *SubnetQuery {
+	query := (&SubnetClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := d.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(device.Table, device.FieldID, id),
+			sqlgraph.To(subnet.Table, subnet.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, device.SubnetsTable, device.SubnetsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(d.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *DeviceClient) Hooks() []Hook {
 	return c.hooks.Device
@@ -416,7 +453,7 @@ func (c *DomainClient) Use(hooks ...Hook) {
 	c.hooks.Domain = append(c.hooks.Domain, hooks...)
 }
 
-// Use adds a list of query interceptors to the interceptors stack.
+// Intercept adds a list of query interceptors to the interceptors stack.
 // A call to `Intercept(f, g, h)` equals to `domain.Intercept(f(g(h())))`.
 func (c *DomainClient) Intercept(interceptors ...Interceptor) {
 	c.inters.Domain = append(c.inters.Domain, interceptors...)
@@ -474,6 +511,7 @@ func (c *DomainClient) DeleteOneID(id int) *DomainDeleteOne {
 func (c *DomainClient) Query() *DomainQuery {
 	return &DomainQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeDomain},
 		inters: c.Interceptors(),
 	}
 }
@@ -613,7 +651,7 @@ func (c *GroupClient) Use(hooks ...Hook) {
 	c.hooks.Group = append(c.hooks.Group, hooks...)
 }
 
-// Use adds a list of query interceptors to the interceptors stack.
+// Intercept adds a list of query interceptors to the interceptors stack.
 // A call to `Intercept(f, g, h)` equals to `group.Intercept(f(g(h())))`.
 func (c *GroupClient) Intercept(interceptors ...Interceptor) {
 	c.inters.Group = append(c.inters.Group, interceptors...)
@@ -671,6 +709,7 @@ func (c *GroupClient) DeleteOneID(id int) *GroupDeleteOne {
 func (c *GroupClient) Query() *GroupQuery {
 	return &GroupQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeGroup},
 		inters: c.Interceptors(),
 	}
 }
@@ -778,7 +817,7 @@ func (c *LootClient) Use(hooks ...Hook) {
 	c.hooks.Loot = append(c.hooks.Loot, hooks...)
 }
 
-// Use adds a list of query interceptors to the interceptors stack.
+// Intercept adds a list of query interceptors to the interceptors stack.
 // A call to `Intercept(f, g, h)` equals to `loot.Intercept(f(g(h())))`.
 func (c *LootClient) Intercept(interceptors ...Interceptor) {
 	c.inters.Loot = append(c.inters.Loot, interceptors...)
@@ -808,7 +847,7 @@ func (c *LootClient) UpdateOne(l *Loot) *LootUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *LootClient) UpdateOneID(id string) *LootUpdateOne {
+func (c *LootClient) UpdateOneID(id int) *LootUpdateOne {
 	mutation := newLootMutation(c.config, OpUpdateOne, withLootID(id))
 	return &LootUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -825,7 +864,7 @@ func (c *LootClient) DeleteOne(l *Loot) *LootDeleteOne {
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *LootClient) DeleteOneID(id string) *LootDeleteOne {
+func (c *LootClient) DeleteOneID(id int) *LootDeleteOne {
 	builder := c.Delete().Where(loot.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -836,17 +875,18 @@ func (c *LootClient) DeleteOneID(id string) *LootDeleteOne {
 func (c *LootClient) Query() *LootQuery {
 	return &LootQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeLoot},
 		inters: c.Interceptors(),
 	}
 }
 
 // Get returns a Loot entity by its id.
-func (c *LootClient) Get(ctx context.Context, id string) (*Loot, error) {
+func (c *LootClient) Get(ctx context.Context, id int) (*Loot, error) {
 	return c.Query().Where(loot.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *LootClient) GetX(ctx context.Context, id string) *Loot {
+func (c *LootClient) GetX(ctx context.Context, id int) *Loot {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -862,7 +902,23 @@ func (c *LootClient) QueryRodent(l *Loot) *RodentQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(loot.Table, loot.FieldID, id),
 			sqlgraph.To(rodent.Table, rodent.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, loot.RodentTable, loot.RodentPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, true, loot.RodentTable, loot.RodentColumn),
+		)
+		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTask queries the task edge of a Loot.
+func (c *LootClient) QueryTask(l *Loot) *TaskQuery {
+	query := (&TaskClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := l.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(loot.Table, loot.FieldID, id),
+			sqlgraph.To(task.Table, task.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, loot.TaskTable, loot.TaskColumn),
 		)
 		fromV = sqlgraph.Neighbors(l.driver.Dialect(), step)
 		return fromV, nil
@@ -895,6 +951,140 @@ func (c *LootClient) mutate(ctx context.Context, m *LootMutation) (Value, error)
 	}
 }
 
+// OperatorClient is a client for the Operator schema.
+type OperatorClient struct {
+	config
+}
+
+// NewOperatorClient returns a client for the Operator from the given config.
+func NewOperatorClient(c config) *OperatorClient {
+	return &OperatorClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `operator.Hooks(f(g(h())))`.
+func (c *OperatorClient) Use(hooks ...Hook) {
+	c.hooks.Operator = append(c.hooks.Operator, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `operator.Intercept(f(g(h())))`.
+func (c *OperatorClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Operator = append(c.inters.Operator, interceptors...)
+}
+
+// Create returns a builder for creating a Operator entity.
+func (c *OperatorClient) Create() *OperatorCreate {
+	mutation := newOperatorMutation(c.config, OpCreate)
+	return &OperatorCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Operator entities.
+func (c *OperatorClient) CreateBulk(builders ...*OperatorCreate) *OperatorCreateBulk {
+	return &OperatorCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Operator.
+func (c *OperatorClient) Update() *OperatorUpdate {
+	mutation := newOperatorMutation(c.config, OpUpdate)
+	return &OperatorUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *OperatorClient) UpdateOne(o *Operator) *OperatorUpdateOne {
+	mutation := newOperatorMutation(c.config, OpUpdateOne, withOperator(o))
+	return &OperatorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *OperatorClient) UpdateOneID(id int) *OperatorUpdateOne {
+	mutation := newOperatorMutation(c.config, OpUpdateOne, withOperatorID(id))
+	return &OperatorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Operator.
+func (c *OperatorClient) Delete() *OperatorDelete {
+	mutation := newOperatorMutation(c.config, OpDelete)
+	return &OperatorDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *OperatorClient) DeleteOne(o *Operator) *OperatorDeleteOne {
+	return c.DeleteOneID(o.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *OperatorClient) DeleteOneID(id int) *OperatorDeleteOne {
+	builder := c.Delete().Where(operator.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &OperatorDeleteOne{builder}
+}
+
+// Query returns a query builder for Operator.
+func (c *OperatorClient) Query() *OperatorQuery {
+	return &OperatorQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeOperator},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Operator entity by its id.
+func (c *OperatorClient) Get(ctx context.Context, id int) (*Operator, error) {
+	return c.Query().Where(operator.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *OperatorClient) GetX(ctx context.Context, id int) *Operator {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryProjects queries the projects edge of a Operator.
+func (c *OperatorClient) QueryProjects(o *Operator) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(operator.Table, operator.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, operator.ProjectsTable, operator.ProjectsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *OperatorClient) Hooks() []Hook {
+	return c.hooks.Operator
+}
+
+// Interceptors returns the client interceptors.
+func (c *OperatorClient) Interceptors() []Interceptor {
+	return c.inters.Operator
+}
+
+func (c *OperatorClient) mutate(ctx context.Context, m *OperatorMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&OperatorCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&OperatorUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&OperatorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&OperatorDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Operator mutation op: %q", m.Op())
+	}
+}
+
 // ProjectClient is a client for the Project schema.
 type ProjectClient struct {
 	config
@@ -911,7 +1101,7 @@ func (c *ProjectClient) Use(hooks ...Hook) {
 	c.hooks.Project = append(c.hooks.Project, hooks...)
 }
 
-// Use adds a list of query interceptors to the interceptors stack.
+// Intercept adds a list of query interceptors to the interceptors stack.
 // A call to `Intercept(f, g, h)` equals to `project.Intercept(f(g(h())))`.
 func (c *ProjectClient) Intercept(interceptors ...Interceptor) {
 	c.inters.Project = append(c.inters.Project, interceptors...)
@@ -969,6 +1159,7 @@ func (c *ProjectClient) DeleteOneID(id int) *ProjectDeleteOne {
 func (c *ProjectClient) Query() *ProjectQuery {
 	return &ProjectQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeProject},
 		inters: c.Interceptors(),
 	}
 }
@@ -985,6 +1176,38 @@ func (c *ProjectClient) GetX(ctx context.Context, id int) *Project {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryOperators queries the operators edge of a Project.
+func (c *ProjectClient) QueryOperators(pr *Project) *OperatorQuery {
+	query := (&OperatorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(operator.Table, operator.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, project.OperatorsTable, project.OperatorsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRodents queries the rodents edge of a Project.
+func (c *ProjectClient) QueryRodents(pr *Project) *RodentQuery {
+	query := (&RodentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(rodent.Table, rodent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.RodentsTable, project.RodentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -1028,7 +1251,7 @@ func (c *RodentClient) Use(hooks ...Hook) {
 	c.hooks.Rodent = append(c.hooks.Rodent, hooks...)
 }
 
-// Use adds a list of query interceptors to the interceptors stack.
+// Intercept adds a list of query interceptors to the interceptors stack.
 // A call to `Intercept(f, g, h)` equals to `rodent.Intercept(f(g(h())))`.
 func (c *RodentClient) Intercept(interceptors ...Interceptor) {
 	c.inters.Rodent = append(c.inters.Rodent, interceptors...)
@@ -1086,6 +1309,7 @@ func (c *RodentClient) DeleteOneID(id int) *RodentDeleteOne {
 func (c *RodentClient) Query() *RodentQuery {
 	return &RodentQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeRodent},
 		inters: c.Interceptors(),
 	}
 }
@@ -1136,6 +1360,38 @@ func (c *RodentClient) QueryUser(r *Rodent) *UserQuery {
 	return query
 }
 
+// QueryProject queries the project edge of a Rodent.
+func (c *RodentClient) QueryProject(r *Rodent) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rodent.Table, rodent.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rodent.ProjectTable, rodent.ProjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRouter queries the router edge of a Rodent.
+func (c *RodentClient) QueryRouter(r *Rodent) *RouterQuery {
+	query := (&RouterClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rodent.Table, rodent.FieldID, id),
+			sqlgraph.To(router.Table, router.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rodent.RouterTable, rodent.RouterColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryTasks queries the tasks edge of a Rodent.
 func (c *RodentClient) QueryTasks(r *Rodent) *TaskQuery {
 	query := (&TaskClient{config: c.config}).Query()
@@ -1160,7 +1416,7 @@ func (c *RodentClient) QueryLoot(r *Rodent) *LootQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(rodent.Table, rodent.FieldID, id),
 			sqlgraph.To(loot.Table, loot.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, rodent.LootTable, rodent.LootPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, false, rodent.LootTable, rodent.LootColumn),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil
@@ -1193,6 +1449,274 @@ func (c *RodentClient) mutate(ctx context.Context, m *RodentMutation) (Value, er
 	}
 }
 
+// RouterClient is a client for the Router schema.
+type RouterClient struct {
+	config
+}
+
+// NewRouterClient returns a client for the Router from the given config.
+func NewRouterClient(c config) *RouterClient {
+	return &RouterClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `router.Hooks(f(g(h())))`.
+func (c *RouterClient) Use(hooks ...Hook) {
+	c.hooks.Router = append(c.hooks.Router, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `router.Intercept(f(g(h())))`.
+func (c *RouterClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Router = append(c.inters.Router, interceptors...)
+}
+
+// Create returns a builder for creating a Router entity.
+func (c *RouterClient) Create() *RouterCreate {
+	mutation := newRouterMutation(c.config, OpCreate)
+	return &RouterCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Router entities.
+func (c *RouterClient) CreateBulk(builders ...*RouterCreate) *RouterCreateBulk {
+	return &RouterCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Router.
+func (c *RouterClient) Update() *RouterUpdate {
+	mutation := newRouterMutation(c.config, OpUpdate)
+	return &RouterUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RouterClient) UpdateOne(r *Router) *RouterUpdateOne {
+	mutation := newRouterMutation(c.config, OpUpdateOne, withRouter(r))
+	return &RouterUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RouterClient) UpdateOneID(id int) *RouterUpdateOne {
+	mutation := newRouterMutation(c.config, OpUpdateOne, withRouterID(id))
+	return &RouterUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Router.
+func (c *RouterClient) Delete() *RouterDelete {
+	mutation := newRouterMutation(c.config, OpDelete)
+	return &RouterDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RouterClient) DeleteOne(r *Router) *RouterDeleteOne {
+	return c.DeleteOneID(r.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RouterClient) DeleteOneID(id int) *RouterDeleteOne {
+	builder := c.Delete().Where(router.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RouterDeleteOne{builder}
+}
+
+// Query returns a query builder for Router.
+func (c *RouterClient) Query() *RouterQuery {
+	return &RouterQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRouter},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Router entity by its id.
+func (c *RouterClient) Get(ctx context.Context, id int) (*Router, error) {
+	return c.Query().Where(router.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RouterClient) GetX(ctx context.Context, id int) *Router {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRodents queries the rodents edge of a Router.
+func (c *RouterClient) QueryRodents(r *Router) *RodentQuery {
+	query := (&RodentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(router.Table, router.FieldID, id),
+			sqlgraph.To(rodent.Table, rodent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, router.RodentsTable, router.RodentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RouterClient) Hooks() []Hook {
+	return c.hooks.Router
+}
+
+// Interceptors returns the client interceptors.
+func (c *RouterClient) Interceptors() []Interceptor {
+	return c.inters.Router
+}
+
+func (c *RouterClient) mutate(ctx context.Context, m *RouterMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RouterCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RouterUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RouterUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RouterDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Router mutation op: %q", m.Op())
+	}
+}
+
+// SubnetClient is a client for the Subnet schema.
+type SubnetClient struct {
+	config
+}
+
+// NewSubnetClient returns a client for the Subnet from the given config.
+func NewSubnetClient(c config) *SubnetClient {
+	return &SubnetClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `subnet.Hooks(f(g(h())))`.
+func (c *SubnetClient) Use(hooks ...Hook) {
+	c.hooks.Subnet = append(c.hooks.Subnet, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `subnet.Intercept(f(g(h())))`.
+func (c *SubnetClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Subnet = append(c.inters.Subnet, interceptors...)
+}
+
+// Create returns a builder for creating a Subnet entity.
+func (c *SubnetClient) Create() *SubnetCreate {
+	mutation := newSubnetMutation(c.config, OpCreate)
+	return &SubnetCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Subnet entities.
+func (c *SubnetClient) CreateBulk(builders ...*SubnetCreate) *SubnetCreateBulk {
+	return &SubnetCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Subnet.
+func (c *SubnetClient) Update() *SubnetUpdate {
+	mutation := newSubnetMutation(c.config, OpUpdate)
+	return &SubnetUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SubnetClient) UpdateOne(s *Subnet) *SubnetUpdateOne {
+	mutation := newSubnetMutation(c.config, OpUpdateOne, withSubnet(s))
+	return &SubnetUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SubnetClient) UpdateOneID(id int) *SubnetUpdateOne {
+	mutation := newSubnetMutation(c.config, OpUpdateOne, withSubnetID(id))
+	return &SubnetUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Subnet.
+func (c *SubnetClient) Delete() *SubnetDelete {
+	mutation := newSubnetMutation(c.config, OpDelete)
+	return &SubnetDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SubnetClient) DeleteOne(s *Subnet) *SubnetDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SubnetClient) DeleteOneID(id int) *SubnetDeleteOne {
+	builder := c.Delete().Where(subnet.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SubnetDeleteOne{builder}
+}
+
+// Query returns a query builder for Subnet.
+func (c *SubnetClient) Query() *SubnetQuery {
+	return &SubnetQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSubnet},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Subnet entity by its id.
+func (c *SubnetClient) Get(ctx context.Context, id int) (*Subnet, error) {
+	return c.Query().Where(subnet.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SubnetClient) GetX(ctx context.Context, id int) *Subnet {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryHosts queries the hosts edge of a Subnet.
+func (c *SubnetClient) QueryHosts(s *Subnet) *DeviceQuery {
+	query := (&DeviceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(subnet.Table, subnet.FieldID, id),
+			sqlgraph.To(device.Table, device.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, subnet.HostsTable, subnet.HostsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SubnetClient) Hooks() []Hook {
+	return c.hooks.Subnet
+}
+
+// Interceptors returns the client interceptors.
+func (c *SubnetClient) Interceptors() []Interceptor {
+	return c.inters.Subnet
+}
+
+func (c *SubnetClient) mutate(ctx context.Context, m *SubnetMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SubnetCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SubnetUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SubnetUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SubnetDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Subnet mutation op: %q", m.Op())
+	}
+}
+
 // TaskClient is a client for the Task schema.
 type TaskClient struct {
 	config
@@ -1209,7 +1733,7 @@ func (c *TaskClient) Use(hooks ...Hook) {
 	c.hooks.Task = append(c.hooks.Task, hooks...)
 }
 
-// Use adds a list of query interceptors to the interceptors stack.
+// Intercept adds a list of query interceptors to the interceptors stack.
 // A call to `Intercept(f, g, h)` equals to `task.Intercept(f(g(h())))`.
 func (c *TaskClient) Intercept(interceptors ...Interceptor) {
 	c.inters.Task = append(c.inters.Task, interceptors...)
@@ -1267,6 +1791,7 @@ func (c *TaskClient) DeleteOneID(id int) *TaskDeleteOne {
 func (c *TaskClient) Query() *TaskQuery {
 	return &TaskQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeTask},
 		inters: c.Interceptors(),
 	}
 }
@@ -1301,6 +1826,22 @@ func (c *TaskClient) QueryRodent(t *Task) *RodentQuery {
 	return query
 }
 
+// QueryLoot queries the loot edge of a Task.
+func (c *TaskClient) QueryLoot(t *Task) *LootQuery {
+	query := (&LootClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(task.Table, task.FieldID, id),
+			sqlgraph.To(loot.Table, loot.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, task.LootTable, task.LootColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *TaskClient) Hooks() []Hook {
 	return c.hooks.Task
@@ -1326,123 +1867,6 @@ func (c *TaskClient) mutate(ctx context.Context, m *TaskMutation) (Value, error)
 	}
 }
 
-// TtpClient is a client for the Ttp schema.
-type TtpClient struct {
-	config
-}
-
-// NewTtpClient returns a client for the Ttp from the given config.
-func NewTtpClient(c config) *TtpClient {
-	return &TtpClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `ttp.Hooks(f(g(h())))`.
-func (c *TtpClient) Use(hooks ...Hook) {
-	c.hooks.Ttp = append(c.hooks.Ttp, hooks...)
-}
-
-// Use adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `ttp.Intercept(f(g(h())))`.
-func (c *TtpClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Ttp = append(c.inters.Ttp, interceptors...)
-}
-
-// Create returns a builder for creating a Ttp entity.
-func (c *TtpClient) Create() *TtpCreate {
-	mutation := newTtpMutation(c.config, OpCreate)
-	return &TtpCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of Ttp entities.
-func (c *TtpClient) CreateBulk(builders ...*TtpCreate) *TtpCreateBulk {
-	return &TtpCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for Ttp.
-func (c *TtpClient) Update() *TtpUpdate {
-	mutation := newTtpMutation(c.config, OpUpdate)
-	return &TtpUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *TtpClient) UpdateOne(t *Ttp) *TtpUpdateOne {
-	mutation := newTtpMutation(c.config, OpUpdateOne, withTtp(t))
-	return &TtpUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *TtpClient) UpdateOneID(id int) *TtpUpdateOne {
-	mutation := newTtpMutation(c.config, OpUpdateOne, withTtpID(id))
-	return &TtpUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for Ttp.
-func (c *TtpClient) Delete() *TtpDelete {
-	mutation := newTtpMutation(c.config, OpDelete)
-	return &TtpDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *TtpClient) DeleteOne(t *Ttp) *TtpDeleteOne {
-	return c.DeleteOneID(t.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *TtpClient) DeleteOneID(id int) *TtpDeleteOne {
-	builder := c.Delete().Where(ttp.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &TtpDeleteOne{builder}
-}
-
-// Query returns a query builder for Ttp.
-func (c *TtpClient) Query() *TtpQuery {
-	return &TtpQuery{
-		config: c.config,
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a Ttp entity by its id.
-func (c *TtpClient) Get(ctx context.Context, id int) (*Ttp, error) {
-	return c.Query().Where(ttp.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *TtpClient) GetX(ctx context.Context, id int) *Ttp {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// Hooks returns the client hooks.
-func (c *TtpClient) Hooks() []Hook {
-	return c.hooks.Ttp
-}
-
-// Interceptors returns the client interceptors.
-func (c *TtpClient) Interceptors() []Interceptor {
-	return c.inters.Ttp
-}
-
-func (c *TtpClient) mutate(ctx context.Context, m *TtpMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&TtpCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&TtpUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&TtpUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&TtpDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown Ttp mutation op: %q", m.Op())
-	}
-}
-
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -1459,7 +1883,7 @@ func (c *UserClient) Use(hooks ...Hook) {
 	c.hooks.User = append(c.hooks.User, hooks...)
 }
 
-// Use adds a list of query interceptors to the interceptors stack.
+// Intercept adds a list of query interceptors to the interceptors stack.
 // A call to `Intercept(f, g, h)` equals to `user.Intercept(f(g(h())))`.
 func (c *UserClient) Intercept(interceptors ...Interceptor) {
 	c.inters.User = append(c.inters.User, interceptors...)
@@ -1517,6 +1941,7 @@ func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
 func (c *UserClient) Query() *UserQuery {
 	return &UserQuery{
 		config: c.config,
+		ctx:    &QueryContext{Type: TypeUser},
 		inters: c.Interceptors(),
 	}
 }

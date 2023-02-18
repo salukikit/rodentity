@@ -15,6 +15,8 @@ const (
 	FieldArch = "arch"
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
+	// FieldLocaladdress holds the string denoting the localaddress field in the database.
+	FieldLocaladdress = "localaddress"
 	// FieldMachinepass holds the string denoting the machinepass field in the database.
 	FieldMachinepass = "machinepass"
 	// FieldCertificates holds the string denoting the certificates field in the database.
@@ -27,6 +29,8 @@ const (
 	EdgeGroups = "groups"
 	// EdgeDomain holds the string denoting the domain edge name in mutations.
 	EdgeDomain = "domain"
+	// EdgeSubnets holds the string denoting the subnets edge name in mutations.
+	EdgeSubnets = "subnets"
 	// Table holds the table name of the device in the database.
 	Table = "devices"
 	// UsersTable is the table that holds the users relation/edge. The primary key declared below.
@@ -53,6 +57,11 @@ const (
 	DomainInverseTable = "domains"
 	// DomainColumn is the table column denoting the domain relation/edge.
 	DomainColumn = "domain_devices"
+	// SubnetsTable is the table that holds the subnets relation/edge. The primary key declared below.
+	SubnetsTable = "subnet_hosts"
+	// SubnetsInverseTable is the table name for the Subnet entity.
+	// It exists in this package in order to avoid circular dependency with the "subnet" package.
+	SubnetsInverseTable = "subnets"
 )
 
 // Columns holds all SQL columns for device fields.
@@ -62,6 +71,7 @@ var Columns = []string{
 	FieldOs,
 	FieldArch,
 	FieldVersion,
+	FieldLocaladdress,
 	FieldMachinepass,
 	FieldCertificates,
 }
@@ -79,6 +89,9 @@ var (
 	// GroupsPrimaryKey and GroupsColumn2 are the table columns denoting the
 	// primary key for the groups relation (M2M).
 	GroupsPrimaryKey = []string{"group_id", "device_id"}
+	// SubnetsPrimaryKey and SubnetsColumn2 are the table columns denoting the
+	// primary key for the subnets relation (M2M).
+	SubnetsPrimaryKey = []string{"subnet_id", "device_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -103,4 +116,6 @@ var (
 	DefaultArch string
 	// DefaultVersion holds the default value on creation for the "version" field.
 	DefaultVersion string
+	// DefaultLocaladdress holds the default value on creation for the "localaddress" field.
+	DefaultLocaladdress string
 )

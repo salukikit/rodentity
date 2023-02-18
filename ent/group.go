@@ -136,24 +136,24 @@ func (gr *Group) assignValues(columns []string, values []any) error {
 
 // QueryDevices queries the "devices" edge of the Group entity.
 func (gr *Group) QueryDevices() *DeviceQuery {
-	return (&GroupClient{config: gr.config}).QueryDevices(gr)
+	return NewGroupClient(gr.config).QueryDevices(gr)
 }
 
 // QueryUsers queries the "users" edge of the Group entity.
 func (gr *Group) QueryUsers() *UserQuery {
-	return (&GroupClient{config: gr.config}).QueryUsers(gr)
+	return NewGroupClient(gr.config).QueryUsers(gr)
 }
 
 // QueryDomain queries the "domain" edge of the Group entity.
 func (gr *Group) QueryDomain() *DomainQuery {
-	return (&GroupClient{config: gr.config}).QueryDomain(gr)
+	return NewGroupClient(gr.config).QueryDomain(gr)
 }
 
 // Update returns a builder for updating this Group.
 // Note that you need to call Group.Unwrap() before calling this method if this Group
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (gr *Group) Update() *GroupUpdateOne {
-	return (&GroupClient{config: gr.config}).UpdateOne(gr)
+	return NewGroupClient(gr.config).UpdateOne(gr)
 }
 
 // Unwrap unwraps the Group entity that was returned from a transaction after it was closed,
@@ -186,9 +186,3 @@ func (gr *Group) String() string {
 
 // Groups is a parsable slice of Group.
 type Groups []*Group
-
-func (gr Groups) config(cfg config) {
-	for _i := range gr {
-		gr[_i].config = cfg
-	}
-}

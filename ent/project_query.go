@@ -4,26 +4,28 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/project"
+	"github.com/salukikit/rodentity/ent/rodent"
 )
 
 // ProjectQuery is the builder for querying Project entities.
 type ProjectQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
-	order      []OrderFunc
-	fields     []string
-	inters     []Interceptor
-	predicates []predicate.Project
+	ctx           *QueryContext
+	order         []OrderFunc
+	inters        []Interceptor
+	predicates    []predicate.Project
+	withOperators *OperatorQuery
+	withRodents   *RodentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -37,20 +39,20 @@ func (pq *ProjectQuery) Where(ps ...predicate.Project) *ProjectQuery {
 
 // Limit the number of records to be returned by this query.
 func (pq *ProjectQuery) Limit(limit int) *ProjectQuery {
-	pq.limit = &limit
+	pq.ctx.Limit = &limit
 	return pq
 }
 
 // Offset to start from.
 func (pq *ProjectQuery) Offset(offset int) *ProjectQuery {
-	pq.offset = &offset
+	pq.ctx.Offset = &offset
 	return pq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
 func (pq *ProjectQuery) Unique(unique bool) *ProjectQuery {
-	pq.unique = &unique
+	pq.ctx.Unique = &unique
 	return pq
 }
 
@@ -60,10 +62,54 @@ func (pq *ProjectQuery) Order(o ...OrderFunc) *ProjectQuery {
 	return pq
 }
 
+// QueryOperators chains the current query on the "operators" edge.
+func (pq *ProjectQuery) QueryOperators() *OperatorQuery {
+	query := (&OperatorClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, selector),
+			sqlgraph.To(operator.Table, operator.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, project.OperatorsTable, project.OperatorsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRodents chains the current query on the "rodents" edge.
+func (pq *ProjectQuery) QueryRodents() *RodentQuery {
+	query := (&RodentClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, selector),
+			sqlgraph.To(rodent.Table, rodent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.RodentsTable, project.RodentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Project entity from the query.
 // Returns a *NotFoundError when no Project was found.
 func (pq *ProjectQuery) First(ctx context.Context) (*Project, error) {
-	nodes, err := pq.Limit(1).All(newQueryContext(ctx, TypeProject, "First"))
+	nodes, err := pq.Limit(1).All(setContextOp(ctx, pq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +132,7 @@ func (pq *ProjectQuery) FirstX(ctx context.Context) *Project {
 // Returns a *NotFoundError when no Project ID was found.
 func (pq *ProjectQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
-	if ids, err = pq.Limit(1).IDs(newQueryContext(ctx, TypeProject, "FirstID")); err != nil {
+	if ids, err = pq.Limit(1).IDs(setContextOp(ctx, pq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -109,7 +155,7 @@ func (pq *ProjectQuery) FirstIDX(ctx context.Context) int {
 // Returns a *NotSingularError when more than one Project entity is found.
 // Returns a *NotFoundError when no Project entities are found.
 func (pq *ProjectQuery) Only(ctx context.Context) (*Project, error) {
-	nodes, err := pq.Limit(2).All(newQueryContext(ctx, TypeProject, "Only"))
+	nodes, err := pq.Limit(2).All(setContextOp(ctx, pq.ctx, "Only"))
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +183,7 @@ func (pq *ProjectQuery) OnlyX(ctx context.Context) *Project {
 // Returns a *NotFoundError when no entities are found.
 func (pq *ProjectQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
-	if ids, err = pq.Limit(2).IDs(newQueryContext(ctx, TypeProject, "OnlyID")); err != nil {
+	if ids, err = pq.Limit(2).IDs(setContextOp(ctx, pq.ctx, "OnlyID")); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -162,7 +208,7 @@ func (pq *ProjectQuery) OnlyIDX(ctx context.Context) int {
 
 // All executes the query and returns a list of Projects.
 func (pq *ProjectQuery) All(ctx context.Context) ([]*Project, error) {
-	ctx = newQueryContext(ctx, TypeProject, "All")
+	ctx = setContextOp(ctx, pq.ctx, "All")
 	if err := pq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -180,10 +226,12 @@ func (pq *ProjectQuery) AllX(ctx context.Context) []*Project {
 }
 
 // IDs executes the query and returns a list of Project IDs.
-func (pq *ProjectQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
-	ctx = newQueryContext(ctx, TypeProject, "IDs")
-	if err := pq.Select(project.FieldID).Scan(ctx, &ids); err != nil {
+func (pq *ProjectQuery) IDs(ctx context.Context) (ids []int, err error) {
+	if pq.ctx.Unique == nil && pq.path != nil {
+		pq.Unique(true)
+	}
+	ctx = setContextOp(ctx, pq.ctx, "IDs")
+	if err = pq.Select(project.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -200,7 +248,7 @@ func (pq *ProjectQuery) IDsX(ctx context.Context) []int {
 
 // Count returns the count of the given query.
 func (pq *ProjectQuery) Count(ctx context.Context) (int, error) {
-	ctx = newQueryContext(ctx, TypeProject, "Count")
+	ctx = setContextOp(ctx, pq.ctx, "Count")
 	if err := pq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -218,7 +266,7 @@ func (pq *ProjectQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (pq *ProjectQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = newQueryContext(ctx, TypeProject, "Exist")
+	ctx = setContextOp(ctx, pq.ctx, "Exist")
 	switch _, err := pq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -245,25 +293,47 @@ func (pq *ProjectQuery) Clone() *ProjectQuery {
 		return nil
 	}
 	return &ProjectQuery{
-		config:     pq.config,
-		limit:      pq.limit,
-		offset:     pq.offset,
-		order:      append([]OrderFunc{}, pq.order...),
-		inters:     append([]Interceptor{}, pq.inters...),
-		predicates: append([]predicate.Project{}, pq.predicates...),
+		config:        pq.config,
+		ctx:           pq.ctx.Clone(),
+		order:         append([]OrderFunc{}, pq.order...),
+		inters:        append([]Interceptor{}, pq.inters...),
+		predicates:    append([]predicate.Project{}, pq.predicates...),
+		withOperators: pq.withOperators.Clone(),
+		withRodents:   pq.withRodents.Clone(),
 		// clone intermediate query.
-		sql:    pq.sql.Clone(),
-		path:   pq.path,
-		unique: pq.unique,
+		sql:  pq.sql.Clone(),
+		path: pq.path,
 	}
+}
+
+// WithOperators tells the query-builder to eager-load the nodes that are connected to
+// the "operators" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithOperators(opts ...func(*OperatorQuery)) *ProjectQuery {
+	query := (&OperatorClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withOperators = query
+	return pq
+}
+
+// WithRodents tells the query-builder to eager-load the nodes that are connected to
+// the "rodents" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithRodents(opts ...func(*RodentQuery)) *ProjectQuery {
+	query := (&RodentClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withRodents = query
+	return pq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 func (pq *ProjectQuery) GroupBy(field string, fields ...string) *ProjectGroupBy {
-	pq.fields = append([]string{field}, fields...)
+	pq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &ProjectGroupBy{build: pq}
-	grbuild.flds = &pq.fields
+	grbuild.flds = &pq.ctx.Fields
 	grbuild.label = project.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -272,10 +342,10 @@ func (pq *ProjectQuery) GroupBy(field string, fields ...string) *ProjectGroupBy 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
 func (pq *ProjectQuery) Select(fields ...string) *ProjectSelect {
-	pq.fields = append(pq.fields, fields...)
+	pq.ctx.Fields = append(pq.ctx.Fields, fields...)
 	sbuild := &ProjectSelect{ProjectQuery: pq}
 	sbuild.label = project.Label
-	sbuild.flds, sbuild.scan = &pq.fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &pq.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
@@ -295,7 +365,7 @@ func (pq *ProjectQuery) prepareQuery(ctx context.Context) error {
 			}
 		}
 	}
-	for _, f := range pq.fields {
+	for _, f := range pq.ctx.Fields {
 		if !project.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
@@ -312,8 +382,12 @@ func (pq *ProjectQuery) prepareQuery(ctx context.Context) error {
 
 func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Project, error) {
 	var (
-		nodes = []*Project{}
-		_spec = pq.querySpec()
+		nodes       = []*Project{}
+		_spec       = pq.querySpec()
+		loadedTypes = [2]bool{
+			pq.withOperators != nil,
+			pq.withRodents != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Project).scanValues(nil, columns)
@@ -321,6 +395,7 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Project{config: pq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -332,35 +407,134 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := pq.withOperators; query != nil {
+		if err := pq.loadOperators(ctx, query, nodes,
+			func(n *Project) { n.Edges.Operators = []*Operator{} },
+			func(n *Project, e *Operator) { n.Edges.Operators = append(n.Edges.Operators, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withRodents; query != nil {
+		if err := pq.loadRodents(ctx, query, nodes,
+			func(n *Project) { n.Edges.Rodents = []*Rodent{} },
+			func(n *Project, e *Rodent) { n.Edges.Rodents = append(n.Edges.Rodents, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (pq *ProjectQuery) loadOperators(ctx context.Context, query *OperatorQuery, nodes []*Project, init func(*Project), assign func(*Project, *Operator)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Project)
+	nids := make(map[int]map[*Project]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(project.OperatorsTable)
+		s.Join(joinT).On(s.C(operator.FieldID), joinT.C(project.OperatorsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(project.OperatorsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(project.OperatorsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Project]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Operator](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "operators" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (pq *ProjectQuery) loadRodents(ctx context.Context, query *RodentQuery, nodes []*Project, init func(*Project), assign func(*Project, *Rodent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Project)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Rodent(func(s *sql.Selector) {
+		s.Where(sql.InValues(project.RodentsColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.project_rodents
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "project_rodents" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "project_rodents" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
 }
 
 func (pq *ProjectQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := pq.querySpec()
-	_spec.Node.Columns = pq.fields
-	if len(pq.fields) > 0 {
-		_spec.Unique = pq.unique != nil && *pq.unique
+	_spec.Node.Columns = pq.ctx.Fields
+	if len(pq.ctx.Fields) > 0 {
+		_spec.Unique = pq.ctx.Unique != nil && *pq.ctx.Unique
 	}
 	return sqlgraph.CountNodes(ctx, pq.driver, _spec)
 }
 
 func (pq *ProjectQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := &sqlgraph.QuerySpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   project.Table,
-			Columns: project.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: project.FieldID,
-			},
-		},
-		From:   pq.sql,
-		Unique: true,
-	}
-	if unique := pq.unique; unique != nil {
+	_spec := sqlgraph.NewQuerySpec(project.Table, project.Columns, sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt))
+	_spec.From = pq.sql
+	if unique := pq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
+	} else if pq.path != nil {
+		_spec.Unique = true
 	}
-	if fields := pq.fields; len(fields) > 0 {
+	if fields := pq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, project.FieldID)
 		for i := range fields {
@@ -376,10 +550,10 @@ func (pq *ProjectQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if limit := pq.limit; limit != nil {
+	if limit := pq.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := pq.offset; offset != nil {
+	if offset := pq.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
 	if ps := pq.order; len(ps) > 0 {
@@ -395,7 +569,7 @@ func (pq *ProjectQuery) querySpec() *sqlgraph.QuerySpec {
 func (pq *ProjectQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(pq.driver.Dialect())
 	t1 := builder.Table(project.Table)
-	columns := pq.fields
+	columns := pq.ctx.Fields
 	if len(columns) == 0 {
 		columns = project.Columns
 	}
@@ -404,7 +578,7 @@ func (pq *ProjectQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector = pq.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if pq.unique != nil && *pq.unique {
+	if pq.ctx.Unique != nil && *pq.ctx.Unique {
 		selector.Distinct()
 	}
 	for _, p := range pq.predicates {
@@ -413,12 +587,12 @@ func (pq *ProjectQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	for _, p := range pq.order {
 		p(selector)
 	}
-	if offset := pq.offset; offset != nil {
+	if offset := pq.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := pq.limit; limit != nil {
+	if limit := pq.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -438,7 +612,7 @@ func (pgb *ProjectGroupBy) Aggregate(fns ...AggregateFunc) *ProjectGroupBy {
 
 // Scan applies the selector query and scans the result into the given value.
 func (pgb *ProjectGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeProject, "GroupBy")
+	ctx = setContextOp(ctx, pgb.build.ctx, "GroupBy")
 	if err := pgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -486,7 +660,7 @@ func (ps *ProjectSelect) Aggregate(fns ...AggregateFunc) *ProjectSelect {
 
 // Scan applies the selector query and scans the result into the given value.
 func (ps *ProjectSelect) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeProject, "Select")
+	ctx = setContextOp(ctx, ps.ctx, "Select")
 	if err := ps.prepareQuery(ctx); err != nil {
 		return err
 	}

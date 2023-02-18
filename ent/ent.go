@@ -15,10 +15,12 @@ import (
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
 	"github.com/salukikit/rodentity/ent/loot"
+	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/router"
+	"github.com/salukikit/rodentity/ent/subnet"
 	"github.com/salukikit/rodentity/ent/task"
-	"github.com/salukikit/rodentity/ent/ttp"
 	"github.com/salukikit/rodentity/ent/user"
 )
 
@@ -28,6 +30,7 @@ type (
 	Hook          = ent.Hook
 	Value         = ent.Value
 	Query         = ent.Query
+	QueryContext  = ent.QueryContext
 	Querier       = ent.Querier
 	QuerierFunc   = ent.QuerierFunc
 	Interceptor   = ent.Interceptor
@@ -46,15 +49,17 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		device.Table:  device.ValidColumn,
-		domain.Table:  domain.ValidColumn,
-		group.Table:   group.ValidColumn,
-		loot.Table:    loot.ValidColumn,
-		project.Table: project.ValidColumn,
-		rodent.Table:  rodent.ValidColumn,
-		task.Table:    task.ValidColumn,
-		ttp.Table:     ttp.ValidColumn,
-		user.Table:    user.ValidColumn,
+		device.Table:   device.ValidColumn,
+		domain.Table:   domain.ValidColumn,
+		group.Table:    group.ValidColumn,
+		loot.Table:     loot.ValidColumn,
+		operator.Table: operator.ValidColumn,
+		project.Table:  project.ValidColumn,
+		rodent.Table:   rodent.ValidColumn,
+		router.Table:   router.ValidColumn,
+		subnet.Table:   subnet.ValidColumn,
+		task.Table:     task.ValidColumn,
+		user.Table:     user.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {
@@ -519,10 +524,11 @@ func withHooks[V Value, M any, PM interface {
 	return nv, nil
 }
 
-// newQueryContext returns a new context with the given QueryContext attached in case it does not exist.
-func newQueryContext(ctx context.Context, typ, op string) context.Context {
+// setContextOp returns a new context with the given QueryContext attached (including its op) in case it does not exist.
+func setContextOp(ctx context.Context, qc *QueryContext, op string) context.Context {
 	if ent.QueryFromContext(ctx) == nil {
-		ctx = ent.NewQueryContext(ctx, &ent.QueryContext{Type: typ, Op: op})
+		qc.Op = op
+		ctx = ent.NewQueryContext(ctx, qc)
 	}
 	return ctx
 }

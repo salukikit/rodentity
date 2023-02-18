@@ -9,13 +9,17 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/salukikit/rodentity/ent/loot"
+	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/task"
 )
 
 // Loot is the model entity for the Loot schema.
 type Loot struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID string `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
+	// Xid holds the value of the "xid" field.
+	Xid string `json:"xid,omitempty"`
 	// Type holds the value of the "type" field.
 	Type loot.Type `json:"type,omitempty"`
 	// Location holds the value of the "location" field.
@@ -26,25 +30,46 @@ type Loot struct {
 	Collectedon time.Time `json:"collectedon,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LootQuery when eager-loading is set.
-	Edges LootEdges `json:"edges"`
+	Edges       LootEdges `json:"edges"`
+	rodent_loot *int
+	task_loot   *int
 }
 
 // LootEdges holds the relations/edges for other nodes in the graph.
 type LootEdges struct {
 	// Rodent holds the value of the rodent edge.
-	Rodent []*Rodent `json:"rodent,omitempty"`
+	Rodent *Rodent `json:"rodent,omitempty"`
+	// Task holds the value of the task edge.
+	Task *Task `json:"task,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // RodentOrErr returns the Rodent value or an error if the edge
-// was not loaded in eager-loading.
-func (e LootEdges) RodentOrErr() ([]*Rodent, error) {
+// was not loaded in eager-loading, or loaded but was not found.
+func (e LootEdges) RodentOrErr() (*Rodent, error) {
 	if e.loadedTypes[0] {
+		if e.Rodent == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: rodent.Label}
+		}
 		return e.Rodent, nil
 	}
 	return nil, &NotLoadedError{edge: "rodent"}
+}
+
+// TaskOrErr returns the Task value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e LootEdges) TaskOrErr() (*Task, error) {
+	if e.loadedTypes[1] {
+		if e.Task == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: task.Label}
+		}
+		return e.Task, nil
+	}
+	return nil, &NotLoadedError{edge: "task"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -54,10 +79,16 @@ func (*Loot) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case loot.FieldData:
 			values[i] = new([]byte)
-		case loot.FieldID, loot.FieldType, loot.FieldLocation:
+		case loot.FieldID:
+			values[i] = new(sql.NullInt64)
+		case loot.FieldXid, loot.FieldType, loot.FieldLocation:
 			values[i] = new(sql.NullString)
 		case loot.FieldCollectedon:
 			values[i] = new(sql.NullTime)
+		case loot.ForeignKeys[0]: // rodent_loot
+			values[i] = new(sql.NullInt64)
+		case loot.ForeignKeys[1]: // task_loot
+			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Loot", columns[i])
 		}
@@ -74,10 +105,16 @@ func (l *Loot) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case loot.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			l.ID = int(value.Int64)
+		case loot.FieldXid:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
+				return fmt.Errorf("unexpected type %T for field xid", values[i])
 			} else if value.Valid {
-				l.ID = value.String
+				l.Xid = value.String
 			}
 		case loot.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -103,6 +140,20 @@ func (l *Loot) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				l.Collectedon = value.Time
 			}
+		case loot.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field rodent_loot", value)
+			} else if value.Valid {
+				l.rodent_loot = new(int)
+				*l.rodent_loot = int(value.Int64)
+			}
+		case loot.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field task_loot", value)
+			} else if value.Valid {
+				l.task_loot = new(int)
+				*l.task_loot = int(value.Int64)
+			}
 		}
 	}
 	return nil
@@ -110,14 +161,19 @@ func (l *Loot) assignValues(columns []string, values []any) error {
 
 // QueryRodent queries the "rodent" edge of the Loot entity.
 func (l *Loot) QueryRodent() *RodentQuery {
-	return (&LootClient{config: l.config}).QueryRodent(l)
+	return NewLootClient(l.config).QueryRodent(l)
+}
+
+// QueryTask queries the "task" edge of the Loot entity.
+func (l *Loot) QueryTask() *TaskQuery {
+	return NewLootClient(l.config).QueryTask(l)
 }
 
 // Update returns a builder for updating this Loot.
 // Note that you need to call Loot.Unwrap() before calling this method if this Loot
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (l *Loot) Update() *LootUpdateOne {
-	return (&LootClient{config: l.config}).UpdateOne(l)
+	return NewLootClient(l.config).UpdateOne(l)
 }
 
 // Unwrap unwraps the Loot entity that was returned from a transaction after it was closed,
@@ -136,6 +192,9 @@ func (l *Loot) String() string {
 	var builder strings.Builder
 	builder.WriteString("Loot(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", l.ID))
+	builder.WriteString("xid=")
+	builder.WriteString(l.Xid)
+	builder.WriteString(", ")
 	builder.WriteString("type=")
 	builder.WriteString(fmt.Sprintf("%v", l.Type))
 	builder.WriteString(", ")
@@ -153,9 +212,3 @@ func (l *Loot) String() string {
 
 // Loots is a parsable slice of Loot.
 type Loots []*Loot
-
-func (l Loots) config(cfg config) {
-	for _i := range l {
-		l[_i].config = cfg
-	}
-}

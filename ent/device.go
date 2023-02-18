@@ -24,6 +24,8 @@ type Device struct {
 	Arch string `json:"arch,omitempty"`
 	// Version holds the value of the "version" field.
 	Version string `json:"version,omitempty"`
+	// Localaddress holds the value of the "localaddress" field.
+	Localaddress string `json:"localaddress,omitempty"`
 	// Machinepass holds the value of the "machinepass" field.
 	Machinepass string `json:"machinepass,omitempty"`
 	// Certificates holds the value of the "certificates" field.
@@ -44,9 +46,11 @@ type DeviceEdges struct {
 	Groups []*Group `json:"groups,omitempty"`
 	// Domain holds the value of the domain edge.
 	Domain *Domain `json:"domain,omitempty"`
+	// Subnets holds the value of the subnets edge.
+	Subnets []*Subnet `json:"subnets,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // UsersOrErr returns the Users value or an error if the edge
@@ -89,6 +93,15 @@ func (e DeviceEdges) DomainOrErr() (*Domain, error) {
 	return nil, &NotLoadedError{edge: "domain"}
 }
 
+// SubnetsOrErr returns the Subnets value or an error if the edge
+// was not loaded in eager-loading.
+func (e DeviceEdges) SubnetsOrErr() ([]*Subnet, error) {
+	if e.loadedTypes[4] {
+		return e.Subnets, nil
+	}
+	return nil, &NotLoadedError{edge: "subnets"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Device) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -96,7 +109,7 @@ func (*Device) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case device.FieldID:
 			values[i] = new(sql.NullInt64)
-		case device.FieldHostname, device.FieldOs, device.FieldArch, device.FieldVersion, device.FieldMachinepass, device.FieldCertificates:
+		case device.FieldHostname, device.FieldOs, device.FieldArch, device.FieldVersion, device.FieldLocaladdress, device.FieldMachinepass, device.FieldCertificates:
 			values[i] = new(sql.NullString)
 		case device.ForeignKeys[0]: // domain_devices
 			values[i] = new(sql.NullInt64)
@@ -145,6 +158,12 @@ func (d *Device) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				d.Version = value.String
 			}
+		case device.FieldLocaladdress:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field localaddress", values[i])
+			} else if value.Valid {
+				d.Localaddress = value.String
+			}
 		case device.FieldMachinepass:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field machinepass", values[i])
@@ -171,29 +190,34 @@ func (d *Device) assignValues(columns []string, values []any) error {
 
 // QueryUsers queries the "users" edge of the Device entity.
 func (d *Device) QueryUsers() *UserQuery {
-	return (&DeviceClient{config: d.config}).QueryUsers(d)
+	return NewDeviceClient(d.config).QueryUsers(d)
 }
 
 // QueryRodents queries the "rodents" edge of the Device entity.
 func (d *Device) QueryRodents() *RodentQuery {
-	return (&DeviceClient{config: d.config}).QueryRodents(d)
+	return NewDeviceClient(d.config).QueryRodents(d)
 }
 
 // QueryGroups queries the "groups" edge of the Device entity.
 func (d *Device) QueryGroups() *GroupQuery {
-	return (&DeviceClient{config: d.config}).QueryGroups(d)
+	return NewDeviceClient(d.config).QueryGroups(d)
 }
 
 // QueryDomain queries the "domain" edge of the Device entity.
 func (d *Device) QueryDomain() *DomainQuery {
-	return (&DeviceClient{config: d.config}).QueryDomain(d)
+	return NewDeviceClient(d.config).QueryDomain(d)
+}
+
+// QuerySubnets queries the "subnets" edge of the Device entity.
+func (d *Device) QuerySubnets() *SubnetQuery {
+	return NewDeviceClient(d.config).QuerySubnets(d)
 }
 
 // Update returns a builder for updating this Device.
 // Note that you need to call Device.Unwrap() before calling this method if this Device
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (d *Device) Update() *DeviceUpdateOne {
-	return (&DeviceClient{config: d.config}).UpdateOne(d)
+	return NewDeviceClient(d.config).UpdateOne(d)
 }
 
 // Unwrap unwraps the Device entity that was returned from a transaction after it was closed,
@@ -224,6 +248,9 @@ func (d *Device) String() string {
 	builder.WriteString("version=")
 	builder.WriteString(d.Version)
 	builder.WriteString(", ")
+	builder.WriteString("localaddress=")
+	builder.WriteString(d.Localaddress)
+	builder.WriteString(", ")
 	builder.WriteString("machinepass=")
 	builder.WriteString(d.Machinepass)
 	builder.WriteString(", ")
@@ -235,9 +262,3 @@ func (d *Device) String() string {
 
 // Devices is a parsable slice of Device.
 type Devices []*Device
-
-func (d Devices) config(cfg config) {
-	for _i := range d {
-		d[_i].config = cfg
-	}
-}

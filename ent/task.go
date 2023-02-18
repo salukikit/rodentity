@@ -30,6 +30,8 @@ type Task struct {
 	Result []byte `json:"result,omitempty"`
 	// Executed holds the value of the "Executed" field.
 	Executed bool `json:"Executed,omitempty"`
+	// Looted holds the value of the "looted" field.
+	Looted bool `json:"looted,omitempty"`
 	// Requestedat holds the value of the "requestedat" field.
 	Requestedat time.Time `json:"requestedat,omitempty"`
 	// Completedat holds the value of the "completedat" field.
@@ -46,9 +48,11 @@ type Task struct {
 type TaskEdges struct {
 	// Rodent holds the value of the rodent edge.
 	Rodent *Rodent `json:"rodent,omitempty"`
+	// Loot holds the value of the loot edge.
+	Loot []*Loot `json:"loot,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // RodentOrErr returns the Rodent value or an error if the edge
@@ -64,6 +68,15 @@ func (e TaskEdges) RodentOrErr() (*Rodent, error) {
 	return nil, &NotLoadedError{edge: "rodent"}
 }
 
+// LootOrErr returns the Loot value or an error if the edge
+// was not loaded in eager-loading.
+func (e TaskEdges) LootOrErr() ([]*Loot, error) {
+	if e.loadedTypes[1] {
+		return e.Loot, nil
+	}
+	return nil, &NotLoadedError{edge: "loot"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Task) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -71,7 +84,7 @@ func (*Task) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case task.FieldArgs, task.FieldData, task.FieldResult, task.FieldTTPs:
 			values[i] = new([]byte)
-		case task.FieldExecuted:
+		case task.FieldExecuted, task.FieldLooted:
 			values[i] = new(sql.NullBool)
 		case task.FieldID:
 			values[i] = new(sql.NullInt64)
@@ -140,6 +153,12 @@ func (t *Task) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				t.Executed = value.Bool
 			}
+		case task.FieldLooted:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field looted", values[i])
+			} else if value.Valid {
+				t.Looted = value.Bool
+			}
 		case task.FieldRequestedat:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field requestedat", values[i])
@@ -174,14 +193,19 @@ func (t *Task) assignValues(columns []string, values []any) error {
 
 // QueryRodent queries the "rodent" edge of the Task entity.
 func (t *Task) QueryRodent() *RodentQuery {
-	return (&TaskClient{config: t.config}).QueryRodent(t)
+	return NewTaskClient(t.config).QueryRodent(t)
+}
+
+// QueryLoot queries the "loot" edge of the Task entity.
+func (t *Task) QueryLoot() *LootQuery {
+	return NewTaskClient(t.config).QueryLoot(t)
 }
 
 // Update returns a builder for updating this Task.
 // Note that you need to call Task.Unwrap() before calling this method if this Task
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (t *Task) Update() *TaskUpdateOne {
-	return (&TaskClient{config: t.config}).UpdateOne(t)
+	return NewTaskClient(t.config).UpdateOne(t)
 }
 
 // Unwrap unwraps the Task entity that was returned from a transaction after it was closed,
@@ -218,6 +242,9 @@ func (t *Task) String() string {
 	builder.WriteString("Executed=")
 	builder.WriteString(fmt.Sprintf("%v", t.Executed))
 	builder.WriteString(", ")
+	builder.WriteString("looted=")
+	builder.WriteString(fmt.Sprintf("%v", t.Looted))
+	builder.WriteString(", ")
 	builder.WriteString("requestedat=")
 	builder.WriteString(t.Requestedat.Format(time.ANSIC))
 	builder.WriteString(", ")
@@ -232,9 +259,3 @@ func (t *Task) String() string {
 
 // Tasks is a parsable slice of Task.
 type Tasks []*Task
-
-func (t Tasks) config(cfg config) {
-	for _i := range t {
-		t[_i].config = cfg
-	}
-}

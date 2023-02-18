@@ -10,8 +10,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/project"
+	"github.com/salukikit/rodentity/ent/rodent"
 )
 
 // ProjectUpdate is the builder for updating Project entities.
@@ -27,9 +29,81 @@ func (pu *ProjectUpdate) Where(ps ...predicate.Project) *ProjectUpdate {
 	return pu
 }
 
+// AddOperatorIDs adds the "operators" edge to the Operator entity by IDs.
+func (pu *ProjectUpdate) AddOperatorIDs(ids ...int) *ProjectUpdate {
+	pu.mutation.AddOperatorIDs(ids...)
+	return pu
+}
+
+// AddOperators adds the "operators" edges to the Operator entity.
+func (pu *ProjectUpdate) AddOperators(o ...*Operator) *ProjectUpdate {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return pu.AddOperatorIDs(ids...)
+}
+
+// AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
+func (pu *ProjectUpdate) AddRodentIDs(ids ...int) *ProjectUpdate {
+	pu.mutation.AddRodentIDs(ids...)
+	return pu
+}
+
+// AddRodents adds the "rodents" edges to the Rodent entity.
+func (pu *ProjectUpdate) AddRodents(r ...*Rodent) *ProjectUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return pu.AddRodentIDs(ids...)
+}
+
 // Mutation returns the ProjectMutation object of the builder.
 func (pu *ProjectUpdate) Mutation() *ProjectMutation {
 	return pu.mutation
+}
+
+// ClearOperators clears all "operators" edges to the Operator entity.
+func (pu *ProjectUpdate) ClearOperators() *ProjectUpdate {
+	pu.mutation.ClearOperators()
+	return pu
+}
+
+// RemoveOperatorIDs removes the "operators" edge to Operator entities by IDs.
+func (pu *ProjectUpdate) RemoveOperatorIDs(ids ...int) *ProjectUpdate {
+	pu.mutation.RemoveOperatorIDs(ids...)
+	return pu
+}
+
+// RemoveOperators removes "operators" edges to Operator entities.
+func (pu *ProjectUpdate) RemoveOperators(o ...*Operator) *ProjectUpdate {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return pu.RemoveOperatorIDs(ids...)
+}
+
+// ClearRodents clears all "rodents" edges to the Rodent entity.
+func (pu *ProjectUpdate) ClearRodents() *ProjectUpdate {
+	pu.mutation.ClearRodents()
+	return pu
+}
+
+// RemoveRodentIDs removes the "rodents" edge to Rodent entities by IDs.
+func (pu *ProjectUpdate) RemoveRodentIDs(ids ...int) *ProjectUpdate {
+	pu.mutation.RemoveRodentIDs(ids...)
+	return pu
+}
+
+// RemoveRodents removes "rodents" edges to Rodent entities.
+func (pu *ProjectUpdate) RemoveRodents(r ...*Rodent) *ProjectUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return pu.RemoveRodentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -60,22 +134,121 @@ func (pu *ProjectUpdate) ExecX(ctx context.Context) {
 }
 
 func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   project.Table,
-			Columns: project.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: project.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(project.Table, project.Columns, sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt))
 	if ps := pu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if pu.mutation.OperatorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.OperatorsTable,
+			Columns: project.OperatorsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RemovedOperatorsIDs(); len(nodes) > 0 && !pu.mutation.OperatorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.OperatorsTable,
+			Columns: project.OperatorsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.OperatorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.OperatorsTable,
+			Columns: project.OperatorsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if pu.mutation.RodentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RodentsTable,
+			Columns: []string{project.RodentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: rodent.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RemovedRodentsIDs(); len(nodes) > 0 && !pu.mutation.RodentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RodentsTable,
+			Columns: []string{project.RodentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: rodent.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RodentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RodentsTable,
+			Columns: []string{project.RodentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: rodent.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, pu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -97,9 +270,87 @@ type ProjectUpdateOne struct {
 	mutation *ProjectMutation
 }
 
+// AddOperatorIDs adds the "operators" edge to the Operator entity by IDs.
+func (puo *ProjectUpdateOne) AddOperatorIDs(ids ...int) *ProjectUpdateOne {
+	puo.mutation.AddOperatorIDs(ids...)
+	return puo
+}
+
+// AddOperators adds the "operators" edges to the Operator entity.
+func (puo *ProjectUpdateOne) AddOperators(o ...*Operator) *ProjectUpdateOne {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return puo.AddOperatorIDs(ids...)
+}
+
+// AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
+func (puo *ProjectUpdateOne) AddRodentIDs(ids ...int) *ProjectUpdateOne {
+	puo.mutation.AddRodentIDs(ids...)
+	return puo
+}
+
+// AddRodents adds the "rodents" edges to the Rodent entity.
+func (puo *ProjectUpdateOne) AddRodents(r ...*Rodent) *ProjectUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return puo.AddRodentIDs(ids...)
+}
+
 // Mutation returns the ProjectMutation object of the builder.
 func (puo *ProjectUpdateOne) Mutation() *ProjectMutation {
 	return puo.mutation
+}
+
+// ClearOperators clears all "operators" edges to the Operator entity.
+func (puo *ProjectUpdateOne) ClearOperators() *ProjectUpdateOne {
+	puo.mutation.ClearOperators()
+	return puo
+}
+
+// RemoveOperatorIDs removes the "operators" edge to Operator entities by IDs.
+func (puo *ProjectUpdateOne) RemoveOperatorIDs(ids ...int) *ProjectUpdateOne {
+	puo.mutation.RemoveOperatorIDs(ids...)
+	return puo
+}
+
+// RemoveOperators removes "operators" edges to Operator entities.
+func (puo *ProjectUpdateOne) RemoveOperators(o ...*Operator) *ProjectUpdateOne {
+	ids := make([]int, len(o))
+	for i := range o {
+		ids[i] = o[i].ID
+	}
+	return puo.RemoveOperatorIDs(ids...)
+}
+
+// ClearRodents clears all "rodents" edges to the Rodent entity.
+func (puo *ProjectUpdateOne) ClearRodents() *ProjectUpdateOne {
+	puo.mutation.ClearRodents()
+	return puo
+}
+
+// RemoveRodentIDs removes the "rodents" edge to Rodent entities by IDs.
+func (puo *ProjectUpdateOne) RemoveRodentIDs(ids ...int) *ProjectUpdateOne {
+	puo.mutation.RemoveRodentIDs(ids...)
+	return puo
+}
+
+// RemoveRodents removes "rodents" edges to Rodent entities.
+func (puo *ProjectUpdateOne) RemoveRodents(r ...*Rodent) *ProjectUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return puo.RemoveRodentIDs(ids...)
+}
+
+// Where appends a list predicates to the ProjectUpdate builder.
+func (puo *ProjectUpdateOne) Where(ps ...predicate.Project) *ProjectUpdateOne {
+	puo.mutation.Where(ps...)
+	return puo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -137,16 +388,7 @@ func (puo *ProjectUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err error) {
-	_spec := &sqlgraph.UpdateSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   project.Table,
-			Columns: project.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: project.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewUpdateSpec(project.Table, project.Columns, sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt))
 	id, ok := puo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Project.id" for update`)}
@@ -170,6 +412,114 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 				ps[i](selector)
 			}
 		}
+	}
+	if puo.mutation.OperatorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.OperatorsTable,
+			Columns: project.OperatorsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RemovedOperatorsIDs(); len(nodes) > 0 && !puo.mutation.OperatorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.OperatorsTable,
+			Columns: project.OperatorsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.OperatorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   project.OperatorsTable,
+			Columns: project.OperatorsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.RodentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RodentsTable,
+			Columns: []string{project.RodentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: rodent.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RemovedRodentsIDs(); len(nodes) > 0 && !puo.mutation.RodentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RodentsTable,
+			Columns: []string{project.RodentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: rodent.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RodentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RodentsTable,
+			Columns: []string{project.RodentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: rodent.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Project{config: puo.config}
 	_spec.Assign = _node.assignValues

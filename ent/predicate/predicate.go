@@ -18,17 +18,23 @@ type Group func(*sql.Selector)
 // Loot is the predicate function for loot builders.
 type Loot func(*sql.Selector)
 
+// Operator is the predicate function for operator builders.
+type Operator func(*sql.Selector)
+
 // Project is the predicate function for project builders.
 type Project func(*sql.Selector)
 
 // Rodent is the predicate function for rodent builders.
 type Rodent func(*sql.Selector)
 
+// Router is the predicate function for router builders.
+type Router func(*sql.Selector)
+
+// Subnet is the predicate function for subnet builders.
+type Subnet func(*sql.Selector)
+
 // Task is the predicate function for task builders.
 type Task func(*sql.Selector)
-
-// Ttp is the predicate function for ttp builders.
-type Ttp func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

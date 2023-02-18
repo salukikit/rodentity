@@ -36,6 +36,12 @@ func (Rodent) Edges() []ent.Edge {
 		edge.From("user", User.Type).
 			Ref("rodents").
 			Unique(),
+		edge.From("project", Project.Type).
+			Ref("rodents").
+			Unique(),
+		edge.From("router", Router.Type).
+			Ref("rodents").
+			Unique(),
 		edge.To("tasks", Task.Type),
 		edge.To("loot", Loot.Type),
 	}

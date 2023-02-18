@@ -14,7 +14,9 @@ import (
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/predicate"
+	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/router"
 	"github.com/salukikit/rodentity/ent/task"
 	"github.com/salukikit/rodentity/ent/user"
 )
@@ -22,18 +24,17 @@ import (
 // RodentQuery is the builder for querying Rodent entities.
 type RodentQuery struct {
 	config
-	limit      *int
-	offset     *int
-	unique     *bool
-	order      []OrderFunc
-	fields     []string
-	inters     []Interceptor
-	predicates []predicate.Rodent
-	withDevice *DeviceQuery
-	withUser   *UserQuery
-	withTasks  *TaskQuery
-	withLoot   *LootQuery
-	withFKs    bool
+	ctx         *QueryContext
+	order       []OrderFunc
+	inters      []Interceptor
+	predicates  []predicate.Rodent
+	withDevice  *DeviceQuery
+	withUser    *UserQuery
+	withProject *ProjectQuery
+	withRouter  *RouterQuery
+	withTasks   *TaskQuery
+	withLoot    *LootQuery
+	withFKs     bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -47,20 +48,20 @@ func (rq *RodentQuery) Where(ps ...predicate.Rodent) *RodentQuery {
 
 // Limit the number of records to be returned by this query.
 func (rq *RodentQuery) Limit(limit int) *RodentQuery {
-	rq.limit = &limit
+	rq.ctx.Limit = &limit
 	return rq
 }
 
 // Offset to start from.
 func (rq *RodentQuery) Offset(offset int) *RodentQuery {
-	rq.offset = &offset
+	rq.ctx.Offset = &offset
 	return rq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
 func (rq *RodentQuery) Unique(unique bool) *RodentQuery {
-	rq.unique = &unique
+	rq.ctx.Unique = &unique
 	return rq
 }
 
@@ -114,6 +115,50 @@ func (rq *RodentQuery) QueryUser() *UserQuery {
 	return query
 }
 
+// QueryProject chains the current query on the "project" edge.
+func (rq *RodentQuery) QueryProject() *ProjectQuery {
+	query := (&ProjectClient{config: rq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rodent.Table, rodent.FieldID, selector),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rodent.ProjectTable, rodent.ProjectColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRouter chains the current query on the "router" edge.
+func (rq *RodentQuery) QueryRouter() *RouterQuery {
+	query := (&RouterClient{config: rq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rodent.Table, rodent.FieldID, selector),
+			sqlgraph.To(router.Table, router.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rodent.RouterTable, rodent.RouterColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryTasks chains the current query on the "tasks" edge.
 func (rq *RodentQuery) QueryTasks() *TaskQuery {
 	query := (&TaskClient{config: rq.config}).Query()
@@ -150,7 +195,7 @@ func (rq *RodentQuery) QueryLoot() *LootQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(rodent.Table, rodent.FieldID, selector),
 			sqlgraph.To(loot.Table, loot.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, rodent.LootTable, rodent.LootPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, false, rodent.LootTable, rodent.LootColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -161,7 +206,7 @@ func (rq *RodentQuery) QueryLoot() *LootQuery {
 // First returns the first Rodent entity from the query.
 // Returns a *NotFoundError when no Rodent was found.
 func (rq *RodentQuery) First(ctx context.Context) (*Rodent, error) {
-	nodes, err := rq.Limit(1).All(newQueryContext(ctx, TypeRodent, "First"))
+	nodes, err := rq.Limit(1).All(setContextOp(ctx, rq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +229,7 @@ func (rq *RodentQuery) FirstX(ctx context.Context) *Rodent {
 // Returns a *NotFoundError when no Rodent ID was found.
 func (rq *RodentQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
-	if ids, err = rq.Limit(1).IDs(newQueryContext(ctx, TypeRodent, "FirstID")); err != nil {
+	if ids, err = rq.Limit(1).IDs(setContextOp(ctx, rq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -207,7 +252,7 @@ func (rq *RodentQuery) FirstIDX(ctx context.Context) int {
 // Returns a *NotSingularError when more than one Rodent entity is found.
 // Returns a *NotFoundError when no Rodent entities are found.
 func (rq *RodentQuery) Only(ctx context.Context) (*Rodent, error) {
-	nodes, err := rq.Limit(2).All(newQueryContext(ctx, TypeRodent, "Only"))
+	nodes, err := rq.Limit(2).All(setContextOp(ctx, rq.ctx, "Only"))
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +280,7 @@ func (rq *RodentQuery) OnlyX(ctx context.Context) *Rodent {
 // Returns a *NotFoundError when no entities are found.
 func (rq *RodentQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
-	if ids, err = rq.Limit(2).IDs(newQueryContext(ctx, TypeRodent, "OnlyID")); err != nil {
+	if ids, err = rq.Limit(2).IDs(setContextOp(ctx, rq.ctx, "OnlyID")); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -260,7 +305,7 @@ func (rq *RodentQuery) OnlyIDX(ctx context.Context) int {
 
 // All executes the query and returns a list of Rodents.
 func (rq *RodentQuery) All(ctx context.Context) ([]*Rodent, error) {
-	ctx = newQueryContext(ctx, TypeRodent, "All")
+	ctx = setContextOp(ctx, rq.ctx, "All")
 	if err := rq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -278,10 +323,12 @@ func (rq *RodentQuery) AllX(ctx context.Context) []*Rodent {
 }
 
 // IDs executes the query and returns a list of Rodent IDs.
-func (rq *RodentQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
-	ctx = newQueryContext(ctx, TypeRodent, "IDs")
-	if err := rq.Select(rodent.FieldID).Scan(ctx, &ids); err != nil {
+func (rq *RodentQuery) IDs(ctx context.Context) (ids []int, err error) {
+	if rq.ctx.Unique == nil && rq.path != nil {
+		rq.Unique(true)
+	}
+	ctx = setContextOp(ctx, rq.ctx, "IDs")
+	if err = rq.Select(rodent.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -298,7 +345,7 @@ func (rq *RodentQuery) IDsX(ctx context.Context) []int {
 
 // Count returns the count of the given query.
 func (rq *RodentQuery) Count(ctx context.Context) (int, error) {
-	ctx = newQueryContext(ctx, TypeRodent, "Count")
+	ctx = setContextOp(ctx, rq.ctx, "Count")
 	if err := rq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -316,7 +363,7 @@ func (rq *RodentQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (rq *RodentQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = newQueryContext(ctx, TypeRodent, "Exist")
+	ctx = setContextOp(ctx, rq.ctx, "Exist")
 	switch _, err := rq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -343,20 +390,20 @@ func (rq *RodentQuery) Clone() *RodentQuery {
 		return nil
 	}
 	return &RodentQuery{
-		config:     rq.config,
-		limit:      rq.limit,
-		offset:     rq.offset,
-		order:      append([]OrderFunc{}, rq.order...),
-		inters:     append([]Interceptor{}, rq.inters...),
-		predicates: append([]predicate.Rodent{}, rq.predicates...),
-		withDevice: rq.withDevice.Clone(),
-		withUser:   rq.withUser.Clone(),
-		withTasks:  rq.withTasks.Clone(),
-		withLoot:   rq.withLoot.Clone(),
+		config:      rq.config,
+		ctx:         rq.ctx.Clone(),
+		order:       append([]OrderFunc{}, rq.order...),
+		inters:      append([]Interceptor{}, rq.inters...),
+		predicates:  append([]predicate.Rodent{}, rq.predicates...),
+		withDevice:  rq.withDevice.Clone(),
+		withUser:    rq.withUser.Clone(),
+		withProject: rq.withProject.Clone(),
+		withRouter:  rq.withRouter.Clone(),
+		withTasks:   rq.withTasks.Clone(),
+		withLoot:    rq.withLoot.Clone(),
 		// clone intermediate query.
-		sql:    rq.sql.Clone(),
-		path:   rq.path,
-		unique: rq.unique,
+		sql:  rq.sql.Clone(),
+		path: rq.path,
 	}
 }
 
@@ -379,6 +426,28 @@ func (rq *RodentQuery) WithUser(opts ...func(*UserQuery)) *RodentQuery {
 		opt(query)
 	}
 	rq.withUser = query
+	return rq
+}
+
+// WithProject tells the query-builder to eager-load the nodes that are connected to
+// the "project" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RodentQuery) WithProject(opts ...func(*ProjectQuery)) *RodentQuery {
+	query := (&ProjectClient{config: rq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withProject = query
+	return rq
+}
+
+// WithRouter tells the query-builder to eager-load the nodes that are connected to
+// the "router" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RodentQuery) WithRouter(opts ...func(*RouterQuery)) *RodentQuery {
+	query := (&RouterClient{config: rq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withRouter = query
 	return rq
 }
 
@@ -419,9 +488,9 @@ func (rq *RodentQuery) WithLoot(opts ...func(*LootQuery)) *RodentQuery {
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (rq *RodentQuery) GroupBy(field string, fields ...string) *RodentGroupBy {
-	rq.fields = append([]string{field}, fields...)
+	rq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &RodentGroupBy{build: rq}
-	grbuild.flds = &rq.fields
+	grbuild.flds = &rq.ctx.Fields
 	grbuild.label = rodent.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -440,10 +509,10 @@ func (rq *RodentQuery) GroupBy(field string, fields ...string) *RodentGroupBy {
 //		Select(rodent.FieldXid).
 //		Scan(ctx, &v)
 func (rq *RodentQuery) Select(fields ...string) *RodentSelect {
-	rq.fields = append(rq.fields, fields...)
+	rq.ctx.Fields = append(rq.ctx.Fields, fields...)
 	sbuild := &RodentSelect{RodentQuery: rq}
 	sbuild.label = rodent.Label
-	sbuild.flds, sbuild.scan = &rq.fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &rq.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
@@ -463,7 +532,7 @@ func (rq *RodentQuery) prepareQuery(ctx context.Context) error {
 			}
 		}
 	}
-	for _, f := range rq.fields {
+	for _, f := range rq.ctx.Fields {
 		if !rodent.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
@@ -483,14 +552,16 @@ func (rq *RodentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Roden
 		nodes       = []*Rodent{}
 		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [6]bool{
 			rq.withDevice != nil,
 			rq.withUser != nil,
+			rq.withProject != nil,
+			rq.withRouter != nil,
 			rq.withTasks != nil,
 			rq.withLoot != nil,
 		}
 	)
-	if rq.withDevice != nil || rq.withUser != nil {
+	if rq.withDevice != nil || rq.withUser != nil || rq.withProject != nil || rq.withRouter != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -526,6 +597,18 @@ func (rq *RodentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Roden
 			return nil, err
 		}
 	}
+	if query := rq.withProject; query != nil {
+		if err := rq.loadProject(ctx, query, nodes, nil,
+			func(n *Rodent, e *Project) { n.Edges.Project = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := rq.withRouter; query != nil {
+		if err := rq.loadRouter(ctx, query, nodes, nil,
+			func(n *Rodent, e *Router) { n.Edges.Router = e }); err != nil {
+			return nil, err
+		}
+	}
 	if query := rq.withTasks; query != nil {
 		if err := rq.loadTasks(ctx, query, nodes,
 			func(n *Rodent) { n.Edges.Tasks = []*Task{} },
@@ -556,6 +639,9 @@ func (rq *RodentQuery) loadDevice(ctx context.Context, query *DeviceQuery, nodes
 		}
 		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
+	if len(ids) == 0 {
+		return nil
+	}
 	query.Where(device.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -585,6 +671,9 @@ func (rq *RodentQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*
 		}
 		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
+	if len(ids) == 0 {
+		return nil
+	}
 	query.Where(user.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
@@ -594,6 +683,70 @@ func (rq *RodentQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "user_rodents" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (rq *RodentQuery) loadProject(ctx context.Context, query *ProjectQuery, nodes []*Rodent, init func(*Rodent), assign func(*Rodent, *Project)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Rodent)
+	for i := range nodes {
+		if nodes[i].project_rodents == nil {
+			continue
+		}
+		fk := *nodes[i].project_rodents
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(project.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "project_rodents" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (rq *RodentQuery) loadRouter(ctx context.Context, query *RouterQuery, nodes []*Rodent, init func(*Rodent), assign func(*Rodent, *Router)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Rodent)
+	for i := range nodes {
+		if nodes[i].router_rodents == nil {
+			continue
+		}
+		fk := *nodes[i].router_rodents
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(router.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "router_rodents" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -633,90 +786,55 @@ func (rq *RodentQuery) loadTasks(ctx context.Context, query *TaskQuery, nodes []
 	return nil
 }
 func (rq *RodentQuery) loadLoot(ctx context.Context, query *LootQuery, nodes []*Rodent, init func(*Rodent), assign func(*Rodent, *Loot)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Rodent)
-	nids := make(map[string]map[*Rodent]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Rodent)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
 		if init != nil {
-			init(node)
+			init(nodes[i])
 		}
 	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(rodent.LootTable)
-		s.Join(joinT).On(s.C(loot.FieldID), joinT.C(rodent.LootPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(rodent.LootPrimaryKey[0]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(rodent.LootPrimaryKey[0]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
-	}
-	neighbors, err := query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-		assign := spec.Assign
-		values := spec.ScanValues
-		spec.ScanValues = func(columns []string) ([]any, error) {
-			values, err := values(columns[1:])
-			if err != nil {
-				return nil, err
-			}
-			return append([]any{new(sql.NullInt64)}, values...), nil
-		}
-		spec.Assign = func(columns []string, values []any) error {
-			outValue := int(values[0].(*sql.NullInt64).Int64)
-			inValue := values[1].(*sql.NullString).String
-			if nids[inValue] == nil {
-				nids[inValue] = map[*Rodent]struct{}{byID[outValue]: {}}
-				return assign(columns[1:], values[1:])
-			}
-			nids[inValue][byID[outValue]] = struct{}{}
-			return nil
-		}
-	})
+	query.withFKs = true
+	query.Where(predicate.Loot(func(s *sql.Selector) {
+		s.Where(sql.InValues(rodent.LootColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
+		fk := n.rodent_loot
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "rodent_loot" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected "loot" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "rodent_loot" returned %v for node %v`, *fk, n.ID)
 		}
-		for kn := range nodes {
-			assign(kn, n)
-		}
+		assign(node, n)
 	}
 	return nil
 }
 
 func (rq *RodentQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := rq.querySpec()
-	_spec.Node.Columns = rq.fields
-	if len(rq.fields) > 0 {
-		_spec.Unique = rq.unique != nil && *rq.unique
+	_spec.Node.Columns = rq.ctx.Fields
+	if len(rq.ctx.Fields) > 0 {
+		_spec.Unique = rq.ctx.Unique != nil && *rq.ctx.Unique
 	}
 	return sqlgraph.CountNodes(ctx, rq.driver, _spec)
 }
 
 func (rq *RodentQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := &sqlgraph.QuerySpec{
-		Node: &sqlgraph.NodeSpec{
-			Table:   rodent.Table,
-			Columns: rodent.Columns,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: rodent.FieldID,
-			},
-		},
-		From:   rq.sql,
-		Unique: true,
-	}
-	if unique := rq.unique; unique != nil {
+	_spec := sqlgraph.NewQuerySpec(rodent.Table, rodent.Columns, sqlgraph.NewFieldSpec(rodent.FieldID, field.TypeInt))
+	_spec.From = rq.sql
+	if unique := rq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
+	} else if rq.path != nil {
+		_spec.Unique = true
 	}
-	if fields := rq.fields; len(fields) > 0 {
+	if fields := rq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, rodent.FieldID)
 		for i := range fields {
@@ -732,10 +850,10 @@ func (rq *RodentQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if limit := rq.limit; limit != nil {
+	if limit := rq.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := rq.offset; offset != nil {
+	if offset := rq.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
 	if ps := rq.order; len(ps) > 0 {
@@ -751,7 +869,7 @@ func (rq *RodentQuery) querySpec() *sqlgraph.QuerySpec {
 func (rq *RodentQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(rq.driver.Dialect())
 	t1 := builder.Table(rodent.Table)
-	columns := rq.fields
+	columns := rq.ctx.Fields
 	if len(columns) == 0 {
 		columns = rodent.Columns
 	}
@@ -760,7 +878,7 @@ func (rq *RodentQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector = rq.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if rq.unique != nil && *rq.unique {
+	if rq.ctx.Unique != nil && *rq.ctx.Unique {
 		selector.Distinct()
 	}
 	for _, p := range rq.predicates {
@@ -769,12 +887,12 @@ func (rq *RodentQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	for _, p := range rq.order {
 		p(selector)
 	}
-	if offset := rq.offset; offset != nil {
+	if offset := rq.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := rq.limit; limit != nil {
+	if limit := rq.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -794,7 +912,7 @@ func (rgb *RodentGroupBy) Aggregate(fns ...AggregateFunc) *RodentGroupBy {
 
 // Scan applies the selector query and scans the result into the given value.
 func (rgb *RodentGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeRodent, "GroupBy")
+	ctx = setContextOp(ctx, rgb.build.ctx, "GroupBy")
 	if err := rgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -842,7 +960,7 @@ func (rs *RodentSelect) Aggregate(fns ...AggregateFunc) *RodentSelect {
 
 // Scan applies the selector query and scans the result into the given value.
 func (rs *RodentSelect) Scan(ctx context.Context, v any) error {
-	ctx = newQueryContext(ctx, TypeRodent, "Select")
+	ctx = setContextOp(ctx, rs.ctx, "Select")
 	if err := rs.prepareQuery(ctx); err != nil {
 		return err
 	}

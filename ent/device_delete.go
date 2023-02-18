@@ -40,15 +40,7 @@ func (dd *DeviceDelete) ExecX(ctx context.Context) int {
 }
 
 func (dd *DeviceDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := &sqlgraph.DeleteSpec{
-		Node: &sqlgraph.NodeSpec{
-			Table: device.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: device.FieldID,
-			},
-		},
-	}
+	_spec := sqlgraph.NewDeleteSpec(device.Table, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
 	if ps := dd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -69,6 +61,12 @@ type DeviceDeleteOne struct {
 	dd *DeviceDelete
 }
 
+// Where appends a list predicates to the DeviceDelete builder.
+func (ddo *DeviceDeleteOne) Where(ps ...predicate.Device) *DeviceDeleteOne {
+	ddo.dd.mutation.Where(ps...)
+	return ddo
+}
+
 // Exec executes the deletion query.
 func (ddo *DeviceDeleteOne) Exec(ctx context.Context) error {
 	n, err := ddo.dd.Exec(ctx)
@@ -84,5 +82,7 @@ func (ddo *DeviceDeleteOne) Exec(ctx context.Context) error {
 
 // ExecX is like Exec, but panics if an error occurs.
 func (ddo *DeviceDeleteOne) ExecX(ctx context.Context) {
-	ddo.dd.ExecX(ctx)
+	if err := ddo.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

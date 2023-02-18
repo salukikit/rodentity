@@ -18,6 +18,7 @@ func (Device) Fields() []ent.Field {
 		field.String("os").Default("unknown"),
 		field.String("arch").Default("unknown"),
 		field.String("version").Default("unknown"),
+		field.String("localaddress").Default("unknown"),
 		field.String("machinepass").Optional(),
 		field.String("certificates").Optional(),
 	}
@@ -30,5 +31,6 @@ func (Device) Edges() []ent.Edge {
 		edge.To("rodents", Rodent.Type),
 		edge.From("groups", Group.Type).Ref("devices"),
 		edge.From("domain", Domain.Type).Ref("devices").Unique(),
+		edge.From("subnets", Subnet.Type).Ref("hosts"),
 	}
 }

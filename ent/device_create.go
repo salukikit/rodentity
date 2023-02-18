@@ -13,6 +13,7 @@ import (
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/subnet"
 	"github.com/salukikit/rodentity/ent/user"
 )
 
@@ -67,6 +68,20 @@ func (dc *DeviceCreate) SetVersion(s string) *DeviceCreate {
 func (dc *DeviceCreate) SetNillableVersion(s *string) *DeviceCreate {
 	if s != nil {
 		dc.SetVersion(*s)
+	}
+	return dc
+}
+
+// SetLocaladdress sets the "localaddress" field.
+func (dc *DeviceCreate) SetLocaladdress(s string) *DeviceCreate {
+	dc.mutation.SetLocaladdress(s)
+	return dc
+}
+
+// SetNillableLocaladdress sets the "localaddress" field if the given value is not nil.
+func (dc *DeviceCreate) SetNillableLocaladdress(s *string) *DeviceCreate {
+	if s != nil {
+		dc.SetLocaladdress(*s)
 	}
 	return dc
 }
@@ -163,6 +178,21 @@ func (dc *DeviceCreate) SetDomain(d *Domain) *DeviceCreate {
 	return dc.SetDomainID(d.ID)
 }
 
+// AddSubnetIDs adds the "subnets" edge to the Subnet entity by IDs.
+func (dc *DeviceCreate) AddSubnetIDs(ids ...int) *DeviceCreate {
+	dc.mutation.AddSubnetIDs(ids...)
+	return dc
+}
+
+// AddSubnets adds the "subnets" edges to the Subnet entity.
+func (dc *DeviceCreate) AddSubnets(s ...*Subnet) *DeviceCreate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return dc.AddSubnetIDs(ids...)
+}
+
 // Mutation returns the DeviceMutation object of the builder.
 func (dc *DeviceCreate) Mutation() *DeviceMutation {
 	return dc.mutation
@@ -210,6 +240,10 @@ func (dc *DeviceCreate) defaults() {
 		v := device.DefaultVersion
 		dc.mutation.SetVersion(v)
 	}
+	if _, ok := dc.mutation.Localaddress(); !ok {
+		v := device.DefaultLocaladdress
+		dc.mutation.SetLocaladdress(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -225,6 +259,9 @@ func (dc *DeviceCreate) check() error {
 	}
 	if _, ok := dc.mutation.Version(); !ok {
 		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Device.version"`)}
+	}
+	if _, ok := dc.mutation.Localaddress(); !ok {
+		return &ValidationError{Name: "localaddress", err: errors.New(`ent: missing required field "Device.localaddress"`)}
 	}
 	return nil
 }
@@ -250,13 +287,7 @@ func (dc *DeviceCreate) sqlSave(ctx context.Context) (*Device, error) {
 func (dc *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Device{config: dc.config}
-		_spec = &sqlgraph.CreateSpec{
-			Table: device.Table,
-			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
-				Column: device.FieldID,
-			},
-		}
+		_spec = sqlgraph.NewCreateSpec(device.Table, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
 	)
 	if value, ok := dc.mutation.Hostname(); ok {
 		_spec.SetField(device.FieldHostname, field.TypeString, value)
@@ -273,6 +304,10 @@ func (dc *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 	if value, ok := dc.mutation.Version(); ok {
 		_spec.SetField(device.FieldVersion, field.TypeString, value)
 		_node.Version = value
+	}
+	if value, ok := dc.mutation.Localaddress(); ok {
+		_spec.SetField(device.FieldLocaladdress, field.TypeString, value)
+		_node.Localaddress = value
 	}
 	if value, ok := dc.mutation.Machinepass(); ok {
 		_spec.SetField(device.FieldMachinepass, field.TypeString, value)
@@ -357,6 +392,25 @@ func (dc *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.domain_devices = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := dc.mutation.SubnetsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.SubnetsTable,
+			Columns: device.SubnetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: subnet.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -11,6 +11,8 @@ const (
 	Label = "loot"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldXid holds the string denoting the xid field in the database.
+	FieldXid = "xid"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
 	// FieldLocation holds the string denoting the location field in the database.
@@ -21,34 +23,52 @@ const (
 	FieldCollectedon = "collectedon"
 	// EdgeRodent holds the string denoting the rodent edge name in mutations.
 	EdgeRodent = "rodent"
+	// EdgeTask holds the string denoting the task edge name in mutations.
+	EdgeTask = "task"
 	// Table holds the table name of the loot in the database.
 	Table = "loots"
-	// RodentTable is the table that holds the rodent relation/edge. The primary key declared below.
-	RodentTable = "rodent_loot"
+	// RodentTable is the table that holds the rodent relation/edge.
+	RodentTable = "loots"
 	// RodentInverseTable is the table name for the Rodent entity.
 	// It exists in this package in order to avoid circular dependency with the "rodent" package.
 	RodentInverseTable = "rodents"
+	// RodentColumn is the table column denoting the rodent relation/edge.
+	RodentColumn = "rodent_loot"
+	// TaskTable is the table that holds the task relation/edge.
+	TaskTable = "loots"
+	// TaskInverseTable is the table name for the Task entity.
+	// It exists in this package in order to avoid circular dependency with the "task" package.
+	TaskInverseTable = "tasks"
+	// TaskColumn is the table column denoting the task relation/edge.
+	TaskColumn = "task_loot"
 )
 
 // Columns holds all SQL columns for loot fields.
 var Columns = []string{
 	FieldID,
+	FieldXid,
 	FieldType,
 	FieldLocation,
 	FieldData,
 	FieldCollectedon,
 }
 
-var (
-	// RodentPrimaryKey and RodentColumn2 are the table columns denoting the
-	// primary key for the rodent relation (M2M).
-	RodentPrimaryKey = []string{"rodent_id", "loot_id"}
-)
+// ForeignKeys holds the SQL foreign-keys that are owned by the "loots"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"rodent_loot",
+	"task_loot",
+}
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}

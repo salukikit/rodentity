@@ -19,6 +19,8 @@ const (
 	FieldResult = "result"
 	// FieldExecuted holds the string denoting the executed field in the database.
 	FieldExecuted = "executed"
+	// FieldLooted holds the string denoting the looted field in the database.
+	FieldLooted = "looted"
 	// FieldRequestedat holds the string denoting the requestedat field in the database.
 	FieldRequestedat = "requestedat"
 	// FieldCompletedat holds the string denoting the completedat field in the database.
@@ -27,6 +29,8 @@ const (
 	FieldTTPs = "tt_ps"
 	// EdgeRodent holds the string denoting the rodent edge name in mutations.
 	EdgeRodent = "rodent"
+	// EdgeLoot holds the string denoting the loot edge name in mutations.
+	EdgeLoot = "loot"
 	// Table holds the table name of the task in the database.
 	Table = "tasks"
 	// RodentTable is the table that holds the rodent relation/edge.
@@ -36,6 +40,13 @@ const (
 	RodentInverseTable = "rodents"
 	// RodentColumn is the table column denoting the rodent relation/edge.
 	RodentColumn = "rodent_tasks"
+	// LootTable is the table that holds the loot relation/edge.
+	LootTable = "loots"
+	// LootInverseTable is the table name for the Loot entity.
+	// It exists in this package in order to avoid circular dependency with the "loot" package.
+	LootInverseTable = "loots"
+	// LootColumn is the table column denoting the loot relation/edge.
+	LootColumn = "task_loot"
 )
 
 // Columns holds all SQL columns for task fields.
@@ -47,6 +58,7 @@ var Columns = []string{
 	FieldData,
 	FieldResult,
 	FieldExecuted,
+	FieldLooted,
 	FieldRequestedat,
 	FieldCompletedat,
 	FieldTTPs,
@@ -78,4 +90,6 @@ var (
 	DefaultType string
 	// DefaultExecuted holds the default value on creation for the "Executed" field.
 	DefaultExecuted bool
+	// DefaultLooted holds the default value on creation for the "looted" field.
+	DefaultLooted bool
 )

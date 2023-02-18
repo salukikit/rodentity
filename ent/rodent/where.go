@@ -669,6 +669,60 @@ func HasUserWith(preds ...predicate.User) predicate.Rodent {
 	})
 }
 
+// HasProject applies the HasEdge predicate on the "project" edge.
+func HasProject() predicate.Rodent {
+	return predicate.Rodent(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ProjectTable, ProjectColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasProjectWith applies the HasEdge predicate on the "project" edge with a given conditions (other predicates).
+func HasProjectWith(preds ...predicate.Project) predicate.Rodent {
+	return predicate.Rodent(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ProjectInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ProjectTable, ProjectColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRouter applies the HasEdge predicate on the "router" edge.
+func HasRouter() predicate.Rodent {
+	return predicate.Rodent(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, RouterTable, RouterColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRouterWith applies the HasEdge predicate on the "router" edge with a given conditions (other predicates).
+func HasRouterWith(preds ...predicate.Router) predicate.Rodent {
+	return predicate.Rodent(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(RouterInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, RouterTable, RouterColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasTasks applies the HasEdge predicate on the "tasks" edge.
 func HasTasks() predicate.Rodent {
 	return predicate.Rodent(func(s *sql.Selector) {
@@ -701,7 +755,7 @@ func HasLoot() predicate.Rodent {
 	return predicate.Rodent(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, LootTable, LootPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, false, LootTable, LootColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -713,7 +767,7 @@ func HasLootWith(preds ...predicate.Loot) predicate.Rodent {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(LootInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, LootTable, LootPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, false, LootTable, LootColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

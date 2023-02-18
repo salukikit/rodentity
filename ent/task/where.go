@@ -80,6 +80,11 @@ func Executed(v bool) predicate.Task {
 	return predicate.Task(sql.FieldEQ(FieldExecuted, v))
 }
 
+// Looted applies equality check predicate on the "looted" field. It's identical to LootedEQ.
+func Looted(v bool) predicate.Task {
+	return predicate.Task(sql.FieldEQ(FieldLooted, v))
+}
+
 // Requestedat applies equality check predicate on the "requestedat" field. It's identical to RequestedatEQ.
 func Requestedat(v time.Time) predicate.Task {
 	return predicate.Task(sql.FieldEQ(FieldRequestedat, v))
@@ -340,6 +345,16 @@ func ExecutedNEQ(v bool) predicate.Task {
 	return predicate.Task(sql.FieldNEQ(FieldExecuted, v))
 }
 
+// LootedEQ applies the EQ predicate on the "looted" field.
+func LootedEQ(v bool) predicate.Task {
+	return predicate.Task(sql.FieldEQ(FieldLooted, v))
+}
+
+// LootedNEQ applies the NEQ predicate on the "looted" field.
+func LootedNEQ(v bool) predicate.Task {
+	return predicate.Task(sql.FieldNEQ(FieldLooted, v))
+}
+
 // RequestedatEQ applies the EQ predicate on the "requestedat" field.
 func RequestedatEQ(v time.Time) predicate.Task {
 	return predicate.Task(sql.FieldEQ(FieldRequestedat, v))
@@ -458,6 +473,33 @@ func HasRodentWith(preds ...predicate.Rodent) predicate.Task {
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(RodentInverseTable, FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, RodentTable, RodentColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasLoot applies the HasEdge predicate on the "loot" edge.
+func HasLoot() predicate.Task {
+	return predicate.Task(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LootTable, LootColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLootWith applies the HasEdge predicate on the "loot" edge with a given conditions (other predicates).
+func HasLootWith(preds ...predicate.Loot) predicate.Task {
+	return predicate.Task(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LootInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LootTable, LootColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

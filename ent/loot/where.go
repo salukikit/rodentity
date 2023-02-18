@@ -11,48 +11,53 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id string) predicate.Loot {
+func ID(id int) predicate.Loot {
 	return predicate.Loot(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id string) predicate.Loot {
+func IDEQ(id int) predicate.Loot {
 	return predicate.Loot(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id string) predicate.Loot {
+func IDNEQ(id int) predicate.Loot {
 	return predicate.Loot(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...string) predicate.Loot {
+func IDIn(ids ...int) predicate.Loot {
 	return predicate.Loot(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...string) predicate.Loot {
+func IDNotIn(ids ...int) predicate.Loot {
 	return predicate.Loot(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id string) predicate.Loot {
+func IDGT(id int) predicate.Loot {
 	return predicate.Loot(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id string) predicate.Loot {
+func IDGTE(id int) predicate.Loot {
 	return predicate.Loot(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id string) predicate.Loot {
+func IDLT(id int) predicate.Loot {
 	return predicate.Loot(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id string) predicate.Loot {
+func IDLTE(id int) predicate.Loot {
 	return predicate.Loot(sql.FieldLTE(FieldID, id))
+}
+
+// Xid applies equality check predicate on the "xid" field. It's identical to XidEQ.
+func Xid(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldEQ(FieldXid, v))
 }
 
 // Location applies equality check predicate on the "location" field. It's identical to LocationEQ.
@@ -68,6 +73,71 @@ func Data(v []byte) predicate.Loot {
 // Collectedon applies equality check predicate on the "collectedon" field. It's identical to CollectedonEQ.
 func Collectedon(v time.Time) predicate.Loot {
 	return predicate.Loot(sql.FieldEQ(FieldCollectedon, v))
+}
+
+// XidEQ applies the EQ predicate on the "xid" field.
+func XidEQ(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldEQ(FieldXid, v))
+}
+
+// XidNEQ applies the NEQ predicate on the "xid" field.
+func XidNEQ(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldNEQ(FieldXid, v))
+}
+
+// XidIn applies the In predicate on the "xid" field.
+func XidIn(vs ...string) predicate.Loot {
+	return predicate.Loot(sql.FieldIn(FieldXid, vs...))
+}
+
+// XidNotIn applies the NotIn predicate on the "xid" field.
+func XidNotIn(vs ...string) predicate.Loot {
+	return predicate.Loot(sql.FieldNotIn(FieldXid, vs...))
+}
+
+// XidGT applies the GT predicate on the "xid" field.
+func XidGT(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldGT(FieldXid, v))
+}
+
+// XidGTE applies the GTE predicate on the "xid" field.
+func XidGTE(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldGTE(FieldXid, v))
+}
+
+// XidLT applies the LT predicate on the "xid" field.
+func XidLT(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldLT(FieldXid, v))
+}
+
+// XidLTE applies the LTE predicate on the "xid" field.
+func XidLTE(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldLTE(FieldXid, v))
+}
+
+// XidContains applies the Contains predicate on the "xid" field.
+func XidContains(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldContains(FieldXid, v))
+}
+
+// XidHasPrefix applies the HasPrefix predicate on the "xid" field.
+func XidHasPrefix(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldHasPrefix(FieldXid, v))
+}
+
+// XidHasSuffix applies the HasSuffix predicate on the "xid" field.
+func XidHasSuffix(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldHasSuffix(FieldXid, v))
+}
+
+// XidEqualFold applies the EqualFold predicate on the "xid" field.
+func XidEqualFold(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldEqualFold(FieldXid, v))
+}
+
+// XidContainsFold applies the ContainsFold predicate on the "xid" field.
+func XidContainsFold(v string) predicate.Loot {
+	return predicate.Loot(sql.FieldContainsFold(FieldXid, v))
 }
 
 // TypeEQ applies the EQ predicate on the "type" field.
@@ -240,7 +310,7 @@ func HasRodent() predicate.Loot {
 	return predicate.Loot(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, RodentTable, RodentPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, true, RodentTable, RodentColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -252,7 +322,34 @@ func HasRodentWith(preds ...predicate.Rodent) predicate.Loot {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(RodentInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, RodentTable, RodentPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, true, RodentTable, RodentColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTask applies the HasEdge predicate on the "task" edge.
+func HasTask() predicate.Loot {
+	return predicate.Loot(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, TaskTable, TaskColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTaskWith applies the HasEdge predicate on the "task" edge with a given conditions (other predicates).
+func HasTaskWith(preds ...predicate.Task) predicate.Loot {
+	return predicate.Loot(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(TaskInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, TaskTable, TaskColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

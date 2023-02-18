@@ -9,7 +9,9 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/salukikit/rodentity/ent/device"
+	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/router"
 	"github.com/salukikit/rodentity/ent/user"
 )
 
@@ -40,9 +42,11 @@ type Rodent struct {
 	Lastseen time.Time `json:"lastseen,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RodentQuery when eager-loading is set.
-	Edges          RodentEdges `json:"edges"`
-	device_rodents *int
-	user_rodents   *int
+	Edges           RodentEdges `json:"edges"`
+	device_rodents  *int
+	project_rodents *int
+	router_rodents  *int
+	user_rodents    *int
 }
 
 // RodentEdges holds the relations/edges for other nodes in the graph.
@@ -51,13 +55,17 @@ type RodentEdges struct {
 	Device *Device `json:"device,omitempty"`
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
+	// Project holds the value of the project edge.
+	Project *Project `json:"project,omitempty"`
+	// Router holds the value of the router edge.
+	Router *Router `json:"router,omitempty"`
 	// Tasks holds the value of the tasks edge.
 	Tasks []*Task `json:"tasks,omitempty"`
 	// Loot holds the value of the loot edge.
 	Loot []*Loot `json:"loot,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [6]bool
 }
 
 // DeviceOrErr returns the Device value or an error if the edge
@@ -86,10 +94,36 @@ func (e RodentEdges) UserOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "user"}
 }
 
+// ProjectOrErr returns the Project value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e RodentEdges) ProjectOrErr() (*Project, error) {
+	if e.loadedTypes[2] {
+		if e.Project == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: project.Label}
+		}
+		return e.Project, nil
+	}
+	return nil, &NotLoadedError{edge: "project"}
+}
+
+// RouterOrErr returns the Router value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e RodentEdges) RouterOrErr() (*Router, error) {
+	if e.loadedTypes[3] {
+		if e.Router == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: router.Label}
+		}
+		return e.Router, nil
+	}
+	return nil, &NotLoadedError{edge: "router"}
+}
+
 // TasksOrErr returns the Tasks value or an error if the edge
 // was not loaded in eager-loading.
 func (e RodentEdges) TasksOrErr() ([]*Task, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[4] {
 		return e.Tasks, nil
 	}
 	return nil, &NotLoadedError{edge: "tasks"}
@@ -98,7 +132,7 @@ func (e RodentEdges) TasksOrErr() ([]*Task, error) {
 // LootOrErr returns the Loot value or an error if the edge
 // was not loaded in eager-loading.
 func (e RodentEdges) LootOrErr() ([]*Loot, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[5] {
 		return e.Loot, nil
 	}
 	return nil, &NotLoadedError{edge: "loot"}
@@ -119,7 +153,11 @@ func (*Rodent) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullTime)
 		case rodent.ForeignKeys[0]: // device_rodents
 			values[i] = new(sql.NullInt64)
-		case rodent.ForeignKeys[1]: // user_rodents
+		case rodent.ForeignKeys[1]: // project_rodents
+			values[i] = new(sql.NullInt64)
+		case rodent.ForeignKeys[2]: // router_rodents
+			values[i] = new(sql.NullInt64)
+		case rodent.ForeignKeys[3]: // user_rodents
 			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Rodent", columns[i])
@@ -211,6 +249,20 @@ func (r *Rodent) assignValues(columns []string, values []any) error {
 			}
 		case rodent.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field project_rodents", value)
+			} else if value.Valid {
+				r.project_rodents = new(int)
+				*r.project_rodents = int(value.Int64)
+			}
+		case rodent.ForeignKeys[2]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field router_rodents", value)
+			} else if value.Valid {
+				r.router_rodents = new(int)
+				*r.router_rodents = int(value.Int64)
+			}
+		case rodent.ForeignKeys[3]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field user_rodents", value)
 			} else if value.Valid {
 				r.user_rodents = new(int)
@@ -223,29 +275,39 @@ func (r *Rodent) assignValues(columns []string, values []any) error {
 
 // QueryDevice queries the "device" edge of the Rodent entity.
 func (r *Rodent) QueryDevice() *DeviceQuery {
-	return (&RodentClient{config: r.config}).QueryDevice(r)
+	return NewRodentClient(r.config).QueryDevice(r)
 }
 
 // QueryUser queries the "user" edge of the Rodent entity.
 func (r *Rodent) QueryUser() *UserQuery {
-	return (&RodentClient{config: r.config}).QueryUser(r)
+	return NewRodentClient(r.config).QueryUser(r)
+}
+
+// QueryProject queries the "project" edge of the Rodent entity.
+func (r *Rodent) QueryProject() *ProjectQuery {
+	return NewRodentClient(r.config).QueryProject(r)
+}
+
+// QueryRouter queries the "router" edge of the Rodent entity.
+func (r *Rodent) QueryRouter() *RouterQuery {
+	return NewRodentClient(r.config).QueryRouter(r)
 }
 
 // QueryTasks queries the "tasks" edge of the Rodent entity.
 func (r *Rodent) QueryTasks() *TaskQuery {
-	return (&RodentClient{config: r.config}).QueryTasks(r)
+	return NewRodentClient(r.config).QueryTasks(r)
 }
 
 // QueryLoot queries the "loot" edge of the Rodent entity.
 func (r *Rodent) QueryLoot() *LootQuery {
-	return (&RodentClient{config: r.config}).QueryLoot(r)
+	return NewRodentClient(r.config).QueryLoot(r)
 }
 
 // Update returns a builder for updating this Rodent.
 // Note that you need to call Rodent.Unwrap() before calling this method if this Rodent
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (r *Rodent) Update() *RodentUpdateOne {
-	return (&RodentClient{config: r.config}).UpdateOne(r)
+	return NewRodentClient(r.config).UpdateOne(r)
 }
 
 // Unwrap unwraps the Rodent entity that was returned from a transaction after it was closed,
@@ -299,9 +361,3 @@ func (r *Rodent) String() string {
 
 // Rodents is a parsable slice of Rodent.
 type Rodents []*Rodent
-
-func (r Rodents) config(cfg config) {
-	for _i := range r {
-		r[_i].config = cfg
-	}
-}

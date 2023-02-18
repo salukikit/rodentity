@@ -57,6 +57,18 @@ func (f LootFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LootMutation", m)
 }
 
+// The OperatorFunc type is an adapter to allow the use of ordinary
+// function as Operator mutator.
+type OperatorFunc func(context.Context, *ent.OperatorMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f OperatorFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.OperatorMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OperatorMutation", m)
+}
+
 // The ProjectFunc type is an adapter to allow the use of ordinary
 // function as Project mutator.
 type ProjectFunc func(context.Context, *ent.ProjectMutation) (ent.Value, error)
@@ -81,6 +93,30 @@ func (f RodentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RodentMutation", m)
 }
 
+// The RouterFunc type is an adapter to allow the use of ordinary
+// function as Router mutator.
+type RouterFunc func(context.Context, *ent.RouterMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RouterFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RouterMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RouterMutation", m)
+}
+
+// The SubnetFunc type is an adapter to allow the use of ordinary
+// function as Subnet mutator.
+type SubnetFunc func(context.Context, *ent.SubnetMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SubnetFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SubnetMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SubnetMutation", m)
+}
+
 // The TaskFunc type is an adapter to allow the use of ordinary
 // function as Task mutator.
 type TaskFunc func(context.Context, *ent.TaskMutation) (ent.Value, error)
@@ -91,18 +127,6 @@ func (f TaskFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TaskMutation", m)
-}
-
-// The TtpFunc type is an adapter to allow the use of ordinary
-// function as Ttp mutator.
-type TtpFunc func(context.Context, *ent.TtpMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f TtpFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.TtpMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TtpMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary
