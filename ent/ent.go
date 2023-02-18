@@ -19,6 +19,7 @@ import (
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/router"
+	"github.com/salukikit/rodentity/ent/services"
 	"github.com/salukikit/rodentity/ent/subnet"
 	"github.com/salukikit/rodentity/ent/task"
 	"github.com/salukikit/rodentity/ent/user"
@@ -57,6 +58,7 @@ func columnChecker(table string) func(string) error {
 		project.Table:  project.ValidColumn,
 		rodent.Table:   rodent.ValidColumn,
 		router.Table:   router.ValidColumn,
+		services.Table: services.ValidColumn,
 		subnet.Table:   subnet.ValidColumn,
 		task.Table:     task.ValidColumn,
 		user.Table:     user.ValidColumn,

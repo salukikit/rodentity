@@ -29,6 +29,8 @@ const (
 	FieldTTPs = "tt_ps"
 	// EdgeRodent holds the string denoting the rodent edge name in mutations.
 	EdgeRodent = "rodent"
+	// EdgeOperator holds the string denoting the operator edge name in mutations.
+	EdgeOperator = "operator"
 	// EdgeLoot holds the string denoting the loot edge name in mutations.
 	EdgeLoot = "loot"
 	// Table holds the table name of the task in the database.
@@ -40,6 +42,13 @@ const (
 	RodentInverseTable = "rodents"
 	// RodentColumn is the table column denoting the rodent relation/edge.
 	RodentColumn = "rodent_tasks"
+	// OperatorTable is the table that holds the operator relation/edge.
+	OperatorTable = "tasks"
+	// OperatorInverseTable is the table name for the Operator entity.
+	// It exists in this package in order to avoid circular dependency with the "operator" package.
+	OperatorInverseTable = "operators"
+	// OperatorColumn is the table column denoting the operator relation/edge.
+	OperatorColumn = "operator_tasks"
 	// LootTable is the table that holds the loot relation/edge.
 	LootTable = "loots"
 	// LootInverseTable is the table name for the Loot entity.
@@ -67,6 +76,7 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "tasks"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
+	"operator_tasks",
 	"rodent_tasks",
 }
 

@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -19,9 +20,16 @@ type Subnet struct {
 	Cidr string `json:"cidr,omitempty"`
 	// Mask holds the value of the "mask" field.
 	Mask []byte `json:"mask,omitempty"`
+	// OutboundTcpports holds the value of the "outbound_tcpports" field.
+	OutboundTcpports []string `json:"outbound_tcpports,omitempty"`
+	// OutboundUdpports holds the value of the "outbound_udpports" field.
+	OutboundUdpports []string `json:"outbound_udpports,omitempty"`
+	// Proxy holds the value of the "proxy" field.
+	Proxy bool `json:"proxy,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SubnetQuery when eager-loading is set.
-	Edges SubnetEdges `json:"edges"`
+	Edges           SubnetEdges `json:"edges"`
+	services_subnet *int
 }
 
 // SubnetEdges holds the relations/edges for other nodes in the graph.
@@ -47,12 +55,16 @@ func (*Subnet) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case subnet.FieldMask:
+		case subnet.FieldMask, subnet.FieldOutboundTcpports, subnet.FieldOutboundUdpports:
 			values[i] = new([]byte)
+		case subnet.FieldProxy:
+			values[i] = new(sql.NullBool)
 		case subnet.FieldID:
 			values[i] = new(sql.NullInt64)
 		case subnet.FieldCidr:
 			values[i] = new(sql.NullString)
+		case subnet.ForeignKeys[0]: // services_subnet
+			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Subnet", columns[i])
 		}
@@ -85,6 +97,35 @@ func (s *Subnet) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field mask", values[i])
 			} else if value != nil {
 				s.Mask = *value
+			}
+		case subnet.FieldOutboundTcpports:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field outbound_tcpports", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &s.OutboundTcpports); err != nil {
+					return fmt.Errorf("unmarshal field outbound_tcpports: %w", err)
+				}
+			}
+		case subnet.FieldOutboundUdpports:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field outbound_udpports", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &s.OutboundUdpports); err != nil {
+					return fmt.Errorf("unmarshal field outbound_udpports: %w", err)
+				}
+			}
+		case subnet.FieldProxy:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field proxy", values[i])
+			} else if value.Valid {
+				s.Proxy = value.Bool
+			}
+		case subnet.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field services_subnet", value)
+			} else if value.Valid {
+				s.services_subnet = new(int)
+				*s.services_subnet = int(value.Int64)
 			}
 		}
 	}
@@ -124,6 +165,15 @@ func (s *Subnet) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("mask=")
 	builder.WriteString(fmt.Sprintf("%v", s.Mask))
+	builder.WriteString(", ")
+	builder.WriteString("outbound_tcpports=")
+	builder.WriteString(fmt.Sprintf("%v", s.OutboundTcpports))
+	builder.WriteString(", ")
+	builder.WriteString("outbound_udpports=")
+	builder.WriteString(fmt.Sprintf("%v", s.OutboundUdpports))
+	builder.WriteString(", ")
+	builder.WriteString("proxy=")
+	builder.WriteString(fmt.Sprintf("%v", s.Proxy))
 	builder.WriteByte(')')
 	return builder.String()
 }

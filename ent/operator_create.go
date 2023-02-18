@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/project"
+	"github.com/salukikit/rodentity/ent/task"
 )
 
 // OperatorCreate is the builder for creating a Operator entity.
@@ -51,6 +52,21 @@ func (oc *OperatorCreate) AddProjects(p ...*Project) *OperatorCreate {
 		ids[i] = p[i].ID
 	}
 	return oc.AddProjectIDs(ids...)
+}
+
+// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
+func (oc *OperatorCreate) AddTaskIDs(ids ...int) *OperatorCreate {
+	oc.mutation.AddTaskIDs(ids...)
+	return oc
+}
+
+// AddTasks adds the "tasks" edges to the Task entity.
+func (oc *OperatorCreate) AddTasks(t ...*Task) *OperatorCreate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return oc.AddTaskIDs(ids...)
 }
 
 // Mutation returns the OperatorMutation object of the builder.
@@ -139,6 +155,25 @@ func (oc *OperatorCreate) createSpec() (*Operator, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := oc.mutation.TasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   operator.TasksTable,
+			Columns: []string{operator.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
 				},
 			},
 		}

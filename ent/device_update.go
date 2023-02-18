@@ -9,12 +9,14 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/services"
 	"github.com/salukikit/rodentity/ent/subnet"
 	"github.com/salukikit/rodentity/ent/user"
 )
@@ -80,17 +82,21 @@ func (du *DeviceUpdate) SetNillableVersion(s *string) *DeviceUpdate {
 	return du
 }
 
-// SetLocaladdress sets the "localaddress" field.
-func (du *DeviceUpdate) SetLocaladdress(s string) *DeviceUpdate {
-	du.mutation.SetLocaladdress(s)
+// SetNetInterfaces sets the "net_interfaces" field.
+func (du *DeviceUpdate) SetNetInterfaces(s []string) *DeviceUpdate {
+	du.mutation.SetNetInterfaces(s)
 	return du
 }
 
-// SetNillableLocaladdress sets the "localaddress" field if the given value is not nil.
-func (du *DeviceUpdate) SetNillableLocaladdress(s *string) *DeviceUpdate {
-	if s != nil {
-		du.SetLocaladdress(*s)
-	}
+// AppendNetInterfaces appends s to the "net_interfaces" field.
+func (du *DeviceUpdate) AppendNetInterfaces(s []string) *DeviceUpdate {
+	du.mutation.AppendNetInterfaces(s)
+	return du
+}
+
+// ClearNetInterfaces clears the value of the "net_interfaces" field.
+func (du *DeviceUpdate) ClearNetInterfaces() *DeviceUpdate {
+	du.mutation.ClearNetInterfaces()
 	return du
 }
 
@@ -115,16 +121,14 @@ func (du *DeviceUpdate) ClearMachinepass() *DeviceUpdate {
 }
 
 // SetCertificates sets the "certificates" field.
-func (du *DeviceUpdate) SetCertificates(s string) *DeviceUpdate {
+func (du *DeviceUpdate) SetCertificates(s []string) *DeviceUpdate {
 	du.mutation.SetCertificates(s)
 	return du
 }
 
-// SetNillableCertificates sets the "certificates" field if the given value is not nil.
-func (du *DeviceUpdate) SetNillableCertificates(s *string) *DeviceUpdate {
-	if s != nil {
-		du.SetCertificates(*s)
-	}
+// AppendCertificates appends s to the "certificates" field.
+func (du *DeviceUpdate) AppendCertificates(s []string) *DeviceUpdate {
+	du.mutation.AppendCertificates(s)
 	return du
 }
 
@@ -211,6 +215,21 @@ func (du *DeviceUpdate) AddSubnets(s ...*Subnet) *DeviceUpdate {
 		ids[i] = s[i].ID
 	}
 	return du.AddSubnetIDs(ids...)
+}
+
+// AddServiceIDs adds the "services" edge to the Services entity by IDs.
+func (du *DeviceUpdate) AddServiceIDs(ids ...int) *DeviceUpdate {
+	du.mutation.AddServiceIDs(ids...)
+	return du
+}
+
+// AddServices adds the "services" edges to the Services entity.
+func (du *DeviceUpdate) AddServices(s ...*Services) *DeviceUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return du.AddServiceIDs(ids...)
 }
 
 // Mutation returns the DeviceMutation object of the builder.
@@ -308,6 +327,27 @@ func (du *DeviceUpdate) RemoveSubnets(s ...*Subnet) *DeviceUpdate {
 	return du.RemoveSubnetIDs(ids...)
 }
 
+// ClearServices clears all "services" edges to the Services entity.
+func (du *DeviceUpdate) ClearServices() *DeviceUpdate {
+	du.mutation.ClearServices()
+	return du
+}
+
+// RemoveServiceIDs removes the "services" edge to Services entities by IDs.
+func (du *DeviceUpdate) RemoveServiceIDs(ids ...int) *DeviceUpdate {
+	du.mutation.RemoveServiceIDs(ids...)
+	return du
+}
+
+// RemoveServices removes "services" edges to Services entities.
+func (du *DeviceUpdate) RemoveServices(s ...*Services) *DeviceUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return du.RemoveServiceIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (du *DeviceUpdate) Save(ctx context.Context) (int, error) {
 	return withHooks[int, DeviceMutation](ctx, du.sqlSave, du.mutation, du.hooks)
@@ -356,8 +396,16 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := du.mutation.Version(); ok {
 		_spec.SetField(device.FieldVersion, field.TypeString, value)
 	}
-	if value, ok := du.mutation.Localaddress(); ok {
-		_spec.SetField(device.FieldLocaladdress, field.TypeString, value)
+	if value, ok := du.mutation.NetInterfaces(); ok {
+		_spec.SetField(device.FieldNetInterfaces, field.TypeJSON, value)
+	}
+	if value, ok := du.mutation.AppendedNetInterfaces(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, device.FieldNetInterfaces, value)
+		})
+	}
+	if du.mutation.NetInterfacesCleared() {
+		_spec.ClearField(device.FieldNetInterfaces, field.TypeJSON)
 	}
 	if value, ok := du.mutation.Machinepass(); ok {
 		_spec.SetField(device.FieldMachinepass, field.TypeString, value)
@@ -366,10 +414,15 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.ClearField(device.FieldMachinepass, field.TypeString)
 	}
 	if value, ok := du.mutation.Certificates(); ok {
-		_spec.SetField(device.FieldCertificates, field.TypeString, value)
+		_spec.SetField(device.FieldCertificates, field.TypeJSON, value)
+	}
+	if value, ok := du.mutation.AppendedCertificates(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, device.FieldCertificates, value)
+		})
 	}
 	if du.mutation.CertificatesCleared() {
-		_spec.ClearField(device.FieldCertificates, field.TypeString)
+		_spec.ClearField(device.FieldCertificates, field.TypeJSON)
 	}
 	if du.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -622,6 +675,60 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if du.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.ServicesTable,
+			Columns: device.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: services.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := du.mutation.RemovedServicesIDs(); len(nodes) > 0 && !du.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.ServicesTable,
+			Columns: device.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: services.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := du.mutation.ServicesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.ServicesTable,
+			Columns: device.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: services.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, du.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{device.Label}
@@ -690,17 +797,21 @@ func (duo *DeviceUpdateOne) SetNillableVersion(s *string) *DeviceUpdateOne {
 	return duo
 }
 
-// SetLocaladdress sets the "localaddress" field.
-func (duo *DeviceUpdateOne) SetLocaladdress(s string) *DeviceUpdateOne {
-	duo.mutation.SetLocaladdress(s)
+// SetNetInterfaces sets the "net_interfaces" field.
+func (duo *DeviceUpdateOne) SetNetInterfaces(s []string) *DeviceUpdateOne {
+	duo.mutation.SetNetInterfaces(s)
 	return duo
 }
 
-// SetNillableLocaladdress sets the "localaddress" field if the given value is not nil.
-func (duo *DeviceUpdateOne) SetNillableLocaladdress(s *string) *DeviceUpdateOne {
-	if s != nil {
-		duo.SetLocaladdress(*s)
-	}
+// AppendNetInterfaces appends s to the "net_interfaces" field.
+func (duo *DeviceUpdateOne) AppendNetInterfaces(s []string) *DeviceUpdateOne {
+	duo.mutation.AppendNetInterfaces(s)
+	return duo
+}
+
+// ClearNetInterfaces clears the value of the "net_interfaces" field.
+func (duo *DeviceUpdateOne) ClearNetInterfaces() *DeviceUpdateOne {
+	duo.mutation.ClearNetInterfaces()
 	return duo
 }
 
@@ -725,16 +836,14 @@ func (duo *DeviceUpdateOne) ClearMachinepass() *DeviceUpdateOne {
 }
 
 // SetCertificates sets the "certificates" field.
-func (duo *DeviceUpdateOne) SetCertificates(s string) *DeviceUpdateOne {
+func (duo *DeviceUpdateOne) SetCertificates(s []string) *DeviceUpdateOne {
 	duo.mutation.SetCertificates(s)
 	return duo
 }
 
-// SetNillableCertificates sets the "certificates" field if the given value is not nil.
-func (duo *DeviceUpdateOne) SetNillableCertificates(s *string) *DeviceUpdateOne {
-	if s != nil {
-		duo.SetCertificates(*s)
-	}
+// AppendCertificates appends s to the "certificates" field.
+func (duo *DeviceUpdateOne) AppendCertificates(s []string) *DeviceUpdateOne {
+	duo.mutation.AppendCertificates(s)
 	return duo
 }
 
@@ -821,6 +930,21 @@ func (duo *DeviceUpdateOne) AddSubnets(s ...*Subnet) *DeviceUpdateOne {
 		ids[i] = s[i].ID
 	}
 	return duo.AddSubnetIDs(ids...)
+}
+
+// AddServiceIDs adds the "services" edge to the Services entity by IDs.
+func (duo *DeviceUpdateOne) AddServiceIDs(ids ...int) *DeviceUpdateOne {
+	duo.mutation.AddServiceIDs(ids...)
+	return duo
+}
+
+// AddServices adds the "services" edges to the Services entity.
+func (duo *DeviceUpdateOne) AddServices(s ...*Services) *DeviceUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return duo.AddServiceIDs(ids...)
 }
 
 // Mutation returns the DeviceMutation object of the builder.
@@ -918,6 +1042,27 @@ func (duo *DeviceUpdateOne) RemoveSubnets(s ...*Subnet) *DeviceUpdateOne {
 	return duo.RemoveSubnetIDs(ids...)
 }
 
+// ClearServices clears all "services" edges to the Services entity.
+func (duo *DeviceUpdateOne) ClearServices() *DeviceUpdateOne {
+	duo.mutation.ClearServices()
+	return duo
+}
+
+// RemoveServiceIDs removes the "services" edge to Services entities by IDs.
+func (duo *DeviceUpdateOne) RemoveServiceIDs(ids ...int) *DeviceUpdateOne {
+	duo.mutation.RemoveServiceIDs(ids...)
+	return duo
+}
+
+// RemoveServices removes "services" edges to Services entities.
+func (duo *DeviceUpdateOne) RemoveServices(s ...*Services) *DeviceUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return duo.RemoveServiceIDs(ids...)
+}
+
 // Where appends a list predicates to the DeviceUpdate builder.
 func (duo *DeviceUpdateOne) Where(ps ...predicate.Device) *DeviceUpdateOne {
 	duo.mutation.Where(ps...)
@@ -996,8 +1141,16 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 	if value, ok := duo.mutation.Version(); ok {
 		_spec.SetField(device.FieldVersion, field.TypeString, value)
 	}
-	if value, ok := duo.mutation.Localaddress(); ok {
-		_spec.SetField(device.FieldLocaladdress, field.TypeString, value)
+	if value, ok := duo.mutation.NetInterfaces(); ok {
+		_spec.SetField(device.FieldNetInterfaces, field.TypeJSON, value)
+	}
+	if value, ok := duo.mutation.AppendedNetInterfaces(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, device.FieldNetInterfaces, value)
+		})
+	}
+	if duo.mutation.NetInterfacesCleared() {
+		_spec.ClearField(device.FieldNetInterfaces, field.TypeJSON)
 	}
 	if value, ok := duo.mutation.Machinepass(); ok {
 		_spec.SetField(device.FieldMachinepass, field.TypeString, value)
@@ -1006,10 +1159,15 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 		_spec.ClearField(device.FieldMachinepass, field.TypeString)
 	}
 	if value, ok := duo.mutation.Certificates(); ok {
-		_spec.SetField(device.FieldCertificates, field.TypeString, value)
+		_spec.SetField(device.FieldCertificates, field.TypeJSON, value)
+	}
+	if value, ok := duo.mutation.AppendedCertificates(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, device.FieldCertificates, value)
+		})
 	}
 	if duo.mutation.CertificatesCleared() {
-		_spec.ClearField(device.FieldCertificates, field.TypeString)
+		_spec.ClearField(device.FieldCertificates, field.TypeJSON)
 	}
 	if duo.mutation.UsersCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1254,6 +1412,60 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: subnet.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if duo.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.ServicesTable,
+			Columns: device.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: services.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := duo.mutation.RemovedServicesIDs(); len(nodes) > 0 && !duo.mutation.ServicesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.ServicesTable,
+			Columns: device.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: services.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := duo.mutation.ServicesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.ServicesTable,
+			Columns: device.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: services.FieldID,
 				},
 			},
 		}

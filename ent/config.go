@@ -35,6 +35,7 @@ type (
 		Project  []ent.Hook
 		Rodent   []ent.Hook
 		Router   []ent.Hook
+		Services []ent.Hook
 		Subnet   []ent.Hook
 		Task     []ent.Hook
 		User     []ent.Hook
@@ -48,6 +49,7 @@ type (
 		Project  []ent.Interceptor
 		Rodent   []ent.Interceptor
 		Router   []ent.Interceptor
+		Services []ent.Interceptor
 		Subnet   []ent.Interceptor
 		Task     []ent.Interceptor
 		User     []ent.Interceptor

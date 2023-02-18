@@ -19,6 +19,8 @@ func (Rodent) Fields() []ent.Field {
 		field.String("codename"),
 		field.String("key"),
 		field.String("usercontext").Optional(),
+		field.String("comms").Optional(),
+		field.Bool("comms_inspected").Optional(),
 		field.String("beacontime").Optional(),
 		field.Bool("burned").Default(false),
 		field.Bool("alive").Default(true),
@@ -40,8 +42,7 @@ func (Rodent) Edges() []ent.Edge {
 			Ref("rodents").
 			Unique(),
 		edge.From("router", Router.Type).
-			Ref("rodents").
-			Unique(),
+			Ref("rodents"),
 		edge.To("tasks", Task.Type),
 		edge.To("loot", Loot.Type),
 	}

@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/salukikit/rodentity/ent/loot"
+	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/task"
@@ -184,6 +185,25 @@ func (tu *TaskUpdate) SetRodent(r *Rodent) *TaskUpdate {
 	return tu.SetRodentID(r.ID)
 }
 
+// SetOperatorID sets the "operator" edge to the Operator entity by ID.
+func (tu *TaskUpdate) SetOperatorID(id int) *TaskUpdate {
+	tu.mutation.SetOperatorID(id)
+	return tu
+}
+
+// SetNillableOperatorID sets the "operator" edge to the Operator entity by ID if the given value is not nil.
+func (tu *TaskUpdate) SetNillableOperatorID(id *int) *TaskUpdate {
+	if id != nil {
+		tu = tu.SetOperatorID(*id)
+	}
+	return tu
+}
+
+// SetOperator sets the "operator" edge to the Operator entity.
+func (tu *TaskUpdate) SetOperator(o *Operator) *TaskUpdate {
+	return tu.SetOperatorID(o.ID)
+}
+
 // AddLootIDs adds the "loot" edge to the Loot entity by IDs.
 func (tu *TaskUpdate) AddLootIDs(ids ...int) *TaskUpdate {
 	tu.mutation.AddLootIDs(ids...)
@@ -207,6 +227,12 @@ func (tu *TaskUpdate) Mutation() *TaskMutation {
 // ClearRodent clears the "rodent" edge to the Rodent entity.
 func (tu *TaskUpdate) ClearRodent() *TaskUpdate {
 	tu.mutation.ClearRodent()
+	return tu
+}
+
+// ClearOperator clears the "operator" edge to the Operator entity.
+func (tu *TaskUpdate) ClearOperator() *TaskUpdate {
+	tu.mutation.ClearOperator()
 	return tu
 }
 
@@ -349,6 +375,41 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: rodent.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.OperatorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   task.OperatorTable,
+			Columns: []string{task.OperatorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.OperatorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   task.OperatorTable,
+			Columns: []string{task.OperatorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
 				},
 			},
 		}
@@ -584,6 +645,25 @@ func (tuo *TaskUpdateOne) SetRodent(r *Rodent) *TaskUpdateOne {
 	return tuo.SetRodentID(r.ID)
 }
 
+// SetOperatorID sets the "operator" edge to the Operator entity by ID.
+func (tuo *TaskUpdateOne) SetOperatorID(id int) *TaskUpdateOne {
+	tuo.mutation.SetOperatorID(id)
+	return tuo
+}
+
+// SetNillableOperatorID sets the "operator" edge to the Operator entity by ID if the given value is not nil.
+func (tuo *TaskUpdateOne) SetNillableOperatorID(id *int) *TaskUpdateOne {
+	if id != nil {
+		tuo = tuo.SetOperatorID(*id)
+	}
+	return tuo
+}
+
+// SetOperator sets the "operator" edge to the Operator entity.
+func (tuo *TaskUpdateOne) SetOperator(o *Operator) *TaskUpdateOne {
+	return tuo.SetOperatorID(o.ID)
+}
+
 // AddLootIDs adds the "loot" edge to the Loot entity by IDs.
 func (tuo *TaskUpdateOne) AddLootIDs(ids ...int) *TaskUpdateOne {
 	tuo.mutation.AddLootIDs(ids...)
@@ -607,6 +687,12 @@ func (tuo *TaskUpdateOne) Mutation() *TaskMutation {
 // ClearRodent clears the "rodent" edge to the Rodent entity.
 func (tuo *TaskUpdateOne) ClearRodent() *TaskUpdateOne {
 	tuo.mutation.ClearRodent()
+	return tuo
+}
+
+// ClearOperator clears the "operator" edge to the Operator entity.
+func (tuo *TaskUpdateOne) ClearOperator() *TaskUpdateOne {
+	tuo.mutation.ClearOperator()
 	return tuo
 }
 
@@ -779,6 +865,41 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: rodent.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.OperatorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   task.OperatorTable,
+			Columns: []string{task.OperatorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.OperatorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   task.OperatorTable,
+			Columns: []string{task.OperatorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
 				},
 			},
 		}

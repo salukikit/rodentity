@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/router"
 )
@@ -57,6 +58,25 @@ func (rc *RouterCreate) AddRodents(r ...*Rodent) *RouterCreate {
 		ids[i] = r[i].ID
 	}
 	return rc.AddRodentIDs(ids...)
+}
+
+// SetProjectID sets the "project" edge to the Project entity by ID.
+func (rc *RouterCreate) SetProjectID(id int) *RouterCreate {
+	rc.mutation.SetProjectID(id)
+	return rc
+}
+
+// SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
+func (rc *RouterCreate) SetNillableProjectID(id *int) *RouterCreate {
+	if id != nil {
+		rc = rc.SetProjectID(*id)
+	}
+	return rc
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (rc *RouterCreate) SetProject(p *Project) *RouterCreate {
+	return rc.SetProjectID(p.ID)
 }
 
 // Mutation returns the RouterMutation object of the builder.
@@ -140,10 +160,10 @@ func (rc *RouterCreate) createSpec() (*Router, *sqlgraph.CreateSpec) {
 	}
 	if nodes := rc.mutation.RodentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   router.RodentsTable,
-			Columns: []string{router.RodentsColumn},
+			Columns: router.RodentsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -155,6 +175,26 @@ func (rc *RouterCreate) createSpec() (*Router, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   router.ProjectTable,
+			Columns: []string{router.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.project_routers = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

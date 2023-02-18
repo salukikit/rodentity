@@ -16,6 +16,7 @@ import (
 	"github.com/salukikit/rodentity/ent/group"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/services"
 	"github.com/salukikit/rodentity/ent/subnet"
 	"github.com/salukikit/rodentity/ent/user"
 )
@@ -23,16 +24,17 @@ import (
 // DeviceQuery is the builder for querying Device entities.
 type DeviceQuery struct {
 	config
-	ctx         *QueryContext
-	order       []OrderFunc
-	inters      []Interceptor
-	predicates  []predicate.Device
-	withUsers   *UserQuery
-	withRodents *RodentQuery
-	withGroups  *GroupQuery
-	withDomain  *DomainQuery
-	withSubnets *SubnetQuery
-	withFKs     bool
+	ctx          *QueryContext
+	order        []OrderFunc
+	inters       []Interceptor
+	predicates   []predicate.Device
+	withUsers    *UserQuery
+	withRodents  *RodentQuery
+	withGroups   *GroupQuery
+	withDomain   *DomainQuery
+	withSubnets  *SubnetQuery
+	withServices *ServicesQuery
+	withFKs      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -172,6 +174,28 @@ func (dq *DeviceQuery) QuerySubnets() *SubnetQuery {
 			sqlgraph.From(device.Table, device.FieldID, selector),
 			sqlgraph.To(subnet.Table, subnet.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, device.SubnetsTable, device.SubnetsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(dq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryServices chains the current query on the "services" edge.
+func (dq *DeviceQuery) QueryServices() *ServicesQuery {
+	query := (&ServicesClient{config: dq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := dq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := dq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(device.Table, device.FieldID, selector),
+			sqlgraph.To(services.Table, services.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, device.ServicesTable, device.ServicesPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(dq.driver.Dialect(), step)
 		return fromU, nil
@@ -366,16 +390,17 @@ func (dq *DeviceQuery) Clone() *DeviceQuery {
 		return nil
 	}
 	return &DeviceQuery{
-		config:      dq.config,
-		ctx:         dq.ctx.Clone(),
-		order:       append([]OrderFunc{}, dq.order...),
-		inters:      append([]Interceptor{}, dq.inters...),
-		predicates:  append([]predicate.Device{}, dq.predicates...),
-		withUsers:   dq.withUsers.Clone(),
-		withRodents: dq.withRodents.Clone(),
-		withGroups:  dq.withGroups.Clone(),
-		withDomain:  dq.withDomain.Clone(),
-		withSubnets: dq.withSubnets.Clone(),
+		config:       dq.config,
+		ctx:          dq.ctx.Clone(),
+		order:        append([]OrderFunc{}, dq.order...),
+		inters:       append([]Interceptor{}, dq.inters...),
+		predicates:   append([]predicate.Device{}, dq.predicates...),
+		withUsers:    dq.withUsers.Clone(),
+		withRodents:  dq.withRodents.Clone(),
+		withGroups:   dq.withGroups.Clone(),
+		withDomain:   dq.withDomain.Clone(),
+		withSubnets:  dq.withSubnets.Clone(),
+		withServices: dq.withServices.Clone(),
 		// clone intermediate query.
 		sql:  dq.sql.Clone(),
 		path: dq.path,
@@ -434,6 +459,17 @@ func (dq *DeviceQuery) WithSubnets(opts ...func(*SubnetQuery)) *DeviceQuery {
 		opt(query)
 	}
 	dq.withSubnets = query
+	return dq
+}
+
+// WithServices tells the query-builder to eager-load the nodes that are connected to
+// the "services" edge. The optional arguments are used to configure the query builder of the edge.
+func (dq *DeviceQuery) WithServices(opts ...func(*ServicesQuery)) *DeviceQuery {
+	query := (&ServicesClient{config: dq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	dq.withServices = query
 	return dq
 }
 
@@ -516,12 +552,13 @@ func (dq *DeviceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Devic
 		nodes       = []*Device{}
 		withFKs     = dq.withFKs
 		_spec       = dq.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [6]bool{
 			dq.withUsers != nil,
 			dq.withRodents != nil,
 			dq.withGroups != nil,
 			dq.withDomain != nil,
 			dq.withSubnets != nil,
+			dq.withServices != nil,
 		}
 	)
 	if dq.withDomain != nil {
@@ -579,6 +616,13 @@ func (dq *DeviceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Devic
 		if err := dq.loadSubnets(ctx, query, nodes,
 			func(n *Device) { n.Edges.Subnets = []*Subnet{} },
 			func(n *Device, e *Subnet) { n.Edges.Subnets = append(n.Edges.Subnets, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := dq.withServices; query != nil {
+		if err := dq.loadServices(ctx, query, nodes,
+			func(n *Device) { n.Edges.Services = []*Services{} },
+			func(n *Device, e *Services) { n.Edges.Services = append(n.Edges.Services, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -824,6 +868,67 @@ func (dq *DeviceQuery) loadSubnets(ctx context.Context, query *SubnetQuery, node
 		nodes, ok := nids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected "subnets" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (dq *DeviceQuery) loadServices(ctx context.Context, query *ServicesQuery, nodes []*Device, init func(*Device), assign func(*Device, *Services)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Device)
+	nids := make(map[int]map[*Device]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(device.ServicesTable)
+		s.Join(joinT).On(s.C(services.FieldID), joinT.C(device.ServicesPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(device.ServicesPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(device.ServicesPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Device]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Services](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "services" node returned %v`, n.ID)
 		}
 		for kn := range nodes {
 			assign(kn, n)

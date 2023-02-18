@@ -72,6 +72,34 @@ func (rc *RodentCreate) SetNillableUsercontext(s *string) *RodentCreate {
 	return rc
 }
 
+// SetComms sets the "comms" field.
+func (rc *RodentCreate) SetComms(s string) *RodentCreate {
+	rc.mutation.SetComms(s)
+	return rc
+}
+
+// SetNillableComms sets the "comms" field if the given value is not nil.
+func (rc *RodentCreate) SetNillableComms(s *string) *RodentCreate {
+	if s != nil {
+		rc.SetComms(*s)
+	}
+	return rc
+}
+
+// SetCommsInspected sets the "comms_inspected" field.
+func (rc *RodentCreate) SetCommsInspected(b bool) *RodentCreate {
+	rc.mutation.SetCommsInspected(b)
+	return rc
+}
+
+// SetNillableCommsInspected sets the "comms_inspected" field if the given value is not nil.
+func (rc *RodentCreate) SetNillableCommsInspected(b *bool) *RodentCreate {
+	if b != nil {
+		rc.SetCommsInspected(*b)
+	}
+	return rc
+}
+
 // SetBeacontime sets the "beacontime" field.
 func (rc *RodentCreate) SetBeacontime(s string) *RodentCreate {
 	rc.mutation.SetBeacontime(s)
@@ -183,23 +211,19 @@ func (rc *RodentCreate) SetProject(p *Project) *RodentCreate {
 	return rc.SetProjectID(p.ID)
 }
 
-// SetRouterID sets the "router" edge to the Router entity by ID.
-func (rc *RodentCreate) SetRouterID(id int) *RodentCreate {
-	rc.mutation.SetRouterID(id)
+// AddRouterIDs adds the "router" edge to the Router entity by IDs.
+func (rc *RodentCreate) AddRouterIDs(ids ...int) *RodentCreate {
+	rc.mutation.AddRouterIDs(ids...)
 	return rc
 }
 
-// SetNillableRouterID sets the "router" edge to the Router entity by ID if the given value is not nil.
-func (rc *RodentCreate) SetNillableRouterID(id *int) *RodentCreate {
-	if id != nil {
-		rc = rc.SetRouterID(*id)
+// AddRouter adds the "router" edges to the Router entity.
+func (rc *RodentCreate) AddRouter(r ...*Router) *RodentCreate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
 	}
-	return rc
-}
-
-// SetRouter sets the "router" edge to the Router entity.
-func (rc *RodentCreate) SetRouter(r *Router) *RodentCreate {
-	return rc.SetRouterID(r.ID)
+	return rc.AddRouterIDs(ids...)
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
@@ -353,6 +377,14 @@ func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 		_spec.SetField(rodent.FieldUsercontext, field.TypeString, value)
 		_node.Usercontext = value
 	}
+	if value, ok := rc.mutation.Comms(); ok {
+		_spec.SetField(rodent.FieldComms, field.TypeString, value)
+		_node.Comms = value
+	}
+	if value, ok := rc.mutation.CommsInspected(); ok {
+		_spec.SetField(rodent.FieldCommsInspected, field.TypeBool, value)
+		_node.CommsInspected = value
+	}
 	if value, ok := rc.mutation.Beacontime(); ok {
 		_spec.SetField(rodent.FieldBeacontime, field.TypeString, value)
 		_node.Beacontime = value
@@ -435,10 +467,10 @@ func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 	}
 	if nodes := rc.mutation.RouterIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
 			Table:   rodent.RouterTable,
-			Columns: []string{rodent.RouterColumn},
+			Columns: rodent.RouterPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -450,7 +482,6 @@ func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.router_rodents = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := rc.mutation.TasksIDs(); len(nodes) > 0 {

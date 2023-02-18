@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/salukikit/rodentity/ent/predicate"
+	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/router"
 )
@@ -24,6 +25,8 @@ type RouterQuery struct {
 	inters      []Interceptor
 	predicates  []predicate.Router
 	withRodents *RodentQuery
+	withProject *ProjectQuery
+	withFKs     bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -74,7 +77,29 @@ func (rq *RouterQuery) QueryRodents() *RodentQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(router.Table, router.FieldID, selector),
 			sqlgraph.To(rodent.Table, rodent.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, router.RodentsTable, router.RodentsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, router.RodentsTable, router.RodentsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryProject chains the current query on the "project" edge.
+func (rq *RouterQuery) QueryProject() *ProjectQuery {
+	query := (&ProjectClient{config: rq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(router.Table, router.FieldID, selector),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, router.ProjectTable, router.ProjectColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -275,6 +300,7 @@ func (rq *RouterQuery) Clone() *RouterQuery {
 		inters:      append([]Interceptor{}, rq.inters...),
 		predicates:  append([]predicate.Router{}, rq.predicates...),
 		withRodents: rq.withRodents.Clone(),
+		withProject: rq.withProject.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -289,6 +315,17 @@ func (rq *RouterQuery) WithRodents(opts ...func(*RodentQuery)) *RouterQuery {
 		opt(query)
 	}
 	rq.withRodents = query
+	return rq
+}
+
+// WithProject tells the query-builder to eager-load the nodes that are connected to
+// the "project" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RouterQuery) WithProject(opts ...func(*ProjectQuery)) *RouterQuery {
+	query := (&ProjectClient{config: rq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withProject = query
 	return rq
 }
 
@@ -369,11 +406,19 @@ func (rq *RouterQuery) prepareQuery(ctx context.Context) error {
 func (rq *RouterQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Router, error) {
 	var (
 		nodes       = []*Router{}
+		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			rq.withRodents != nil,
+			rq.withProject != nil,
 		}
 	)
+	if rq.withProject != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, router.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Router).scanValues(nil, columns)
 	}
@@ -399,37 +444,105 @@ func (rq *RouterQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Route
 			return nil, err
 		}
 	}
+	if query := rq.withProject; query != nil {
+		if err := rq.loadProject(ctx, query, nodes, nil,
+			func(n *Router, e *Project) { n.Edges.Project = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
 func (rq *RouterQuery) loadRodents(ctx context.Context, query *RodentQuery, nodes []*Router, init func(*Router), assign func(*Router, *Rodent)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Router)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Router)
+	nids := make(map[int]map[*Router]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
 		if init != nil {
-			init(nodes[i])
+			init(node)
 		}
 	}
-	query.withFKs = true
-	query.Where(predicate.Rodent(func(s *sql.Selector) {
-		s.Where(sql.InValues(router.RodentsColumn, fks...))
-	}))
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(router.RodentsTable)
+		s.Join(joinT).On(s.C(rodent.FieldID), joinT.C(router.RodentsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(router.RodentsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(router.RodentsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Router]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Rodent](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "rodents" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (rq *RouterQuery) loadProject(ctx context.Context, query *ProjectQuery, nodes []*Router, init func(*Router), assign func(*Router, *Project)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Router)
+	for i := range nodes {
+		if nodes[i].project_routers == nil {
+			continue
+		}
+		fk := *nodes[i].project_routers
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(project.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.router_rodents
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "router_rodents" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "router_rodents" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "project_routers" returned %v`, n.ID)
 		}
-		assign(node, n)
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }

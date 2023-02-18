@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -24,12 +25,12 @@ type Device struct {
 	Arch string `json:"arch,omitempty"`
 	// Version holds the value of the "version" field.
 	Version string `json:"version,omitempty"`
-	// Localaddress holds the value of the "localaddress" field.
-	Localaddress string `json:"localaddress,omitempty"`
+	// NetInterfaces holds the value of the "net_interfaces" field.
+	NetInterfaces []string `json:"net_interfaces,omitempty"`
 	// Machinepass holds the value of the "machinepass" field.
 	Machinepass string `json:"machinepass,omitempty"`
 	// Certificates holds the value of the "certificates" field.
-	Certificates string `json:"certificates,omitempty"`
+	Certificates []string `json:"certificates,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DeviceQuery when eager-loading is set.
 	Edges          DeviceEdges `json:"edges"`
@@ -48,9 +49,11 @@ type DeviceEdges struct {
 	Domain *Domain `json:"domain,omitempty"`
 	// Subnets holds the value of the subnets edge.
 	Subnets []*Subnet `json:"subnets,omitempty"`
+	// Services holds the value of the services edge.
+	Services []*Services `json:"services,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [6]bool
 }
 
 // UsersOrErr returns the Users value or an error if the edge
@@ -102,14 +105,25 @@ func (e DeviceEdges) SubnetsOrErr() ([]*Subnet, error) {
 	return nil, &NotLoadedError{edge: "subnets"}
 }
 
+// ServicesOrErr returns the Services value or an error if the edge
+// was not loaded in eager-loading.
+func (e DeviceEdges) ServicesOrErr() ([]*Services, error) {
+	if e.loadedTypes[5] {
+		return e.Services, nil
+	}
+	return nil, &NotLoadedError{edge: "services"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Device) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case device.FieldNetInterfaces, device.FieldCertificates:
+			values[i] = new([]byte)
 		case device.FieldID:
 			values[i] = new(sql.NullInt64)
-		case device.FieldHostname, device.FieldOs, device.FieldArch, device.FieldVersion, device.FieldLocaladdress, device.FieldMachinepass, device.FieldCertificates:
+		case device.FieldHostname, device.FieldOs, device.FieldArch, device.FieldVersion, device.FieldMachinepass:
 			values[i] = new(sql.NullString)
 		case device.ForeignKeys[0]: // domain_devices
 			values[i] = new(sql.NullInt64)
@@ -158,11 +172,13 @@ func (d *Device) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				d.Version = value.String
 			}
-		case device.FieldLocaladdress:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field localaddress", values[i])
-			} else if value.Valid {
-				d.Localaddress = value.String
+		case device.FieldNetInterfaces:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field net_interfaces", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &d.NetInterfaces); err != nil {
+					return fmt.Errorf("unmarshal field net_interfaces: %w", err)
+				}
 			}
 		case device.FieldMachinepass:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -171,10 +187,12 @@ func (d *Device) assignValues(columns []string, values []any) error {
 				d.Machinepass = value.String
 			}
 		case device.FieldCertificates:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field certificates", values[i])
-			} else if value.Valid {
-				d.Certificates = value.String
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &d.Certificates); err != nil {
+					return fmt.Errorf("unmarshal field certificates: %w", err)
+				}
 			}
 		case device.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -213,6 +231,11 @@ func (d *Device) QuerySubnets() *SubnetQuery {
 	return NewDeviceClient(d.config).QuerySubnets(d)
 }
 
+// QueryServices queries the "services" edge of the Device entity.
+func (d *Device) QueryServices() *ServicesQuery {
+	return NewDeviceClient(d.config).QueryServices(d)
+}
+
 // Update returns a builder for updating this Device.
 // Note that you need to call Device.Unwrap() before calling this method if this Device
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -248,14 +271,14 @@ func (d *Device) String() string {
 	builder.WriteString("version=")
 	builder.WriteString(d.Version)
 	builder.WriteString(", ")
-	builder.WriteString("localaddress=")
-	builder.WriteString(d.Localaddress)
+	builder.WriteString("net_interfaces=")
+	builder.WriteString(fmt.Sprintf("%v", d.NetInterfaces))
 	builder.WriteString(", ")
 	builder.WriteString("machinepass=")
 	builder.WriteString(d.Machinepass)
 	builder.WriteString(", ")
 	builder.WriteString("certificates=")
-	builder.WriteString(d.Certificates)
+	builder.WriteString(fmt.Sprintf("%v", d.Certificates))
 	builder.WriteByte(')')
 	return builder.String()
 }

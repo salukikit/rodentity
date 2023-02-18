@@ -30,9 +30,11 @@ type Operator struct {
 type OperatorEdges struct {
 	// Projects holds the value of the projects edge.
 	Projects []*Project `json:"projects,omitempty"`
+	// Tasks holds the value of the tasks edge.
+	Tasks []*Task `json:"tasks,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // ProjectsOrErr returns the Projects value or an error if the edge
@@ -42,6 +44,15 @@ func (e OperatorEdges) ProjectsOrErr() ([]*Project, error) {
 		return e.Projects, nil
 	}
 	return nil, &NotLoadedError{edge: "projects"}
+}
+
+// TasksOrErr returns the Tasks value or an error if the edge
+// was not loaded in eager-loading.
+func (e OperatorEdges) TasksOrErr() ([]*Task, error) {
+	if e.loadedTypes[1] {
+		return e.Tasks, nil
+	}
+	return nil, &NotLoadedError{edge: "tasks"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -102,6 +113,11 @@ func (o *Operator) assignValues(columns []string, values []any) error {
 // QueryProjects queries the "projects" edge of the Operator entity.
 func (o *Operator) QueryProjects() *ProjectQuery {
 	return NewOperatorClient(o.config).QueryProjects(o)
+}
+
+// QueryTasks queries the "tasks" edge of the Operator entity.
+func (o *Operator) QueryTasks() *TaskQuery {
+	return NewOperatorClient(o.config).QueryTasks(o)
 }
 
 // Update returns a builder for updating this Operator.

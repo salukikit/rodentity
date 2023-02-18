@@ -63,6 +63,11 @@ func Mask(v []byte) predicate.Subnet {
 	return predicate.Subnet(sql.FieldEQ(FieldMask, v))
 }
 
+// Proxy applies equality check predicate on the "proxy" field. It's identical to ProxyEQ.
+func Proxy(v bool) predicate.Subnet {
+	return predicate.Subnet(sql.FieldEQ(FieldProxy, v))
+}
+
 // CidrEQ applies the EQ predicate on the "cidr" field.
 func CidrEQ(v string) predicate.Subnet {
 	return predicate.Subnet(sql.FieldEQ(FieldCidr, v))
@@ -176,6 +181,46 @@ func MaskIsNil() predicate.Subnet {
 // MaskNotNil applies the NotNil predicate on the "mask" field.
 func MaskNotNil() predicate.Subnet {
 	return predicate.Subnet(sql.FieldNotNull(FieldMask))
+}
+
+// OutboundTcpportsIsNil applies the IsNil predicate on the "outbound_tcpports" field.
+func OutboundTcpportsIsNil() predicate.Subnet {
+	return predicate.Subnet(sql.FieldIsNull(FieldOutboundTcpports))
+}
+
+// OutboundTcpportsNotNil applies the NotNil predicate on the "outbound_tcpports" field.
+func OutboundTcpportsNotNil() predicate.Subnet {
+	return predicate.Subnet(sql.FieldNotNull(FieldOutboundTcpports))
+}
+
+// OutboundUdpportsIsNil applies the IsNil predicate on the "outbound_udpports" field.
+func OutboundUdpportsIsNil() predicate.Subnet {
+	return predicate.Subnet(sql.FieldIsNull(FieldOutboundUdpports))
+}
+
+// OutboundUdpportsNotNil applies the NotNil predicate on the "outbound_udpports" field.
+func OutboundUdpportsNotNil() predicate.Subnet {
+	return predicate.Subnet(sql.FieldNotNull(FieldOutboundUdpports))
+}
+
+// ProxyEQ applies the EQ predicate on the "proxy" field.
+func ProxyEQ(v bool) predicate.Subnet {
+	return predicate.Subnet(sql.FieldEQ(FieldProxy, v))
+}
+
+// ProxyNEQ applies the NEQ predicate on the "proxy" field.
+func ProxyNEQ(v bool) predicate.Subnet {
+	return predicate.Subnet(sql.FieldNEQ(FieldProxy, v))
+}
+
+// ProxyIsNil applies the IsNil predicate on the "proxy" field.
+func ProxyIsNil() predicate.Subnet {
+	return predicate.Subnet(sql.FieldIsNull(FieldProxy))
+}
+
+// ProxyNotNil applies the NotNil predicate on the "proxy" field.
+func ProxyNotNil() predicate.Subnet {
+	return predicate.Subnet(sql.FieldNotNull(FieldProxy))
 }
 
 // HasHosts applies the HasEdge predicate on the "hosts" edge.

@@ -13,6 +13,7 @@ import (
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/project"
+	"github.com/salukikit/rodentity/ent/task"
 )
 
 // OperatorUpdate is the builder for updating Operator entities.
@@ -73,6 +74,21 @@ func (ou *OperatorUpdate) AddProjects(p ...*Project) *OperatorUpdate {
 	return ou.AddProjectIDs(ids...)
 }
 
+// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
+func (ou *OperatorUpdate) AddTaskIDs(ids ...int) *OperatorUpdate {
+	ou.mutation.AddTaskIDs(ids...)
+	return ou
+}
+
+// AddTasks adds the "tasks" edges to the Task entity.
+func (ou *OperatorUpdate) AddTasks(t ...*Task) *OperatorUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return ou.AddTaskIDs(ids...)
+}
+
 // Mutation returns the OperatorMutation object of the builder.
 func (ou *OperatorUpdate) Mutation() *OperatorMutation {
 	return ou.mutation
@@ -97,6 +113,27 @@ func (ou *OperatorUpdate) RemoveProjects(p ...*Project) *OperatorUpdate {
 		ids[i] = p[i].ID
 	}
 	return ou.RemoveProjectIDs(ids...)
+}
+
+// ClearTasks clears all "tasks" edges to the Task entity.
+func (ou *OperatorUpdate) ClearTasks() *OperatorUpdate {
+	ou.mutation.ClearTasks()
+	return ou
+}
+
+// RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
+func (ou *OperatorUpdate) RemoveTaskIDs(ids ...int) *OperatorUpdate {
+	ou.mutation.RemoveTaskIDs(ids...)
+	return ou
+}
+
+// RemoveTasks removes "tasks" edges to Task entities.
+func (ou *OperatorUpdate) RemoveTasks(t ...*Task) *OperatorUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return ou.RemoveTaskIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -204,6 +241,60 @@ func (ou *OperatorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if ou.mutation.TasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   operator.TasksTable,
+			Columns: []string{operator.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.RemovedTasksIDs(); len(nodes) > 0 && !ou.mutation.TasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   operator.TasksTable,
+			Columns: []string{operator.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ou.mutation.TasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   operator.TasksTable,
+			Columns: []string{operator.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ou.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{operator.Label}
@@ -269,6 +360,21 @@ func (ouo *OperatorUpdateOne) AddProjects(p ...*Project) *OperatorUpdateOne {
 	return ouo.AddProjectIDs(ids...)
 }
 
+// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
+func (ouo *OperatorUpdateOne) AddTaskIDs(ids ...int) *OperatorUpdateOne {
+	ouo.mutation.AddTaskIDs(ids...)
+	return ouo
+}
+
+// AddTasks adds the "tasks" edges to the Task entity.
+func (ouo *OperatorUpdateOne) AddTasks(t ...*Task) *OperatorUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return ouo.AddTaskIDs(ids...)
+}
+
 // Mutation returns the OperatorMutation object of the builder.
 func (ouo *OperatorUpdateOne) Mutation() *OperatorMutation {
 	return ouo.mutation
@@ -293,6 +399,27 @@ func (ouo *OperatorUpdateOne) RemoveProjects(p ...*Project) *OperatorUpdateOne {
 		ids[i] = p[i].ID
 	}
 	return ouo.RemoveProjectIDs(ids...)
+}
+
+// ClearTasks clears all "tasks" edges to the Task entity.
+func (ouo *OperatorUpdateOne) ClearTasks() *OperatorUpdateOne {
+	ouo.mutation.ClearTasks()
+	return ouo
+}
+
+// RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
+func (ouo *OperatorUpdateOne) RemoveTaskIDs(ids ...int) *OperatorUpdateOne {
+	ouo.mutation.RemoveTaskIDs(ids...)
+	return ouo
+}
+
+// RemoveTasks removes "tasks" edges to Task entities.
+func (ouo *OperatorUpdateOne) RemoveTasks(t ...*Task) *OperatorUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return ouo.RemoveTaskIDs(ids...)
 }
 
 // Where appends a list predicates to the OperatorUpdate builder.
@@ -422,6 +549,60 @@ func (ouo *OperatorUpdateOne) sqlSave(ctx context.Context) (_node *Operator, err
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ouo.mutation.TasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   operator.TasksTable,
+			Columns: []string{operator.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.RemovedTasksIDs(); len(nodes) > 0 && !ouo.mutation.TasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   operator.TasksTable,
+			Columns: []string{operator.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ouo.mutation.TasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   operator.TasksTable,
+			Columns: []string{operator.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
 				},
 			},
 		}

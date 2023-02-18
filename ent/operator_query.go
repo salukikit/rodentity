@@ -14,6 +14,7 @@ import (
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/project"
+	"github.com/salukikit/rodentity/ent/task"
 )
 
 // OperatorQuery is the builder for querying Operator entities.
@@ -24,6 +25,7 @@ type OperatorQuery struct {
 	inters       []Interceptor
 	predicates   []predicate.Operator
 	withProjects *ProjectQuery
+	withTasks    *TaskQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,6 +77,28 @@ func (oq *OperatorQuery) QueryProjects() *ProjectQuery {
 			sqlgraph.From(operator.Table, operator.FieldID, selector),
 			sqlgraph.To(project.Table, project.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, operator.ProjectsTable, operator.ProjectsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTasks chains the current query on the "tasks" edge.
+func (oq *OperatorQuery) QueryTasks() *TaskQuery {
+	query := (&TaskClient{config: oq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := oq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := oq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(operator.Table, operator.FieldID, selector),
+			sqlgraph.To(task.Table, task.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, operator.TasksTable, operator.TasksColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(oq.driver.Dialect(), step)
 		return fromU, nil
@@ -275,6 +299,7 @@ func (oq *OperatorQuery) Clone() *OperatorQuery {
 		inters:       append([]Interceptor{}, oq.inters...),
 		predicates:   append([]predicate.Operator{}, oq.predicates...),
 		withProjects: oq.withProjects.Clone(),
+		withTasks:    oq.withTasks.Clone(),
 		// clone intermediate query.
 		sql:  oq.sql.Clone(),
 		path: oq.path,
@@ -289,6 +314,17 @@ func (oq *OperatorQuery) WithProjects(opts ...func(*ProjectQuery)) *OperatorQuer
 		opt(query)
 	}
 	oq.withProjects = query
+	return oq
+}
+
+// WithTasks tells the query-builder to eager-load the nodes that are connected to
+// the "tasks" edge. The optional arguments are used to configure the query builder of the edge.
+func (oq *OperatorQuery) WithTasks(opts ...func(*TaskQuery)) *OperatorQuery {
+	query := (&TaskClient{config: oq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	oq.withTasks = query
 	return oq
 }
 
@@ -370,8 +406,9 @@ func (oq *OperatorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ope
 	var (
 		nodes       = []*Operator{}
 		_spec       = oq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			oq.withProjects != nil,
+			oq.withTasks != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -396,6 +433,13 @@ func (oq *OperatorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ope
 		if err := oq.loadProjects(ctx, query, nodes,
 			func(n *Operator) { n.Edges.Projects = []*Project{} },
 			func(n *Operator, e *Project) { n.Edges.Projects = append(n.Edges.Projects, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := oq.withTasks; query != nil {
+		if err := oq.loadTasks(ctx, query, nodes,
+			func(n *Operator) { n.Edges.Tasks = []*Task{} },
+			func(n *Operator, e *Task) { n.Edges.Tasks = append(n.Edges.Tasks, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -460,6 +504,37 @@ func (oq *OperatorQuery) loadProjects(ctx context.Context, query *ProjectQuery, 
 		for kn := range nodes {
 			assign(kn, n)
 		}
+	}
+	return nil
+}
+func (oq *OperatorQuery) loadTasks(ctx context.Context, query *TaskQuery, nodes []*Operator, init func(*Operator), assign func(*Operator, *Task)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Operator)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Task(func(s *sql.Selector) {
+		s.Where(sql.InValues(operator.TasksColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.operator_tasks
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "operator_tasks" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "operator_tasks" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

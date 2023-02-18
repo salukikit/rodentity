@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/predicate"
@@ -43,6 +44,62 @@ func (su *SubnetUpdate) SetMask(b []byte) *SubnetUpdate {
 // ClearMask clears the value of the "mask" field.
 func (su *SubnetUpdate) ClearMask() *SubnetUpdate {
 	su.mutation.ClearMask()
+	return su
+}
+
+// SetOutboundTcpports sets the "outbound_tcpports" field.
+func (su *SubnetUpdate) SetOutboundTcpports(s []string) *SubnetUpdate {
+	su.mutation.SetOutboundTcpports(s)
+	return su
+}
+
+// AppendOutboundTcpports appends s to the "outbound_tcpports" field.
+func (su *SubnetUpdate) AppendOutboundTcpports(s []string) *SubnetUpdate {
+	su.mutation.AppendOutboundTcpports(s)
+	return su
+}
+
+// ClearOutboundTcpports clears the value of the "outbound_tcpports" field.
+func (su *SubnetUpdate) ClearOutboundTcpports() *SubnetUpdate {
+	su.mutation.ClearOutboundTcpports()
+	return su
+}
+
+// SetOutboundUdpports sets the "outbound_udpports" field.
+func (su *SubnetUpdate) SetOutboundUdpports(s []string) *SubnetUpdate {
+	su.mutation.SetOutboundUdpports(s)
+	return su
+}
+
+// AppendOutboundUdpports appends s to the "outbound_udpports" field.
+func (su *SubnetUpdate) AppendOutboundUdpports(s []string) *SubnetUpdate {
+	su.mutation.AppendOutboundUdpports(s)
+	return su
+}
+
+// ClearOutboundUdpports clears the value of the "outbound_udpports" field.
+func (su *SubnetUpdate) ClearOutboundUdpports() *SubnetUpdate {
+	su.mutation.ClearOutboundUdpports()
+	return su
+}
+
+// SetProxy sets the "proxy" field.
+func (su *SubnetUpdate) SetProxy(b bool) *SubnetUpdate {
+	su.mutation.SetProxy(b)
+	return su
+}
+
+// SetNillableProxy sets the "proxy" field if the given value is not nil.
+func (su *SubnetUpdate) SetNillableProxy(b *bool) *SubnetUpdate {
+	if b != nil {
+		su.SetProxy(*b)
+	}
+	return su
+}
+
+// ClearProxy clears the value of the "proxy" field.
+func (su *SubnetUpdate) ClearProxy() *SubnetUpdate {
+	su.mutation.ClearProxy()
 	return su
 }
 
@@ -131,6 +188,34 @@ func (su *SubnetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if su.mutation.MaskCleared() {
 		_spec.ClearField(subnet.FieldMask, field.TypeBytes)
+	}
+	if value, ok := su.mutation.OutboundTcpports(); ok {
+		_spec.SetField(subnet.FieldOutboundTcpports, field.TypeJSON, value)
+	}
+	if value, ok := su.mutation.AppendedOutboundTcpports(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, subnet.FieldOutboundTcpports, value)
+		})
+	}
+	if su.mutation.OutboundTcpportsCleared() {
+		_spec.ClearField(subnet.FieldOutboundTcpports, field.TypeJSON)
+	}
+	if value, ok := su.mutation.OutboundUdpports(); ok {
+		_spec.SetField(subnet.FieldOutboundUdpports, field.TypeJSON, value)
+	}
+	if value, ok := su.mutation.AppendedOutboundUdpports(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, subnet.FieldOutboundUdpports, value)
+		})
+	}
+	if su.mutation.OutboundUdpportsCleared() {
+		_spec.ClearField(subnet.FieldOutboundUdpports, field.TypeJSON)
+	}
+	if value, ok := su.mutation.Proxy(); ok {
+		_spec.SetField(subnet.FieldProxy, field.TypeBool, value)
+	}
+	if su.mutation.ProxyCleared() {
+		_spec.ClearField(subnet.FieldProxy, field.TypeBool)
 	}
 	if su.mutation.HostsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -221,6 +306,62 @@ func (suo *SubnetUpdateOne) SetMask(b []byte) *SubnetUpdateOne {
 // ClearMask clears the value of the "mask" field.
 func (suo *SubnetUpdateOne) ClearMask() *SubnetUpdateOne {
 	suo.mutation.ClearMask()
+	return suo
+}
+
+// SetOutboundTcpports sets the "outbound_tcpports" field.
+func (suo *SubnetUpdateOne) SetOutboundTcpports(s []string) *SubnetUpdateOne {
+	suo.mutation.SetOutboundTcpports(s)
+	return suo
+}
+
+// AppendOutboundTcpports appends s to the "outbound_tcpports" field.
+func (suo *SubnetUpdateOne) AppendOutboundTcpports(s []string) *SubnetUpdateOne {
+	suo.mutation.AppendOutboundTcpports(s)
+	return suo
+}
+
+// ClearOutboundTcpports clears the value of the "outbound_tcpports" field.
+func (suo *SubnetUpdateOne) ClearOutboundTcpports() *SubnetUpdateOne {
+	suo.mutation.ClearOutboundTcpports()
+	return suo
+}
+
+// SetOutboundUdpports sets the "outbound_udpports" field.
+func (suo *SubnetUpdateOne) SetOutboundUdpports(s []string) *SubnetUpdateOne {
+	suo.mutation.SetOutboundUdpports(s)
+	return suo
+}
+
+// AppendOutboundUdpports appends s to the "outbound_udpports" field.
+func (suo *SubnetUpdateOne) AppendOutboundUdpports(s []string) *SubnetUpdateOne {
+	suo.mutation.AppendOutboundUdpports(s)
+	return suo
+}
+
+// ClearOutboundUdpports clears the value of the "outbound_udpports" field.
+func (suo *SubnetUpdateOne) ClearOutboundUdpports() *SubnetUpdateOne {
+	suo.mutation.ClearOutboundUdpports()
+	return suo
+}
+
+// SetProxy sets the "proxy" field.
+func (suo *SubnetUpdateOne) SetProxy(b bool) *SubnetUpdateOne {
+	suo.mutation.SetProxy(b)
+	return suo
+}
+
+// SetNillableProxy sets the "proxy" field if the given value is not nil.
+func (suo *SubnetUpdateOne) SetNillableProxy(b *bool) *SubnetUpdateOne {
+	if b != nil {
+		suo.SetProxy(*b)
+	}
+	return suo
+}
+
+// ClearProxy clears the value of the "proxy" field.
+func (suo *SubnetUpdateOne) ClearProxy() *SubnetUpdateOne {
+	suo.mutation.ClearProxy()
 	return suo
 }
 
@@ -339,6 +480,34 @@ func (suo *SubnetUpdateOne) sqlSave(ctx context.Context) (_node *Subnet, err err
 	}
 	if suo.mutation.MaskCleared() {
 		_spec.ClearField(subnet.FieldMask, field.TypeBytes)
+	}
+	if value, ok := suo.mutation.OutboundTcpports(); ok {
+		_spec.SetField(subnet.FieldOutboundTcpports, field.TypeJSON, value)
+	}
+	if value, ok := suo.mutation.AppendedOutboundTcpports(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, subnet.FieldOutboundTcpports, value)
+		})
+	}
+	if suo.mutation.OutboundTcpportsCleared() {
+		_spec.ClearField(subnet.FieldOutboundTcpports, field.TypeJSON)
+	}
+	if value, ok := suo.mutation.OutboundUdpports(); ok {
+		_spec.SetField(subnet.FieldOutboundUdpports, field.TypeJSON, value)
+	}
+	if value, ok := suo.mutation.AppendedOutboundUdpports(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, subnet.FieldOutboundUdpports, value)
+		})
+	}
+	if suo.mutation.OutboundUdpportsCleared() {
+		_spec.ClearField(subnet.FieldOutboundUdpports, field.TypeJSON)
+	}
+	if value, ok := suo.mutation.Proxy(); ok {
+		_spec.SetField(subnet.FieldProxy, field.TypeBool, value)
+	}
+	if suo.mutation.ProxyCleared() {
+		_spec.ClearField(subnet.FieldProxy, field.TypeBool)
 	}
 	if suo.mutation.HostsCleared() {
 		edge := &sqlgraph.EdgeSpec{

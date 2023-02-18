@@ -11,6 +11,12 @@ const (
 	FieldCidr = "cidr"
 	// FieldMask holds the string denoting the mask field in the database.
 	FieldMask = "mask"
+	// FieldOutboundTcpports holds the string denoting the outbound_tcpports field in the database.
+	FieldOutboundTcpports = "outbound_tcpports"
+	// FieldOutboundUdpports holds the string denoting the outbound_udpports field in the database.
+	FieldOutboundUdpports = "outbound_udpports"
+	// FieldProxy holds the string denoting the proxy field in the database.
+	FieldProxy = "proxy"
 	// EdgeHosts holds the string denoting the hosts edge name in mutations.
 	EdgeHosts = "hosts"
 	// Table holds the table name of the subnet in the database.
@@ -27,6 +33,15 @@ var Columns = []string{
 	FieldID,
 	FieldCidr,
 	FieldMask,
+	FieldOutboundTcpports,
+	FieldOutboundUdpports,
+	FieldProxy,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "subnets"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"services_subnet",
 }
 
 var (
@@ -39,6 +54,11 @@ var (
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}

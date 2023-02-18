@@ -16,6 +16,9 @@ func (Subnet) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("cidr"),
 		field.Bytes("mask").Optional(),
+		field.Strings("outbound_tcpports").Optional(),
+		field.Strings("outbound_udpports").Optional(),
+		field.Bool("proxy").Optional(),
 	}
 }
 

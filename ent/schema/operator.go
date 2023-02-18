@@ -25,5 +25,22 @@ func (Operator) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("projects", Project.Type).
 			Ref("operators"),
+		edge.To("tasks", Task.Type),
 	}
 }
+
+/*
+// Policy defines the privacy policy of the User.
+func (Operator) Policy() ent.Policy {
+	return privacy.Policy{
+		Mutation: privacy.MutationPolicy{
+			// Deny if not set otherwise.
+			privacy.AlwaysDenyRule(),
+		},
+		Query: privacy.QueryPolicy{
+			// Allow any viewer to read anything.
+			privacy.AlwaysAllowRule(),
+		},
+	}
+}
+*/

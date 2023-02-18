@@ -15,9 +15,9 @@ var (
 		{Name: "os", Type: field.TypeString, Default: "unknown"},
 		{Name: "arch", Type: field.TypeString, Default: "unknown"},
 		{Name: "version", Type: field.TypeString, Default: "unknown"},
-		{Name: "localaddress", Type: field.TypeString, Default: "unknown"},
+		{Name: "net_interfaces", Type: field.TypeJSON, Nullable: true},
 		{Name: "machinepass", Type: field.TypeString, Nullable: true},
-		{Name: "certificates", Type: field.TypeString, Nullable: true},
+		{Name: "certificates", Type: field.TypeJSON, Nullable: true},
 		{Name: "domain_devices", Type: field.TypeInt, Nullable: true},
 	}
 	// DevicesTable holds the schema information for the "devices" table.
@@ -126,6 +126,10 @@ var (
 	// ProjectsColumns holds the columns for the "projects" table.
 	ProjectsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "objective", Type: field.TypeString, Nullable: true},
+		{Name: "end_date", Type: field.TypeTime, Nullable: true},
+		{Name: "start_date", Type: field.TypeTime, Nullable: true},
 	}
 	// ProjectsTable holds the schema information for the "projects" table.
 	ProjectsTable = &schema.Table{
@@ -141,6 +145,8 @@ var (
 		{Name: "codename", Type: field.TypeString},
 		{Name: "key", Type: field.TypeString},
 		{Name: "usercontext", Type: field.TypeString, Nullable: true},
+		{Name: "comms", Type: field.TypeString, Nullable: true},
+		{Name: "comms_inspected", Type: field.TypeBool, Nullable: true},
 		{Name: "beacontime", Type: field.TypeString, Nullable: true},
 		{Name: "burned", Type: field.TypeBool, Default: false},
 		{Name: "alive", Type: field.TypeBool, Default: true},
@@ -148,7 +154,6 @@ var (
 		{Name: "lastseen", Type: field.TypeTime},
 		{Name: "device_rodents", Type: field.TypeInt, Nullable: true},
 		{Name: "project_rodents", Type: field.TypeInt, Nullable: true},
-		{Name: "router_rodents", Type: field.TypeInt, Nullable: true},
 		{Name: "user_rodents", Type: field.TypeInt, Nullable: true},
 	}
 	// RodentsTable holds the schema information for the "rodents" table.
@@ -159,25 +164,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "rodents_devices_rodents",
-				Columns:    []*schema.Column{RodentsColumns[11]},
+				Columns:    []*schema.Column{RodentsColumns[13]},
 				RefColumns: []*schema.Column{DevicesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "rodents_projects_rodents",
-				Columns:    []*schema.Column{RodentsColumns[12]},
+				Columns:    []*schema.Column{RodentsColumns[14]},
 				RefColumns: []*schema.Column{ProjectsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "rodents_routers_rodents",
-				Columns:    []*schema.Column{RodentsColumns[13]},
-				RefColumns: []*schema.Column{RoutersColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
 				Symbol:     "rodents_users_rodents",
-				Columns:    []*schema.Column{RodentsColumns[14]},
+				Columns:    []*schema.Column{RodentsColumns[15]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -190,24 +189,57 @@ var (
 		{Name: "privkey", Type: field.TypeBytes, Nullable: true},
 		{Name: "cert", Type: field.TypeBytes, Nullable: true},
 		{Name: "commands", Type: field.TypeJSON, Nullable: true},
+		{Name: "project_routers", Type: field.TypeInt, Nullable: true},
 	}
 	// RoutersTable holds the schema information for the "routers" table.
 	RoutersTable = &schema.Table{
 		Name:       "routers",
 		Columns:    RoutersColumns,
 		PrimaryKey: []*schema.Column{RoutersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "routers_projects_routers",
+				Columns:    []*schema.Column{RoutersColumns[5]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// ServicesColumns holds the columns for the "services" table.
+	ServicesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "service_name", Type: field.TypeString},
+		{Name: "port", Type: field.TypeString},
+	}
+	// ServicesTable holds the schema information for the "services" table.
+	ServicesTable = &schema.Table{
+		Name:       "services",
+		Columns:    ServicesColumns,
+		PrimaryKey: []*schema.Column{ServicesColumns[0]},
 	}
 	// SubnetsColumns holds the columns for the "subnets" table.
 	SubnetsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "cidr", Type: field.TypeString},
 		{Name: "mask", Type: field.TypeBytes, Nullable: true},
+		{Name: "outbound_tcpports", Type: field.TypeJSON, Nullable: true},
+		{Name: "outbound_udpports", Type: field.TypeJSON, Nullable: true},
+		{Name: "proxy", Type: field.TypeBool, Nullable: true},
+		{Name: "services_subnet", Type: field.TypeInt, Nullable: true},
 	}
 	// SubnetsTable holds the schema information for the "subnets" table.
 	SubnetsTable = &schema.Table{
 		Name:       "subnets",
 		Columns:    SubnetsColumns,
 		PrimaryKey: []*schema.Column{SubnetsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "subnets_services_subnet",
+				Columns:    []*schema.Column{SubnetsColumns[6]},
+				RefColumns: []*schema.Column{ServicesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// TasksColumns holds the columns for the "tasks" table.
 	TasksColumns = []*schema.Column{
@@ -222,6 +254,7 @@ var (
 		{Name: "requestedat", Type: field.TypeTime},
 		{Name: "completedat", Type: field.TypeTime, Nullable: true},
 		{Name: "tt_ps", Type: field.TypeJSON, Nullable: true},
+		{Name: "operator_tasks", Type: field.TypeInt, Nullable: true},
 		{Name: "rodent_tasks", Type: field.TypeInt, Nullable: true},
 	}
 	// TasksTable holds the schema information for the "tasks" table.
@@ -231,8 +264,14 @@ var (
 		PrimaryKey: []*schema.Column{TasksColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "tasks_rodents_tasks",
+				Symbol:     "tasks_operators_tasks",
 				Columns:    []*schema.Column{TasksColumns[11]},
+				RefColumns: []*schema.Column{OperatorsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "tasks_rodents_tasks",
+				Columns:    []*schema.Column{TasksColumns[12]},
 				RefColumns: []*schema.Column{RodentsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -364,6 +403,56 @@ var (
 			},
 		},
 	}
+	// RouterRodentsColumns holds the columns for the "router_rodents" table.
+	RouterRodentsColumns = []*schema.Column{
+		{Name: "router_id", Type: field.TypeInt},
+		{Name: "rodent_id", Type: field.TypeInt},
+	}
+	// RouterRodentsTable holds the schema information for the "router_rodents" table.
+	RouterRodentsTable = &schema.Table{
+		Name:       "router_rodents",
+		Columns:    RouterRodentsColumns,
+		PrimaryKey: []*schema.Column{RouterRodentsColumns[0], RouterRodentsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "router_rodents_router_id",
+				Columns:    []*schema.Column{RouterRodentsColumns[0]},
+				RefColumns: []*schema.Column{RoutersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "router_rodents_rodent_id",
+				Columns:    []*schema.Column{RouterRodentsColumns[1]},
+				RefColumns: []*schema.Column{RodentsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// ServicesDevicesColumns holds the columns for the "services_devices" table.
+	ServicesDevicesColumns = []*schema.Column{
+		{Name: "services_id", Type: field.TypeInt},
+		{Name: "device_id", Type: field.TypeInt},
+	}
+	// ServicesDevicesTable holds the schema information for the "services_devices" table.
+	ServicesDevicesTable = &schema.Table{
+		Name:       "services_devices",
+		Columns:    ServicesDevicesColumns,
+		PrimaryKey: []*schema.Column{ServicesDevicesColumns[0], ServicesDevicesColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "services_devices_services_id",
+				Columns:    []*schema.Column{ServicesDevicesColumns[0]},
+				RefColumns: []*schema.Column{ServicesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "services_devices_device_id",
+				Columns:    []*schema.Column{ServicesDevicesColumns[1]},
+				RefColumns: []*schema.Column{DevicesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// SubnetHostsColumns holds the columns for the "subnet_hosts" table.
 	SubnetHostsColumns = []*schema.Column{
 		{Name: "subnet_id", Type: field.TypeInt},
@@ -399,6 +488,7 @@ var (
 		ProjectsTable,
 		RodentsTable,
 		RoutersTable,
+		ServicesTable,
 		SubnetsTable,
 		TasksTable,
 		UsersTable,
@@ -406,6 +496,8 @@ var (
 		GroupDevicesTable,
 		GroupUsersTable,
 		ProjectOperatorsTable,
+		RouterRodentsTable,
+		ServicesDevicesTable,
 		SubnetHostsTable,
 	}
 )
@@ -418,9 +510,11 @@ func init() {
 	LootsTable.ForeignKeys[1].RefTable = TasksTable
 	RodentsTable.ForeignKeys[0].RefTable = DevicesTable
 	RodentsTable.ForeignKeys[1].RefTable = ProjectsTable
-	RodentsTable.ForeignKeys[2].RefTable = RoutersTable
-	RodentsTable.ForeignKeys[3].RefTable = UsersTable
-	TasksTable.ForeignKeys[0].RefTable = RodentsTable
+	RodentsTable.ForeignKeys[2].RefTable = UsersTable
+	RoutersTable.ForeignKeys[0].RefTable = ProjectsTable
+	SubnetsTable.ForeignKeys[0].RefTable = ServicesTable
+	TasksTable.ForeignKeys[0].RefTable = OperatorsTable
+	TasksTable.ForeignKeys[1].RefTable = RodentsTable
 	UsersTable.ForeignKeys[0].RefTable = DomainsTable
 	DeviceUsersTable.ForeignKeys[0].RefTable = DevicesTable
 	DeviceUsersTable.ForeignKeys[1].RefTable = UsersTable
@@ -430,6 +524,10 @@ func init() {
 	GroupUsersTable.ForeignKeys[1].RefTable = UsersTable
 	ProjectOperatorsTable.ForeignKeys[0].RefTable = ProjectsTable
 	ProjectOperatorsTable.ForeignKeys[1].RefTable = OperatorsTable
+	RouterRodentsTable.ForeignKeys[0].RefTable = RoutersTable
+	RouterRodentsTable.ForeignKeys[1].RefTable = RodentsTable
+	ServicesDevicesTable.ForeignKeys[0].RefTable = ServicesTable
+	ServicesDevicesTable.ForeignKeys[1].RefTable = DevicesTable
 	SubnetHostsTable.ForeignKeys[0].RefTable = SubnetsTable
 	SubnetHostsTable.ForeignKeys[1].RefTable = DevicesTable
 }

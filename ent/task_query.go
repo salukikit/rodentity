@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/salukikit/rodentity/ent/loot"
+	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/task"
@@ -20,13 +21,14 @@ import (
 // TaskQuery is the builder for querying Task entities.
 type TaskQuery struct {
 	config
-	ctx        *QueryContext
-	order      []OrderFunc
-	inters     []Interceptor
-	predicates []predicate.Task
-	withRodent *RodentQuery
-	withLoot   *LootQuery
-	withFKs    bool
+	ctx          *QueryContext
+	order        []OrderFunc
+	inters       []Interceptor
+	predicates   []predicate.Task
+	withRodent   *RodentQuery
+	withOperator *OperatorQuery
+	withLoot     *LootQuery
+	withFKs      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -78,6 +80,28 @@ func (tq *TaskQuery) QueryRodent() *RodentQuery {
 			sqlgraph.From(task.Table, task.FieldID, selector),
 			sqlgraph.To(rodent.Table, rodent.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, task.RodentTable, task.RodentColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryOperator chains the current query on the "operator" edge.
+func (tq *TaskQuery) QueryOperator() *OperatorQuery {
+	query := (&OperatorClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(task.Table, task.FieldID, selector),
+			sqlgraph.To(operator.Table, operator.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, task.OperatorTable, task.OperatorColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -294,13 +318,14 @@ func (tq *TaskQuery) Clone() *TaskQuery {
 		return nil
 	}
 	return &TaskQuery{
-		config:     tq.config,
-		ctx:        tq.ctx.Clone(),
-		order:      append([]OrderFunc{}, tq.order...),
-		inters:     append([]Interceptor{}, tq.inters...),
-		predicates: append([]predicate.Task{}, tq.predicates...),
-		withRodent: tq.withRodent.Clone(),
-		withLoot:   tq.withLoot.Clone(),
+		config:       tq.config,
+		ctx:          tq.ctx.Clone(),
+		order:        append([]OrderFunc{}, tq.order...),
+		inters:       append([]Interceptor{}, tq.inters...),
+		predicates:   append([]predicate.Task{}, tq.predicates...),
+		withRodent:   tq.withRodent.Clone(),
+		withOperator: tq.withOperator.Clone(),
+		withLoot:     tq.withLoot.Clone(),
 		// clone intermediate query.
 		sql:  tq.sql.Clone(),
 		path: tq.path,
@@ -315,6 +340,17 @@ func (tq *TaskQuery) WithRodent(opts ...func(*RodentQuery)) *TaskQuery {
 		opt(query)
 	}
 	tq.withRodent = query
+	return tq
+}
+
+// WithOperator tells the query-builder to eager-load the nodes that are connected to
+// the "operator" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TaskQuery) WithOperator(opts ...func(*OperatorQuery)) *TaskQuery {
+	query := (&OperatorClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withOperator = query
 	return tq
 }
 
@@ -408,12 +444,13 @@ func (tq *TaskQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Task, e
 		nodes       = []*Task{}
 		withFKs     = tq.withFKs
 		_spec       = tq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			tq.withRodent != nil,
+			tq.withOperator != nil,
 			tq.withLoot != nil,
 		}
 	)
-	if tq.withRodent != nil {
+	if tq.withRodent != nil || tq.withOperator != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -440,6 +477,12 @@ func (tq *TaskQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Task, e
 	if query := tq.withRodent; query != nil {
 		if err := tq.loadRodent(ctx, query, nodes, nil,
 			func(n *Task, e *Rodent) { n.Edges.Rodent = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withOperator; query != nil {
+		if err := tq.loadOperator(ctx, query, nodes, nil,
+			func(n *Task, e *Operator) { n.Edges.Operator = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -478,6 +521,38 @@ func (tq *TaskQuery) loadRodent(ctx context.Context, query *RodentQuery, nodes [
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "rodent_tasks" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (tq *TaskQuery) loadOperator(ctx context.Context, query *OperatorQuery, nodes []*Task, init func(*Task), assign func(*Task, *Operator)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Task)
+	for i := range nodes {
+		if nodes[i].operator_tasks == nil {
+			continue
+		}
+		fk := *nodes[i].operator_tasks
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(operator.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "operator_tasks" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

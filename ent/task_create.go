@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/salukikit/rodentity/ent/loot"
+	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/task"
 )
@@ -131,6 +132,25 @@ func (tc *TaskCreate) SetNillableRodentID(id *int) *TaskCreate {
 // SetRodent sets the "rodent" edge to the Rodent entity.
 func (tc *TaskCreate) SetRodent(r *Rodent) *TaskCreate {
 	return tc.SetRodentID(r.ID)
+}
+
+// SetOperatorID sets the "operator" edge to the Operator entity by ID.
+func (tc *TaskCreate) SetOperatorID(id int) *TaskCreate {
+	tc.mutation.SetOperatorID(id)
+	return tc
+}
+
+// SetNillableOperatorID sets the "operator" edge to the Operator entity by ID if the given value is not nil.
+func (tc *TaskCreate) SetNillableOperatorID(id *int) *TaskCreate {
+	if id != nil {
+		tc = tc.SetOperatorID(*id)
+	}
+	return tc
+}
+
+// SetOperator sets the "operator" edge to the Operator entity.
+func (tc *TaskCreate) SetOperator(o *Operator) *TaskCreate {
+	return tc.SetOperatorID(o.ID)
 }
 
 // AddLootIDs adds the "loot" edge to the Loot entity by IDs.
@@ -298,6 +318,26 @@ func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.rodent_tasks = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.OperatorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   task.OperatorTable,
+			Columns: []string{task.OperatorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: operator.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.operator_tasks = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := tc.mutation.LootIDs(); len(nodes) > 0 {

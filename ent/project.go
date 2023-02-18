@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/salukikit/rodentity/ent/project"
@@ -12,9 +13,17 @@ import (
 
 // Project is the model entity for the Project schema.
 type Project struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
+	// Objective holds the value of the "objective" field.
+	Objective string `json:"objective,omitempty"`
+	// EndDate holds the value of the "end_date" field.
+	EndDate time.Time `json:"end_date,omitempty"`
+	// StartDate holds the value of the "start_date" field.
+	StartDate time.Time `json:"start_date,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ProjectQuery when eager-loading is set.
 	Edges ProjectEdges `json:"edges"`
@@ -26,9 +35,11 @@ type ProjectEdges struct {
 	Operators []*Operator `json:"operators,omitempty"`
 	// Rodents holds the value of the rodents edge.
 	Rodents []*Rodent `json:"rodents,omitempty"`
+	// Routers holds the value of the routers edge.
+	Routers []*Router `json:"routers,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // OperatorsOrErr returns the Operators value or an error if the edge
@@ -49,6 +60,15 @@ func (e ProjectEdges) RodentsOrErr() ([]*Rodent, error) {
 	return nil, &NotLoadedError{edge: "rodents"}
 }
 
+// RoutersOrErr returns the Routers value or an error if the edge
+// was not loaded in eager-loading.
+func (e ProjectEdges) RoutersOrErr() ([]*Router, error) {
+	if e.loadedTypes[2] {
+		return e.Routers, nil
+	}
+	return nil, &NotLoadedError{edge: "routers"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Project) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -56,6 +76,10 @@ func (*Project) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case project.FieldID:
 			values[i] = new(sql.NullInt64)
+		case project.FieldName, project.FieldObjective:
+			values[i] = new(sql.NullString)
+		case project.FieldEndDate, project.FieldStartDate:
+			values[i] = new(sql.NullTime)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Project", columns[i])
 		}
@@ -77,6 +101,30 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			pr.ID = int(value.Int64)
+		case project.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				pr.Name = value.String
+			}
+		case project.FieldObjective:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field objective", values[i])
+			} else if value.Valid {
+				pr.Objective = value.String
+			}
+		case project.FieldEndDate:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field end_date", values[i])
+			} else if value.Valid {
+				pr.EndDate = value.Time
+			}
+		case project.FieldStartDate:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field start_date", values[i])
+			} else if value.Valid {
+				pr.StartDate = value.Time
+			}
 		}
 	}
 	return nil
@@ -90,6 +138,11 @@ func (pr *Project) QueryOperators() *OperatorQuery {
 // QueryRodents queries the "rodents" edge of the Project entity.
 func (pr *Project) QueryRodents() *RodentQuery {
 	return NewProjectClient(pr.config).QueryRodents(pr)
+}
+
+// QueryRouters queries the "routers" edge of the Project entity.
+func (pr *Project) QueryRouters() *RouterQuery {
+	return NewProjectClient(pr.config).QueryRouters(pr)
 }
 
 // Update returns a builder for updating this Project.
@@ -114,7 +167,18 @@ func (pr *Project) Unwrap() *Project {
 func (pr *Project) String() string {
 	var builder strings.Builder
 	builder.WriteString("Project(")
-	builder.WriteString(fmt.Sprintf("id=%v", pr.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", pr.ID))
+	builder.WriteString("name=")
+	builder.WriteString(pr.Name)
+	builder.WriteString(", ")
+	builder.WriteString("objective=")
+	builder.WriteString(pr.Objective)
+	builder.WriteString(", ")
+	builder.WriteString("end_date=")
+	builder.WriteString(pr.EndDate.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("start_date=")
+	builder.WriteString(pr.StartDate.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

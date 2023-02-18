@@ -13,56 +13,57 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/predicate"
+	"github.com/salukikit/rodentity/ent/services"
 	"github.com/salukikit/rodentity/ent/subnet"
 )
 
-// SubnetQuery is the builder for querying Subnet entities.
-type SubnetQuery struct {
+// ServicesQuery is the builder for querying Services entities.
+type ServicesQuery struct {
 	config
-	ctx        *QueryContext
-	order      []OrderFunc
-	inters     []Interceptor
-	predicates []predicate.Subnet
-	withHosts  *DeviceQuery
-	withFKs    bool
+	ctx         *QueryContext
+	order       []OrderFunc
+	inters      []Interceptor
+	predicates  []predicate.Services
+	withDevices *DeviceQuery
+	withSubnet  *SubnetQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the SubnetQuery builder.
-func (sq *SubnetQuery) Where(ps ...predicate.Subnet) *SubnetQuery {
+// Where adds a new predicate for the ServicesQuery builder.
+func (sq *ServicesQuery) Where(ps ...predicate.Services) *ServicesQuery {
 	sq.predicates = append(sq.predicates, ps...)
 	return sq
 }
 
 // Limit the number of records to be returned by this query.
-func (sq *SubnetQuery) Limit(limit int) *SubnetQuery {
+func (sq *ServicesQuery) Limit(limit int) *ServicesQuery {
 	sq.ctx.Limit = &limit
 	return sq
 }
 
 // Offset to start from.
-func (sq *SubnetQuery) Offset(offset int) *SubnetQuery {
+func (sq *ServicesQuery) Offset(offset int) *ServicesQuery {
 	sq.ctx.Offset = &offset
 	return sq
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (sq *SubnetQuery) Unique(unique bool) *SubnetQuery {
+func (sq *ServicesQuery) Unique(unique bool) *ServicesQuery {
 	sq.ctx.Unique = &unique
 	return sq
 }
 
 // Order specifies how the records should be ordered.
-func (sq *SubnetQuery) Order(o ...OrderFunc) *SubnetQuery {
+func (sq *ServicesQuery) Order(o ...OrderFunc) *ServicesQuery {
 	sq.order = append(sq.order, o...)
 	return sq
 }
 
-// QueryHosts chains the current query on the "hosts" edge.
-func (sq *SubnetQuery) QueryHosts() *DeviceQuery {
+// QueryDevices chains the current query on the "devices" edge.
+func (sq *ServicesQuery) QueryDevices() *DeviceQuery {
 	query := (&DeviceClient{config: sq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := sq.prepareQuery(ctx); err != nil {
@@ -73,9 +74,9 @@ func (sq *SubnetQuery) QueryHosts() *DeviceQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(subnet.Table, subnet.FieldID, selector),
+			sqlgraph.From(services.Table, services.FieldID, selector),
 			sqlgraph.To(device.Table, device.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, subnet.HostsTable, subnet.HostsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2M, false, services.DevicesTable, services.DevicesPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 		return fromU, nil
@@ -83,21 +84,43 @@ func (sq *SubnetQuery) QueryHosts() *DeviceQuery {
 	return query
 }
 
-// First returns the first Subnet entity from the query.
-// Returns a *NotFoundError when no Subnet was found.
-func (sq *SubnetQuery) First(ctx context.Context) (*Subnet, error) {
+// QuerySubnet chains the current query on the "subnet" edge.
+func (sq *ServicesQuery) QuerySubnet() *SubnetQuery {
+	query := (&SubnetClient{config: sq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(services.Table, services.FieldID, selector),
+			sqlgraph.To(subnet.Table, subnet.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, services.SubnetTable, services.SubnetColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// First returns the first Services entity from the query.
+// Returns a *NotFoundError when no Services was found.
+func (sq *ServicesQuery) First(ctx context.Context) (*Services, error) {
 	nodes, err := sq.Limit(1).All(setContextOp(ctx, sq.ctx, "First"))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{subnet.Label}
+		return nil, &NotFoundError{services.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (sq *SubnetQuery) FirstX(ctx context.Context) *Subnet {
+func (sq *ServicesQuery) FirstX(ctx context.Context) *Services {
 	node, err := sq.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -105,22 +128,22 @@ func (sq *SubnetQuery) FirstX(ctx context.Context) *Subnet {
 	return node
 }
 
-// FirstID returns the first Subnet ID from the query.
-// Returns a *NotFoundError when no Subnet ID was found.
-func (sq *SubnetQuery) FirstID(ctx context.Context) (id int, err error) {
+// FirstID returns the first Services ID from the query.
+// Returns a *NotFoundError when no Services ID was found.
+func (sq *ServicesQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = sq.Limit(1).IDs(setContextOp(ctx, sq.ctx, "FirstID")); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{subnet.Label}
+		err = &NotFoundError{services.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (sq *SubnetQuery) FirstIDX(ctx context.Context) int {
+func (sq *ServicesQuery) FirstIDX(ctx context.Context) int {
 	id, err := sq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -128,10 +151,10 @@ func (sq *SubnetQuery) FirstIDX(ctx context.Context) int {
 	return id
 }
 
-// Only returns a single Subnet entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Subnet entity is found.
-// Returns a *NotFoundError when no Subnet entities are found.
-func (sq *SubnetQuery) Only(ctx context.Context) (*Subnet, error) {
+// Only returns a single Services entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Services entity is found.
+// Returns a *NotFoundError when no Services entities are found.
+func (sq *ServicesQuery) Only(ctx context.Context) (*Services, error) {
 	nodes, err := sq.Limit(2).All(setContextOp(ctx, sq.ctx, "Only"))
 	if err != nil {
 		return nil, err
@@ -140,14 +163,14 @@ func (sq *SubnetQuery) Only(ctx context.Context) (*Subnet, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{subnet.Label}
+		return nil, &NotFoundError{services.Label}
 	default:
-		return nil, &NotSingularError{subnet.Label}
+		return nil, &NotSingularError{services.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (sq *SubnetQuery) OnlyX(ctx context.Context) *Subnet {
+func (sq *ServicesQuery) OnlyX(ctx context.Context) *Services {
 	node, err := sq.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -155,10 +178,10 @@ func (sq *SubnetQuery) OnlyX(ctx context.Context) *Subnet {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Subnet ID in the query.
-// Returns a *NotSingularError when more than one Subnet ID is found.
+// OnlyID is like Only, but returns the only Services ID in the query.
+// Returns a *NotSingularError when more than one Services ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (sq *SubnetQuery) OnlyID(ctx context.Context) (id int, err error) {
+func (sq *ServicesQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = sq.Limit(2).IDs(setContextOp(ctx, sq.ctx, "OnlyID")); err != nil {
 		return
@@ -167,15 +190,15 @@ func (sq *SubnetQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{subnet.Label}
+		err = &NotFoundError{services.Label}
 	default:
-		err = &NotSingularError{subnet.Label}
+		err = &NotSingularError{services.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (sq *SubnetQuery) OnlyIDX(ctx context.Context) int {
+func (sq *ServicesQuery) OnlyIDX(ctx context.Context) int {
 	id, err := sq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -183,18 +206,18 @@ func (sq *SubnetQuery) OnlyIDX(ctx context.Context) int {
 	return id
 }
 
-// All executes the query and returns a list of Subnets.
-func (sq *SubnetQuery) All(ctx context.Context) ([]*Subnet, error) {
+// All executes the query and returns a list of ServicesSlice.
+func (sq *ServicesQuery) All(ctx context.Context) ([]*Services, error) {
 	ctx = setContextOp(ctx, sq.ctx, "All")
 	if err := sq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Subnet, *SubnetQuery]()
-	return withInterceptors[[]*Subnet](ctx, sq, qr, sq.inters)
+	qr := querierAll[[]*Services, *ServicesQuery]()
+	return withInterceptors[[]*Services](ctx, sq, qr, sq.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (sq *SubnetQuery) AllX(ctx context.Context) []*Subnet {
+func (sq *ServicesQuery) AllX(ctx context.Context) []*Services {
 	nodes, err := sq.All(ctx)
 	if err != nil {
 		panic(err)
@@ -202,20 +225,20 @@ func (sq *SubnetQuery) AllX(ctx context.Context) []*Subnet {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Subnet IDs.
-func (sq *SubnetQuery) IDs(ctx context.Context) (ids []int, err error) {
+// IDs executes the query and returns a list of Services IDs.
+func (sq *ServicesQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if sq.ctx.Unique == nil && sq.path != nil {
 		sq.Unique(true)
 	}
 	ctx = setContextOp(ctx, sq.ctx, "IDs")
-	if err = sq.Select(subnet.FieldID).Scan(ctx, &ids); err != nil {
+	if err = sq.Select(services.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (sq *SubnetQuery) IDsX(ctx context.Context) []int {
+func (sq *ServicesQuery) IDsX(ctx context.Context) []int {
 	ids, err := sq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -224,16 +247,16 @@ func (sq *SubnetQuery) IDsX(ctx context.Context) []int {
 }
 
 // Count returns the count of the given query.
-func (sq *SubnetQuery) Count(ctx context.Context) (int, error) {
+func (sq *ServicesQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, sq.ctx, "Count")
 	if err := sq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, sq, querierCount[*SubnetQuery](), sq.inters)
+	return withInterceptors[int](ctx, sq, querierCount[*ServicesQuery](), sq.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (sq *SubnetQuery) CountX(ctx context.Context) int {
+func (sq *ServicesQuery) CountX(ctx context.Context) int {
 	count, err := sq.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -242,7 +265,7 @@ func (sq *SubnetQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (sq *SubnetQuery) Exist(ctx context.Context) (bool, error) {
+func (sq *ServicesQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, sq.ctx, "Exist")
 	switch _, err := sq.FirstID(ctx); {
 	case IsNotFound(err):
@@ -255,7 +278,7 @@ func (sq *SubnetQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (sq *SubnetQuery) ExistX(ctx context.Context) bool {
+func (sq *ServicesQuery) ExistX(ctx context.Context) bool {
 	exist, err := sq.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -263,33 +286,45 @@ func (sq *SubnetQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the SubnetQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the ServicesQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (sq *SubnetQuery) Clone() *SubnetQuery {
+func (sq *ServicesQuery) Clone() *ServicesQuery {
 	if sq == nil {
 		return nil
 	}
-	return &SubnetQuery{
-		config:     sq.config,
-		ctx:        sq.ctx.Clone(),
-		order:      append([]OrderFunc{}, sq.order...),
-		inters:     append([]Interceptor{}, sq.inters...),
-		predicates: append([]predicate.Subnet{}, sq.predicates...),
-		withHosts:  sq.withHosts.Clone(),
+	return &ServicesQuery{
+		config:      sq.config,
+		ctx:         sq.ctx.Clone(),
+		order:       append([]OrderFunc{}, sq.order...),
+		inters:      append([]Interceptor{}, sq.inters...),
+		predicates:  append([]predicate.Services{}, sq.predicates...),
+		withDevices: sq.withDevices.Clone(),
+		withSubnet:  sq.withSubnet.Clone(),
 		// clone intermediate query.
 		sql:  sq.sql.Clone(),
 		path: sq.path,
 	}
 }
 
-// WithHosts tells the query-builder to eager-load the nodes that are connected to
-// the "hosts" edge. The optional arguments are used to configure the query builder of the edge.
-func (sq *SubnetQuery) WithHosts(opts ...func(*DeviceQuery)) *SubnetQuery {
+// WithDevices tells the query-builder to eager-load the nodes that are connected to
+// the "devices" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ServicesQuery) WithDevices(opts ...func(*DeviceQuery)) *ServicesQuery {
 	query := (&DeviceClient{config: sq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	sq.withHosts = query
+	sq.withDevices = query
+	return sq
+}
+
+// WithSubnet tells the query-builder to eager-load the nodes that are connected to
+// the "subnet" edge. The optional arguments are used to configure the query builder of the edge.
+func (sq *ServicesQuery) WithSubnet(opts ...func(*SubnetQuery)) *ServicesQuery {
+	query := (&SubnetClient{config: sq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withSubnet = query
 	return sq
 }
 
@@ -299,19 +334,19 @@ func (sq *SubnetQuery) WithHosts(opts ...func(*DeviceQuery)) *SubnetQuery {
 // Example:
 //
 //	var v []struct {
-//		Cidr string `json:"cidr,omitempty"`
+//		ServiceName string `json:"service_name,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Subnet.Query().
-//		GroupBy(subnet.FieldCidr).
+//	client.Services.Query().
+//		GroupBy(services.FieldServiceName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (sq *SubnetQuery) GroupBy(field string, fields ...string) *SubnetGroupBy {
+func (sq *ServicesQuery) GroupBy(field string, fields ...string) *ServicesGroupBy {
 	sq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &SubnetGroupBy{build: sq}
+	grbuild := &ServicesGroupBy{build: sq}
 	grbuild.flds = &sq.ctx.Fields
-	grbuild.label = subnet.Label
+	grbuild.label = services.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -322,26 +357,26 @@ func (sq *SubnetQuery) GroupBy(field string, fields ...string) *SubnetGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Cidr string `json:"cidr,omitempty"`
+//		ServiceName string `json:"service_name,omitempty"`
 //	}
 //
-//	client.Subnet.Query().
-//		Select(subnet.FieldCidr).
+//	client.Services.Query().
+//		Select(services.FieldServiceName).
 //		Scan(ctx, &v)
-func (sq *SubnetQuery) Select(fields ...string) *SubnetSelect {
+func (sq *ServicesQuery) Select(fields ...string) *ServicesSelect {
 	sq.ctx.Fields = append(sq.ctx.Fields, fields...)
-	sbuild := &SubnetSelect{SubnetQuery: sq}
-	sbuild.label = subnet.Label
+	sbuild := &ServicesSelect{ServicesQuery: sq}
+	sbuild.label = services.Label
 	sbuild.flds, sbuild.scan = &sq.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a SubnetSelect configured with the given aggregations.
-func (sq *SubnetQuery) Aggregate(fns ...AggregateFunc) *SubnetSelect {
+// Aggregate returns a ServicesSelect configured with the given aggregations.
+func (sq *ServicesQuery) Aggregate(fns ...AggregateFunc) *ServicesSelect {
 	return sq.Select().Aggregate(fns...)
 }
 
-func (sq *SubnetQuery) prepareQuery(ctx context.Context) error {
+func (sq *ServicesQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range sq.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -353,7 +388,7 @@ func (sq *SubnetQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range sq.ctx.Fields {
-		if !subnet.ValidColumn(f) {
+		if !services.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -367,23 +402,20 @@ func (sq *SubnetQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (sq *SubnetQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Subnet, error) {
+func (sq *ServicesQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Services, error) {
 	var (
-		nodes       = []*Subnet{}
-		withFKs     = sq.withFKs
+		nodes       = []*Services{}
 		_spec       = sq.querySpec()
-		loadedTypes = [1]bool{
-			sq.withHosts != nil,
+		loadedTypes = [2]bool{
+			sq.withDevices != nil,
+			sq.withSubnet != nil,
 		}
 	)
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, subnet.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Subnet).scanValues(nil, columns)
+		return (*Services).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Subnet{config: sq.config}
+		node := &Services{config: sq.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -397,20 +429,27 @@ func (sq *SubnetQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Subne
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := sq.withHosts; query != nil {
-		if err := sq.loadHosts(ctx, query, nodes,
-			func(n *Subnet) { n.Edges.Hosts = []*Device{} },
-			func(n *Subnet, e *Device) { n.Edges.Hosts = append(n.Edges.Hosts, e) }); err != nil {
+	if query := sq.withDevices; query != nil {
+		if err := sq.loadDevices(ctx, query, nodes,
+			func(n *Services) { n.Edges.Devices = []*Device{} },
+			func(n *Services, e *Device) { n.Edges.Devices = append(n.Edges.Devices, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := sq.withSubnet; query != nil {
+		if err := sq.loadSubnet(ctx, query, nodes,
+			func(n *Services) { n.Edges.Subnet = []*Subnet{} },
+			func(n *Services, e *Subnet) { n.Edges.Subnet = append(n.Edges.Subnet, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (sq *SubnetQuery) loadHosts(ctx context.Context, query *DeviceQuery, nodes []*Subnet, init func(*Subnet), assign func(*Subnet, *Device)) error {
+func (sq *ServicesQuery) loadDevices(ctx context.Context, query *DeviceQuery, nodes []*Services, init func(*Services), assign func(*Services, *Device)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Subnet)
-	nids := make(map[int]map[*Subnet]struct{})
+	byID := make(map[int]*Services)
+	nids := make(map[int]map[*Services]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -419,11 +458,11 @@ func (sq *SubnetQuery) loadHosts(ctx context.Context, query *DeviceQuery, nodes 
 		}
 	}
 	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(subnet.HostsTable)
-		s.Join(joinT).On(s.C(device.FieldID), joinT.C(subnet.HostsPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(subnet.HostsPrimaryKey[0]), edgeIDs...))
+		joinT := sql.Table(services.DevicesTable)
+		s.Join(joinT).On(s.C(device.FieldID), joinT.C(services.DevicesPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(services.DevicesPrimaryKey[0]), edgeIDs...))
 		columns := s.SelectedColumns()
-		s.Select(joinT.C(subnet.HostsPrimaryKey[0]))
+		s.Select(joinT.C(services.DevicesPrimaryKey[0]))
 		s.AppendSelect(columns...)
 		s.SetDistinct(false)
 	})
@@ -445,7 +484,7 @@ func (sq *SubnetQuery) loadHosts(ctx context.Context, query *DeviceQuery, nodes 
 				outValue := int(values[0].(*sql.NullInt64).Int64)
 				inValue := int(values[1].(*sql.NullInt64).Int64)
 				if nids[inValue] == nil {
-					nids[inValue] = map[*Subnet]struct{}{byID[outValue]: {}}
+					nids[inValue] = map[*Services]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
 				}
 				nids[inValue][byID[outValue]] = struct{}{}
@@ -460,7 +499,7 @@ func (sq *SubnetQuery) loadHosts(ctx context.Context, query *DeviceQuery, nodes 
 	for _, n := range neighbors {
 		nodes, ok := nids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected "hosts" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected "devices" node returned %v`, n.ID)
 		}
 		for kn := range nodes {
 			assign(kn, n)
@@ -468,8 +507,39 @@ func (sq *SubnetQuery) loadHosts(ctx context.Context, query *DeviceQuery, nodes 
 	}
 	return nil
 }
+func (sq *ServicesQuery) loadSubnet(ctx context.Context, query *SubnetQuery, nodes []*Services, init func(*Services), assign func(*Services, *Subnet)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Services)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Subnet(func(s *sql.Selector) {
+		s.Where(sql.InValues(services.SubnetColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.services_subnet
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "services_subnet" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "services_subnet" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 
-func (sq *SubnetQuery) sqlCount(ctx context.Context) (int, error) {
+func (sq *ServicesQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := sq.querySpec()
 	_spec.Node.Columns = sq.ctx.Fields
 	if len(sq.ctx.Fields) > 0 {
@@ -478,8 +548,8 @@ func (sq *SubnetQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, sq.driver, _spec)
 }
 
-func (sq *SubnetQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(subnet.Table, subnet.Columns, sqlgraph.NewFieldSpec(subnet.FieldID, field.TypeInt))
+func (sq *ServicesQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(services.Table, services.Columns, sqlgraph.NewFieldSpec(services.FieldID, field.TypeInt))
 	_spec.From = sq.sql
 	if unique := sq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -488,9 +558,9 @@ func (sq *SubnetQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := sq.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, subnet.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, services.FieldID)
 		for i := range fields {
-			if fields[i] != subnet.FieldID {
+			if fields[i] != services.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -518,12 +588,12 @@ func (sq *SubnetQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (sq *SubnetQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (sq *ServicesQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(sq.driver.Dialect())
-	t1 := builder.Table(subnet.Table)
+	t1 := builder.Table(services.Table)
 	columns := sq.ctx.Fields
 	if len(columns) == 0 {
-		columns = subnet.Columns
+		columns = services.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if sq.sql != nil {
@@ -550,28 +620,28 @@ func (sq *SubnetQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// SubnetGroupBy is the group-by builder for Subnet entities.
-type SubnetGroupBy struct {
+// ServicesGroupBy is the group-by builder for Services entities.
+type ServicesGroupBy struct {
 	selector
-	build *SubnetQuery
+	build *ServicesQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (sgb *SubnetGroupBy) Aggregate(fns ...AggregateFunc) *SubnetGroupBy {
+func (sgb *ServicesGroupBy) Aggregate(fns ...AggregateFunc) *ServicesGroupBy {
 	sgb.fns = append(sgb.fns, fns...)
 	return sgb
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (sgb *SubnetGroupBy) Scan(ctx context.Context, v any) error {
+func (sgb *ServicesGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, sgb.build.ctx, "GroupBy")
 	if err := sgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*SubnetQuery, *SubnetGroupBy](ctx, sgb.build, sgb, sgb.build.inters, v)
+	return scanWithInterceptors[*ServicesQuery, *ServicesGroupBy](ctx, sgb.build, sgb, sgb.build.inters, v)
 }
 
-func (sgb *SubnetGroupBy) sqlScan(ctx context.Context, root *SubnetQuery, v any) error {
+func (sgb *ServicesGroupBy) sqlScan(ctx context.Context, root *ServicesQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(sgb.fns))
 	for _, fn := range sgb.fns {
@@ -598,28 +668,28 @@ func (sgb *SubnetGroupBy) sqlScan(ctx context.Context, root *SubnetQuery, v any)
 	return sql.ScanSlice(rows, v)
 }
 
-// SubnetSelect is the builder for selecting fields of Subnet entities.
-type SubnetSelect struct {
-	*SubnetQuery
+// ServicesSelect is the builder for selecting fields of Services entities.
+type ServicesSelect struct {
+	*ServicesQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (ss *SubnetSelect) Aggregate(fns ...AggregateFunc) *SubnetSelect {
+func (ss *ServicesSelect) Aggregate(fns ...AggregateFunc) *ServicesSelect {
 	ss.fns = append(ss.fns, fns...)
 	return ss
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (ss *SubnetSelect) Scan(ctx context.Context, v any) error {
+func (ss *ServicesSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, ss.ctx, "Select")
 	if err := ss.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*SubnetQuery, *SubnetSelect](ctx, ss.SubnetQuery, ss, ss.inters, v)
+	return scanWithInterceptors[*ServicesQuery, *ServicesSelect](ctx, ss.ServicesQuery, ss, ss.inters, v)
 }
 
-func (ss *SubnetSelect) sqlScan(ctx context.Context, root *SubnetQuery, v any) error {
+func (ss *ServicesSelect) sqlScan(ctx context.Context, root *ServicesQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(ss.fns))
 	for _, fn := range ss.fns {

@@ -105,6 +105,18 @@ func (f RouterFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RouterMutation", m)
 }
 
+// The ServicesFunc type is an adapter to allow the use of ordinary
+// function as Services mutator.
+type ServicesFunc func(context.Context, *ent.ServicesMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ServicesFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ServicesMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ServicesMutation", m)
+}
+
 // The SubnetFunc type is an adapter to allow the use of ordinary
 // function as Subnet mutator.
 type SubnetFunc func(context.Context, *ent.SubnetMutation) (ent.Value, error)

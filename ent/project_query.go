@@ -15,6 +15,7 @@ import (
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/router"
 )
 
 // ProjectQuery is the builder for querying Project entities.
@@ -26,6 +27,7 @@ type ProjectQuery struct {
 	predicates    []predicate.Project
 	withOperators *OperatorQuery
 	withRodents   *RodentQuery
+	withRouters   *RouterQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -99,6 +101,28 @@ func (pq *ProjectQuery) QueryRodents() *RodentQuery {
 			sqlgraph.From(project.Table, project.FieldID, selector),
 			sqlgraph.To(rodent.Table, rodent.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, project.RodentsTable, project.RodentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRouters chains the current query on the "routers" edge.
+func (pq *ProjectQuery) QueryRouters() *RouterQuery {
+	query := (&RouterClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, selector),
+			sqlgraph.To(router.Table, router.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.RoutersTable, project.RoutersColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
 		return fromU, nil
@@ -300,6 +324,7 @@ func (pq *ProjectQuery) Clone() *ProjectQuery {
 		predicates:    append([]predicate.Project{}, pq.predicates...),
 		withOperators: pq.withOperators.Clone(),
 		withRodents:   pq.withRodents.Clone(),
+		withRouters:   pq.withRouters.Clone(),
 		// clone intermediate query.
 		sql:  pq.sql.Clone(),
 		path: pq.path,
@@ -328,8 +353,31 @@ func (pq *ProjectQuery) WithRodents(opts ...func(*RodentQuery)) *ProjectQuery {
 	return pq
 }
 
+// WithRouters tells the query-builder to eager-load the nodes that are connected to
+// the "routers" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *ProjectQuery) WithRouters(opts ...func(*RouterQuery)) *ProjectQuery {
+	query := (&RouterClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withRouters = query
+	return pq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		Name string `json:"name,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.Project.Query().
+//		GroupBy(project.FieldName).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (pq *ProjectQuery) GroupBy(field string, fields ...string) *ProjectGroupBy {
 	pq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &ProjectGroupBy{build: pq}
@@ -341,6 +389,16 @@ func (pq *ProjectQuery) GroupBy(field string, fields ...string) *ProjectGroupBy 
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		Name string `json:"name,omitempty"`
+//	}
+//
+//	client.Project.Query().
+//		Select(project.FieldName).
+//		Scan(ctx, &v)
 func (pq *ProjectQuery) Select(fields ...string) *ProjectSelect {
 	pq.ctx.Fields = append(pq.ctx.Fields, fields...)
 	sbuild := &ProjectSelect{ProjectQuery: pq}
@@ -384,9 +442,10 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	var (
 		nodes       = []*Project{}
 		_spec       = pq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			pq.withOperators != nil,
 			pq.withRodents != nil,
+			pq.withRouters != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -418,6 +477,13 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 		if err := pq.loadRodents(ctx, query, nodes,
 			func(n *Project) { n.Edges.Rodents = []*Rodent{} },
 			func(n *Project, e *Rodent) { n.Edges.Rodents = append(n.Edges.Rodents, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := pq.withRouters; query != nil {
+		if err := pq.loadRouters(ctx, query, nodes,
+			func(n *Project) { n.Edges.Routers = []*Router{} },
+			func(n *Project, e *Router) { n.Edges.Routers = append(n.Edges.Routers, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -511,6 +577,37 @@ func (pq *ProjectQuery) loadRodents(ctx context.Context, query *RodentQuery, nod
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "project_rodents" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (pq *ProjectQuery) loadRouters(ctx context.Context, query *RouterQuery, nodes []*Project, init func(*Project), assign func(*Project, *Router)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Project)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Router(func(s *sql.Selector) {
+		s.Where(sql.InValues(project.RoutersColumn, fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.project_routers
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "project_routers" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "project_routers" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

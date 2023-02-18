@@ -18,6 +18,7 @@ import (
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/router"
+	"github.com/salukikit/rodentity/ent/services"
 	"github.com/salukikit/rodentity/ent/subnet"
 	"github.com/salukikit/rodentity/ent/task"
 	"github.com/salukikit/rodentity/ent/user"
@@ -48,6 +49,8 @@ type Client struct {
 	Rodent *RodentClient
 	// Router is the client for interacting with the Router builders.
 	Router *RouterClient
+	// Services is the client for interacting with the Services builders.
+	Services *ServicesClient
 	// Subnet is the client for interacting with the Subnet builders.
 	Subnet *SubnetClient
 	// Task is the client for interacting with the Task builders.
@@ -75,6 +78,7 @@ func (c *Client) init() {
 	c.Project = NewProjectClient(c.config)
 	c.Rodent = NewRodentClient(c.config)
 	c.Router = NewRouterClient(c.config)
+	c.Services = NewServicesClient(c.config)
 	c.Subnet = NewSubnetClient(c.config)
 	c.Task = NewTaskClient(c.config)
 	c.User = NewUserClient(c.config)
@@ -119,6 +123,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Project:  NewProjectClient(cfg),
 		Rodent:   NewRodentClient(cfg),
 		Router:   NewRouterClient(cfg),
+		Services: NewServicesClient(cfg),
 		Subnet:   NewSubnetClient(cfg),
 		Task:     NewTaskClient(cfg),
 		User:     NewUserClient(cfg),
@@ -149,6 +154,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Project:  NewProjectClient(cfg),
 		Rodent:   NewRodentClient(cfg),
 		Router:   NewRouterClient(cfg),
+		Services: NewServicesClient(cfg),
 		Subnet:   NewSubnetClient(cfg),
 		Task:     NewTaskClient(cfg),
 		User:     NewUserClient(cfg),
@@ -188,6 +194,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Project.Use(hooks...)
 	c.Rodent.Use(hooks...)
 	c.Router.Use(hooks...)
+	c.Services.Use(hooks...)
 	c.Subnet.Use(hooks...)
 	c.Task.Use(hooks...)
 	c.User.Use(hooks...)
@@ -204,6 +211,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Project.Intercept(interceptors...)
 	c.Rodent.Intercept(interceptors...)
 	c.Router.Intercept(interceptors...)
+	c.Services.Intercept(interceptors...)
 	c.Subnet.Intercept(interceptors...)
 	c.Task.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
@@ -228,6 +236,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Rodent.mutate(ctx, m)
 	case *RouterMutation:
 		return c.Router.mutate(ctx, m)
+	case *ServicesMutation:
+		return c.Services.mutate(ctx, m)
 	case *SubnetMutation:
 		return c.Subnet.mutate(ctx, m)
 	case *TaskMutation:
@@ -405,6 +415,22 @@ func (c *DeviceClient) QuerySubnets(d *Device) *SubnetQuery {
 			sqlgraph.From(device.Table, device.FieldID, id),
 			sqlgraph.To(subnet.Table, subnet.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, device.SubnetsTable, device.SubnetsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(d.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryServices queries the services edge of a Device.
+func (c *DeviceClient) QueryServices(d *Device) *ServicesQuery {
+	query := (&ServicesClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := d.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(device.Table, device.FieldID, id),
+			sqlgraph.To(services.Table, services.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, device.ServicesTable, device.ServicesPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(d.driver.Dialect(), step)
 		return fromV, nil
@@ -1060,6 +1086,22 @@ func (c *OperatorClient) QueryProjects(o *Operator) *ProjectQuery {
 	return query
 }
 
+// QueryTasks queries the tasks edge of a Operator.
+func (c *OperatorClient) QueryTasks(o *Operator) *TaskQuery {
+	query := (&TaskClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := o.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(operator.Table, operator.FieldID, id),
+			sqlgraph.To(task.Table, task.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, operator.TasksTable, operator.TasksColumn),
+		)
+		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *OperatorClient) Hooks() []Hook {
 	return c.hooks.Operator
@@ -1203,6 +1245,22 @@ func (c *ProjectClient) QueryRodents(pr *Project) *RodentQuery {
 			sqlgraph.From(project.Table, project.FieldID, id),
 			sqlgraph.To(rodent.Table, rodent.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, project.RodentsTable, project.RodentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRouters queries the routers edge of a Project.
+func (c *ProjectClient) QueryRouters(pr *Project) *RouterQuery {
+	query := (&RouterClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(router.Table, router.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.RoutersTable, project.RoutersColumn),
 		)
 		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
 		return fromV, nil
@@ -1384,7 +1442,7 @@ func (c *RodentClient) QueryRouter(r *Rodent) *RouterQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(rodent.Table, rodent.FieldID, id),
 			sqlgraph.To(router.Table, router.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, rodent.RouterTable, rodent.RouterColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, rodent.RouterTable, rodent.RouterPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil
@@ -1550,7 +1608,23 @@ func (c *RouterClient) QueryRodents(r *Router) *RodentQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(router.Table, router.FieldID, id),
 			sqlgraph.To(rodent.Table, rodent.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, router.RodentsTable, router.RodentsColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, router.RodentsTable, router.RodentsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryProject queries the project edge of a Router.
+func (c *RouterClient) QueryProject(r *Router) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(router.Table, router.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, router.ProjectTable, router.ProjectColumn),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil
@@ -1580,6 +1654,156 @@ func (c *RouterClient) mutate(ctx context.Context, m *RouterMutation) (Value, er
 		return (&RouterDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Router mutation op: %q", m.Op())
+	}
+}
+
+// ServicesClient is a client for the Services schema.
+type ServicesClient struct {
+	config
+}
+
+// NewServicesClient returns a client for the Services from the given config.
+func NewServicesClient(c config) *ServicesClient {
+	return &ServicesClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `services.Hooks(f(g(h())))`.
+func (c *ServicesClient) Use(hooks ...Hook) {
+	c.hooks.Services = append(c.hooks.Services, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `services.Intercept(f(g(h())))`.
+func (c *ServicesClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Services = append(c.inters.Services, interceptors...)
+}
+
+// Create returns a builder for creating a Services entity.
+func (c *ServicesClient) Create() *ServicesCreate {
+	mutation := newServicesMutation(c.config, OpCreate)
+	return &ServicesCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Services entities.
+func (c *ServicesClient) CreateBulk(builders ...*ServicesCreate) *ServicesCreateBulk {
+	return &ServicesCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Services.
+func (c *ServicesClient) Update() *ServicesUpdate {
+	mutation := newServicesMutation(c.config, OpUpdate)
+	return &ServicesUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ServicesClient) UpdateOne(s *Services) *ServicesUpdateOne {
+	mutation := newServicesMutation(c.config, OpUpdateOne, withServices(s))
+	return &ServicesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ServicesClient) UpdateOneID(id int) *ServicesUpdateOne {
+	mutation := newServicesMutation(c.config, OpUpdateOne, withServicesID(id))
+	return &ServicesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Services.
+func (c *ServicesClient) Delete() *ServicesDelete {
+	mutation := newServicesMutation(c.config, OpDelete)
+	return &ServicesDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ServicesClient) DeleteOne(s *Services) *ServicesDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ServicesClient) DeleteOneID(id int) *ServicesDeleteOne {
+	builder := c.Delete().Where(services.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ServicesDeleteOne{builder}
+}
+
+// Query returns a query builder for Services.
+func (c *ServicesClient) Query() *ServicesQuery {
+	return &ServicesQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeServices},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Services entity by its id.
+func (c *ServicesClient) Get(ctx context.Context, id int) (*Services, error) {
+	return c.Query().Where(services.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ServicesClient) GetX(ctx context.Context, id int) *Services {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryDevices queries the devices edge of a Services.
+func (c *ServicesClient) QueryDevices(s *Services) *DeviceQuery {
+	query := (&DeviceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(services.Table, services.FieldID, id),
+			sqlgraph.To(device.Table, device.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, services.DevicesTable, services.DevicesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySubnet queries the subnet edge of a Services.
+func (c *ServicesClient) QuerySubnet(s *Services) *SubnetQuery {
+	query := (&SubnetClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := s.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(services.Table, services.FieldID, id),
+			sqlgraph.To(subnet.Table, subnet.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, services.SubnetTable, services.SubnetColumn),
+		)
+		fromV = sqlgraph.Neighbors(s.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ServicesClient) Hooks() []Hook {
+	return c.hooks.Services
+}
+
+// Interceptors returns the client interceptors.
+func (c *ServicesClient) Interceptors() []Interceptor {
+	return c.inters.Services
+}
+
+func (c *ServicesClient) mutate(ctx context.Context, m *ServicesMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ServicesCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ServicesUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ServicesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ServicesDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Services mutation op: %q", m.Op())
 	}
 }
 
@@ -1819,6 +2043,22 @@ func (c *TaskClient) QueryRodent(t *Task) *RodentQuery {
 			sqlgraph.From(task.Table, task.FieldID, id),
 			sqlgraph.To(rodent.Table, rodent.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, task.RodentTable, task.RodentColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOperator queries the operator edge of a Task.
+func (c *TaskClient) QueryOperator(t *Task) *OperatorQuery {
+	query := (&OperatorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(task.Table, task.FieldID, id),
+			sqlgraph.To(operator.Table, operator.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, task.OperatorTable, task.OperatorColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil

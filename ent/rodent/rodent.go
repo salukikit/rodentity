@@ -17,6 +17,10 @@ const (
 	FieldKey = "key"
 	// FieldUsercontext holds the string denoting the usercontext field in the database.
 	FieldUsercontext = "usercontext"
+	// FieldComms holds the string denoting the comms field in the database.
+	FieldComms = "comms"
+	// FieldCommsInspected holds the string denoting the comms_inspected field in the database.
+	FieldCommsInspected = "comms_inspected"
 	// FieldBeacontime holds the string denoting the beacontime field in the database.
 	FieldBeacontime = "beacontime"
 	// FieldBurned holds the string denoting the burned field in the database.
@@ -62,13 +66,11 @@ const (
 	ProjectInverseTable = "projects"
 	// ProjectColumn is the table column denoting the project relation/edge.
 	ProjectColumn = "project_rodents"
-	// RouterTable is the table that holds the router relation/edge.
-	RouterTable = "rodents"
+	// RouterTable is the table that holds the router relation/edge. The primary key declared below.
+	RouterTable = "router_rodents"
 	// RouterInverseTable is the table name for the Router entity.
 	// It exists in this package in order to avoid circular dependency with the "router" package.
 	RouterInverseTable = "routers"
-	// RouterColumn is the table column denoting the router relation/edge.
-	RouterColumn = "router_rodents"
 	// TasksTable is the table that holds the tasks relation/edge.
 	TasksTable = "tasks"
 	// TasksInverseTable is the table name for the Task entity.
@@ -93,6 +95,8 @@ var Columns = []string{
 	FieldCodename,
 	FieldKey,
 	FieldUsercontext,
+	FieldComms,
+	FieldCommsInspected,
 	FieldBeacontime,
 	FieldBurned,
 	FieldAlive,
@@ -105,9 +109,14 @@ var Columns = []string{
 var ForeignKeys = []string{
 	"device_rodents",
 	"project_rodents",
-	"router_rodents",
 	"user_rodents",
 }
+
+var (
+	// RouterPrimaryKey and RouterColumn2 are the table columns denoting the
+	// primary key for the router relation (M2M).
+	RouterPrimaryKey = []string{"router_id", "rodent_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {

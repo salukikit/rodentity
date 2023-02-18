@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/router"
 )
 
@@ -26,16 +27,19 @@ type Router struct {
 	Commands []string `json:"commands,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RouterQuery when eager-loading is set.
-	Edges RouterEdges `json:"edges"`
+	Edges           RouterEdges `json:"edges"`
+	project_routers *int
 }
 
 // RouterEdges holds the relations/edges for other nodes in the graph.
 type RouterEdges struct {
 	// Rodents holds the value of the rodents edge.
 	Rodents []*Rodent `json:"rodents,omitempty"`
+	// Project holds the value of the project edge.
+	Project *Project `json:"project,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // RodentsOrErr returns the Rodents value or an error if the edge
@@ -45,6 +49,19 @@ func (e RouterEdges) RodentsOrErr() ([]*Rodent, error) {
 		return e.Rodents, nil
 	}
 	return nil, &NotLoadedError{edge: "rodents"}
+}
+
+// ProjectOrErr returns the Project value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e RouterEdges) ProjectOrErr() (*Project, error) {
+	if e.loadedTypes[1] {
+		if e.Project == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: project.Label}
+		}
+		return e.Project, nil
+	}
+	return nil, &NotLoadedError{edge: "project"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -58,6 +75,8 @@ func (*Router) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case router.FieldUsername:
 			values[i] = new(sql.NullString)
+		case router.ForeignKeys[0]: // project_routers
+			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Router", columns[i])
 		}
@@ -105,6 +124,13 @@ func (r *Router) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field commands: %w", err)
 				}
 			}
+		case router.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field project_routers", value)
+			} else if value.Valid {
+				r.project_routers = new(int)
+				*r.project_routers = int(value.Int64)
+			}
 		}
 	}
 	return nil
@@ -113,6 +139,11 @@ func (r *Router) assignValues(columns []string, values []any) error {
 // QueryRodents queries the "rodents" edge of the Router entity.
 func (r *Router) QueryRodents() *RodentQuery {
 	return NewRouterClient(r.config).QueryRodents(r)
+}
+
+// QueryProject queries the "project" edge of the Router entity.
+func (r *Router) QueryProject() *ProjectQuery {
+	return NewRouterClient(r.config).QueryProject(r)
 }
 
 // Update returns a builder for updating this Router.

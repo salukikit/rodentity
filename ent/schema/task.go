@@ -32,6 +32,7 @@ func (Task) Fields() []ent.Field {
 func (Task) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("rodent", Rodent.Type).Ref("tasks").Unique(),
+		edge.From("operator", Operator.Type).Ref("tasks").Unique(),
 		edge.To("loot", Loot.Type),
 	}
 }

@@ -1,0 +1,148 @@
+<html lang="en">
+
+<head>
+  <title>ent schema network</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/tonsky/FiraCode@5.2/distr/fira_code.css">
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.6.1/randomColor.min.js" integrity="sha512-vPeZ7JCboHcfpqSx5ZD+/jpEhS4JpXxfz9orSvAPPj0EKUVShU2tgy7XkU+oujBJKnWmu4hU7r9MMQNWPfXsYw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style type="text/css">
+    html * {
+      font-family: 'Fira Code', monospace !important;
+      font-size: 14px;
+    }
+
+    #schema {
+      width: 100%;
+      height: 100%;
+      border: 1px solid lightgray;
+    }
+
+    .var-type {
+      color: #4EC9B0;
+    }
+
+    table {
+      padding: 2px 3px;
+    }
+
+    .vis-tooltip,
+    .table-container {
+      background-color: #1e1e1e !important;
+      color: white;
+    }
+
+    tr {
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="schema"></div>
+  <br />
+  <script type="text/javascript">
+    
+    const fieldsToTable = fields => {
+      const container = document.createElement("div");
+      container.setAttribute("class", "table-container")
+      if (!fields) {
+        container.innerText = "no fields";
+        return container;
+      }
+      const tbl = document.createElement("table");
+      const tblBody = document.createElement("tbody");
+      for (const field of fields) {
+        const row = document.createElement("tr");
+        for (const key of ["name", "type"]) {
+          const cell = document.createElement("td");
+          const cellText = document.createTextNode(field[key]);
+          if (key === "type") {
+            cell.setAttribute("class", "var-type")
+          }
+          cell.appendChild(cellText);
+          row.appendChild(cell);
+        }
+        tblBody.appendChild(row);
+      }
+      tbl.appendChild(tblBody);
+      container.appendChild(tbl);
+      return container;
+    }
+
+    
+    const entGraph = JSON.parse("{\"nodes\":[{\"id\":\"Device\",\"fields\":[{\"name\":\"hostname\",\"type\":\"string\"},{\"name\":\"os\",\"type\":\"string\"},{\"name\":\"arch\",\"type\":\"string\"},{\"name\":\"version\",\"type\":\"string\"},{\"name\":\"net_interfaces\",\"type\":\"[]string\"},{\"name\":\"machinepass\",\"type\":\"string\"},{\"name\":\"certificates\",\"type\":\"[]string\"}]},{\"id\":\"Domain\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"AD\",\"type\":\"bool\"},{\"name\":\"owned\",\"type\":\"bool\"},{\"name\":\"cloud\",\"type\":\"string\"}]},{\"id\":\"Group\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"description\",\"type\":\"string\"},{\"name\":\"permissions\",\"type\":\"string\"}]},{\"id\":\"Loot\",\"fields\":[{\"name\":\"xid\",\"type\":\"string\"},{\"name\":\"type\",\"type\":\"loot.Type\"},{\"name\":\"location\",\"type\":\"string\"},{\"name\":\"data\",\"type\":\"[]byte\"},{\"name\":\"collectedon\",\"type\":\"time.Time\"}]},{\"id\":\"Operator\",\"fields\":[{\"name\":\"username\",\"type\":\"string\"},{\"name\":\"privkey\",\"type\":\"[]byte\"},{\"name\":\"cert\",\"type\":\"[]byte\"}]},{\"id\":\"Project\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"objective\",\"type\":\"string\"},{\"name\":\"end_date\",\"type\":\"time.Time\"},{\"name\":\"start_date\",\"type\":\"time.Time\"}]},{\"id\":\"Rodent\",\"fields\":[{\"name\":\"xid\",\"type\":\"string\"},{\"name\":\"type\",\"type\":\"string\"},{\"name\":\"codename\",\"type\":\"string\"},{\"name\":\"key\",\"type\":\"string\"},{\"name\":\"usercontext\",\"type\":\"string\"},{\"name\":\"comms\",\"type\":\"string\"},{\"name\":\"comms_inspected\",\"type\":\"bool\"},{\"name\":\"beacontime\",\"type\":\"string\"},{\"name\":\"burned\",\"type\":\"bool\"},{\"name\":\"alive\",\"type\":\"bool\"},{\"name\":\"joined\",\"type\":\"time.Time\"},{\"name\":\"lastseen\",\"type\":\"time.Time\"}]},{\"id\":\"Router\",\"fields\":[{\"name\":\"username\",\"type\":\"string\"},{\"name\":\"privkey\",\"type\":\"[]byte\"},{\"name\":\"cert\",\"type\":\"[]byte\"},{\"name\":\"commands\",\"type\":\"[]string\"}]},{\"id\":\"Services\",\"fields\":[{\"name\":\"service_name\",\"type\":\"string\"},{\"name\":\"port\",\"type\":\"string\"}]},{\"id\":\"Subnet\",\"fields\":[{\"name\":\"cidr\",\"type\":\"string\"},{\"name\":\"mask\",\"type\":\"[]byte\"},{\"name\":\"outbound_tcpports\",\"type\":\"[]string\"},{\"name\":\"outbound_udpports\",\"type\":\"[]string\"},{\"name\":\"proxy\",\"type\":\"bool\"}]},{\"id\":\"Task\",\"fields\":[{\"name\":\"xid\",\"type\":\"string\"},{\"name\":\"type\",\"type\":\"string\"},{\"name\":\"args\",\"type\":\"[]string\"},{\"name\":\"data\",\"type\":\"[]byte\"},{\"name\":\"result\",\"type\":\"[]byte\"},{\"name\":\"Executed\",\"type\":\"bool\"},{\"name\":\"looted\",\"type\":\"bool\"},{\"name\":\"requestedat\",\"type\":\"time.Time\"},{\"name\":\"completedat\",\"type\":\"time.Time\"},{\"name\":\"TTPs\",\"type\":\"[]string\"}]},{\"id\":\"User\",\"fields\":[{\"name\":\"username\",\"type\":\"string\"},{\"name\":\"givenname\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"owned\",\"type\":\"bool\"},{\"name\":\"age\",\"type\":\"string\"},{\"name\":\"homedir\",\"type\":\"string\"},{\"name\":\"enabled\",\"type\":\"bool\"}]}],\"edges\":[{\"from\":\"Device\",\"to\":\"User\",\"label\":\"users\"},{\"from\":\"Device\",\"to\":\"Rodent\",\"label\":\"rodents\"},{\"from\":\"Domain\",\"to\":\"Device\",\"label\":\"devices\"},{\"from\":\"Domain\",\"to\":\"User\",\"label\":\"users\"},{\"from\":\"Domain\",\"to\":\"Group\",\"label\":\"groups\"},{\"from\":\"Domain\",\"to\":\"Domain\",\"label\":\"childdomains\"},{\"from\":\"Group\",\"to\":\"Device\",\"label\":\"devices\"},{\"from\":\"Group\",\"to\":\"User\",\"label\":\"users\"},{\"from\":\"Operator\",\"to\":\"Task\",\"label\":\"tasks\"},{\"from\":\"Project\",\"to\":\"Operator\",\"label\":\"operators\"},{\"from\":\"Project\",\"to\":\"Rodent\",\"label\":\"rodents\"},{\"from\":\"Project\",\"to\":\"Router\",\"label\":\"routers\"},{\"from\":\"Rodent\",\"to\":\"Task\",\"label\":\"tasks\"},{\"from\":\"Rodent\",\"to\":\"Loot\",\"label\":\"loot\"},{\"from\":\"Router\",\"to\":\"Rodent\",\"label\":\"rodents\"},{\"from\":\"Services\",\"to\":\"Device\",\"label\":\"devices\"},{\"from\":\"Services\",\"to\":\"Subnet\",\"label\":\"subnet\"},{\"from\":\"Subnet\",\"to\":\"Device\",\"label\":\"hosts\"},{\"from\":\"Task\",\"to\":\"Loot\",\"label\":\"loot\"},{\"from\":\"User\",\"to\":\"Rodent\",\"label\":\"rodents\"}]}");
+    const nodes = new vis.DataSet((entGraph.nodes || []).map(n =>
+    ({
+      id: n.id,
+      label: n.id,
+      color: randomColor({
+        luminosity: 'light',
+        hue: 'random',
+      }),
+      title: fieldsToTable(n.fields),
+    })
+    ));
+    edgesCounter = {};
+    
+    
+    const edgeKey = e => `${e.to}::${e.from}`
+    const edges = new vis.DataSet((entGraph.edges || []).map(e => {
+      const counter = (edgesCounter[edgeKey(e)] || 0) + 1;
+      edgesCounter[edgeKey(e)] = counter;
+      if (e.from === e.to) {
+        return {
+          ...e,
+          physics: false,
+          arrows: "to",
+          type: 'curvedCW',
+          selfReference: {
+            size: (counter + 1) * 10,
+            angle: (counter * 0.8) * Math.PI / 4,
+            renderBehindTheNode: false
+          }
+        }
+      }
+      return { ...e, type: 'curvedCW', physics: false, arrows: "to", smooth: { type: 'curvedCW', roundness: Math.pow(-1, counter) * 0.2 * counter } }
+    }));
+    const options = {
+      manipulation: false,
+      edges: {
+        physics: false,
+        smooth: { type: 'curvedCW', roundness: 0.2 },
+        arrows: "to",
+      },
+      nodes: {
+        widthConstraint: 60,
+        heightConstraint: 60,
+        shape: "box",
+        font: { align: "center" },
+      },
+      layout: {
+        improvedLayout: true,
+        hierarchical: {
+          enabled: true,
+          levelSeparation: 250,
+        },
+      },
+      physics: {
+        enabled: true,
+        barnesHut: {
+          springConstant: 0,
+          avoidOverlap: 1,
+          springConstant: 0
+        },
+        solver: "barnesHut",
+        repulsion: {
+          nodeDistance: 150,
+          springConstant: 0,
+          damping: 0,
+          springLength: 0
+        }
+      }
+    };
+    const container = document.getElementById("schema");
+    const gph = new vis.Network(container, { nodes, edges }, options);
+  </script>
+</body>
+
+</html>

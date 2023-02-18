@@ -4,13 +4,16 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/router"
 )
 
 // ProjectCreate is the builder for creating a Project entity.
@@ -18,6 +21,54 @@ type ProjectCreate struct {
 	config
 	mutation *ProjectMutation
 	hooks    []Hook
+}
+
+// SetName sets the "name" field.
+func (pc *ProjectCreate) SetName(s string) *ProjectCreate {
+	pc.mutation.SetName(s)
+	return pc
+}
+
+// SetObjective sets the "objective" field.
+func (pc *ProjectCreate) SetObjective(s string) *ProjectCreate {
+	pc.mutation.SetObjective(s)
+	return pc
+}
+
+// SetNillableObjective sets the "objective" field if the given value is not nil.
+func (pc *ProjectCreate) SetNillableObjective(s *string) *ProjectCreate {
+	if s != nil {
+		pc.SetObjective(*s)
+	}
+	return pc
+}
+
+// SetEndDate sets the "end_date" field.
+func (pc *ProjectCreate) SetEndDate(t time.Time) *ProjectCreate {
+	pc.mutation.SetEndDate(t)
+	return pc
+}
+
+// SetNillableEndDate sets the "end_date" field if the given value is not nil.
+func (pc *ProjectCreate) SetNillableEndDate(t *time.Time) *ProjectCreate {
+	if t != nil {
+		pc.SetEndDate(*t)
+	}
+	return pc
+}
+
+// SetStartDate sets the "start_date" field.
+func (pc *ProjectCreate) SetStartDate(t time.Time) *ProjectCreate {
+	pc.mutation.SetStartDate(t)
+	return pc
+}
+
+// SetNillableStartDate sets the "start_date" field if the given value is not nil.
+func (pc *ProjectCreate) SetNillableStartDate(t *time.Time) *ProjectCreate {
+	if t != nil {
+		pc.SetStartDate(*t)
+	}
+	return pc
 }
 
 // AddOperatorIDs adds the "operators" edge to the Operator entity by IDs.
@@ -48,6 +99,21 @@ func (pc *ProjectCreate) AddRodents(r ...*Rodent) *ProjectCreate {
 		ids[i] = r[i].ID
 	}
 	return pc.AddRodentIDs(ids...)
+}
+
+// AddRouterIDs adds the "routers" edge to the Router entity by IDs.
+func (pc *ProjectCreate) AddRouterIDs(ids ...int) *ProjectCreate {
+	pc.mutation.AddRouterIDs(ids...)
+	return pc
+}
+
+// AddRouters adds the "routers" edges to the Router entity.
+func (pc *ProjectCreate) AddRouters(r ...*Router) *ProjectCreate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return pc.AddRouterIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -84,6 +150,9 @@ func (pc *ProjectCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (pc *ProjectCreate) check() error {
+	if _, ok := pc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Project.name"`)}
+	}
 	return nil
 }
 
@@ -110,6 +179,22 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 		_node = &Project{config: pc.config}
 		_spec = sqlgraph.NewCreateSpec(project.Table, sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt))
 	)
+	if value, ok := pc.mutation.Name(); ok {
+		_spec.SetField(project.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
+	if value, ok := pc.mutation.Objective(); ok {
+		_spec.SetField(project.FieldObjective, field.TypeString, value)
+		_node.Objective = value
+	}
+	if value, ok := pc.mutation.EndDate(); ok {
+		_spec.SetField(project.FieldEndDate, field.TypeTime, value)
+		_node.EndDate = value
+	}
+	if value, ok := pc.mutation.StartDate(); ok {
+		_spec.SetField(project.FieldStartDate, field.TypeTime, value)
+		_node.StartDate = value
+	}
 	if nodes := pc.mutation.OperatorsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -140,6 +225,25 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: rodent.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := pc.mutation.RoutersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RoutersTable,
+			Columns: []string{project.RoutersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: router.FieldID,
 				},
 			},
 		}

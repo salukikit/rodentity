@@ -28,6 +28,8 @@ type Tx struct {
 	Rodent *RodentClient
 	// Router is the client for interacting with the Router builders.
 	Router *RouterClient
+	// Services is the client for interacting with the Services builders.
+	Services *ServicesClient
 	// Subnet is the client for interacting with the Subnet builders.
 	Subnet *SubnetClient
 	// Task is the client for interacting with the Task builders.
@@ -173,6 +175,7 @@ func (tx *Tx) init() {
 	tx.Project = NewProjectClient(tx.config)
 	tx.Rodent = NewRodentClient(tx.config)
 	tx.Router = NewRouterClient(tx.config)
+	tx.Services = NewServicesClient(tx.config)
 	tx.Subnet = NewSubnetClient(tx.config)
 	tx.Task = NewTaskClient(tx.config)
 	tx.User = NewUserClient(tx.config)

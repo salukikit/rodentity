@@ -86,6 +86,46 @@ func (ru *RodentUpdate) ClearUsercontext() *RodentUpdate {
 	return ru
 }
 
+// SetComms sets the "comms" field.
+func (ru *RodentUpdate) SetComms(s string) *RodentUpdate {
+	ru.mutation.SetComms(s)
+	return ru
+}
+
+// SetNillableComms sets the "comms" field if the given value is not nil.
+func (ru *RodentUpdate) SetNillableComms(s *string) *RodentUpdate {
+	if s != nil {
+		ru.SetComms(*s)
+	}
+	return ru
+}
+
+// ClearComms clears the value of the "comms" field.
+func (ru *RodentUpdate) ClearComms() *RodentUpdate {
+	ru.mutation.ClearComms()
+	return ru
+}
+
+// SetCommsInspected sets the "comms_inspected" field.
+func (ru *RodentUpdate) SetCommsInspected(b bool) *RodentUpdate {
+	ru.mutation.SetCommsInspected(b)
+	return ru
+}
+
+// SetNillableCommsInspected sets the "comms_inspected" field if the given value is not nil.
+func (ru *RodentUpdate) SetNillableCommsInspected(b *bool) *RodentUpdate {
+	if b != nil {
+		ru.SetCommsInspected(*b)
+	}
+	return ru
+}
+
+// ClearCommsInspected clears the value of the "comms_inspected" field.
+func (ru *RodentUpdate) ClearCommsInspected() *RodentUpdate {
+	ru.mutation.ClearCommsInspected()
+	return ru
+}
+
 // SetBeacontime sets the "beacontime" field.
 func (ru *RodentUpdate) SetBeacontime(s string) *RodentUpdate {
 	ru.mutation.SetBeacontime(s)
@@ -203,23 +243,19 @@ func (ru *RodentUpdate) SetProject(p *Project) *RodentUpdate {
 	return ru.SetProjectID(p.ID)
 }
 
-// SetRouterID sets the "router" edge to the Router entity by ID.
-func (ru *RodentUpdate) SetRouterID(id int) *RodentUpdate {
-	ru.mutation.SetRouterID(id)
+// AddRouterIDs adds the "router" edge to the Router entity by IDs.
+func (ru *RodentUpdate) AddRouterIDs(ids ...int) *RodentUpdate {
+	ru.mutation.AddRouterIDs(ids...)
 	return ru
 }
 
-// SetNillableRouterID sets the "router" edge to the Router entity by ID if the given value is not nil.
-func (ru *RodentUpdate) SetNillableRouterID(id *int) *RodentUpdate {
-	if id != nil {
-		ru = ru.SetRouterID(*id)
+// AddRouter adds the "router" edges to the Router entity.
+func (ru *RodentUpdate) AddRouter(r ...*Router) *RodentUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
 	}
-	return ru
-}
-
-// SetRouter sets the "router" edge to the Router entity.
-func (ru *RodentUpdate) SetRouter(r *Router) *RodentUpdate {
-	return ru.SetRouterID(r.ID)
+	return ru.AddRouterIDs(ids...)
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
@@ -275,10 +311,25 @@ func (ru *RodentUpdate) ClearProject() *RodentUpdate {
 	return ru
 }
 
-// ClearRouter clears the "router" edge to the Router entity.
+// ClearRouter clears all "router" edges to the Router entity.
 func (ru *RodentUpdate) ClearRouter() *RodentUpdate {
 	ru.mutation.ClearRouter()
 	return ru
+}
+
+// RemoveRouterIDs removes the "router" edge to Router entities by IDs.
+func (ru *RodentUpdate) RemoveRouterIDs(ids ...int) *RodentUpdate {
+	ru.mutation.RemoveRouterIDs(ids...)
+	return ru
+}
+
+// RemoveRouter removes "router" edges to Router entities.
+func (ru *RodentUpdate) RemoveRouter(r ...*Router) *RodentUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ru.RemoveRouterIDs(ids...)
 }
 
 // ClearTasks clears all "tasks" edges to the Task entity.
@@ -376,6 +427,18 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ru.mutation.UsercontextCleared() {
 		_spec.ClearField(rodent.FieldUsercontext, field.TypeString)
+	}
+	if value, ok := ru.mutation.Comms(); ok {
+		_spec.SetField(rodent.FieldComms, field.TypeString, value)
+	}
+	if ru.mutation.CommsCleared() {
+		_spec.ClearField(rodent.FieldComms, field.TypeString)
+	}
+	if value, ok := ru.mutation.CommsInspected(); ok {
+		_spec.SetField(rodent.FieldCommsInspected, field.TypeBool, value)
+	}
+	if ru.mutation.CommsInspectedCleared() {
+		_spec.ClearField(rodent.FieldCommsInspected, field.TypeBool)
 	}
 	if value, ok := ru.mutation.Beacontime(); ok {
 		_spec.SetField(rodent.FieldBeacontime, field.TypeString, value)
@@ -502,10 +565,10 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ru.mutation.RouterCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
 			Table:   rodent.RouterTable,
-			Columns: []string{rodent.RouterColumn},
+			Columns: rodent.RouterPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -516,12 +579,31 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ru.mutation.RouterIDs(); len(nodes) > 0 {
+	if nodes := ru.mutation.RemovedRouterIDs(); len(nodes) > 0 && !ru.mutation.RouterCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
 			Table:   rodent.RouterTable,
-			Columns: []string{rodent.RouterColumn},
+			Columns: rodent.RouterPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: router.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RouterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   rodent.RouterTable,
+			Columns: rodent.RouterPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -715,6 +797,46 @@ func (ruo *RodentUpdateOne) ClearUsercontext() *RodentUpdateOne {
 	return ruo
 }
 
+// SetComms sets the "comms" field.
+func (ruo *RodentUpdateOne) SetComms(s string) *RodentUpdateOne {
+	ruo.mutation.SetComms(s)
+	return ruo
+}
+
+// SetNillableComms sets the "comms" field if the given value is not nil.
+func (ruo *RodentUpdateOne) SetNillableComms(s *string) *RodentUpdateOne {
+	if s != nil {
+		ruo.SetComms(*s)
+	}
+	return ruo
+}
+
+// ClearComms clears the value of the "comms" field.
+func (ruo *RodentUpdateOne) ClearComms() *RodentUpdateOne {
+	ruo.mutation.ClearComms()
+	return ruo
+}
+
+// SetCommsInspected sets the "comms_inspected" field.
+func (ruo *RodentUpdateOne) SetCommsInspected(b bool) *RodentUpdateOne {
+	ruo.mutation.SetCommsInspected(b)
+	return ruo
+}
+
+// SetNillableCommsInspected sets the "comms_inspected" field if the given value is not nil.
+func (ruo *RodentUpdateOne) SetNillableCommsInspected(b *bool) *RodentUpdateOne {
+	if b != nil {
+		ruo.SetCommsInspected(*b)
+	}
+	return ruo
+}
+
+// ClearCommsInspected clears the value of the "comms_inspected" field.
+func (ruo *RodentUpdateOne) ClearCommsInspected() *RodentUpdateOne {
+	ruo.mutation.ClearCommsInspected()
+	return ruo
+}
+
 // SetBeacontime sets the "beacontime" field.
 func (ruo *RodentUpdateOne) SetBeacontime(s string) *RodentUpdateOne {
 	ruo.mutation.SetBeacontime(s)
@@ -832,23 +954,19 @@ func (ruo *RodentUpdateOne) SetProject(p *Project) *RodentUpdateOne {
 	return ruo.SetProjectID(p.ID)
 }
 
-// SetRouterID sets the "router" edge to the Router entity by ID.
-func (ruo *RodentUpdateOne) SetRouterID(id int) *RodentUpdateOne {
-	ruo.mutation.SetRouterID(id)
+// AddRouterIDs adds the "router" edge to the Router entity by IDs.
+func (ruo *RodentUpdateOne) AddRouterIDs(ids ...int) *RodentUpdateOne {
+	ruo.mutation.AddRouterIDs(ids...)
 	return ruo
 }
 
-// SetNillableRouterID sets the "router" edge to the Router entity by ID if the given value is not nil.
-func (ruo *RodentUpdateOne) SetNillableRouterID(id *int) *RodentUpdateOne {
-	if id != nil {
-		ruo = ruo.SetRouterID(*id)
+// AddRouter adds the "router" edges to the Router entity.
+func (ruo *RodentUpdateOne) AddRouter(r ...*Router) *RodentUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
 	}
-	return ruo
-}
-
-// SetRouter sets the "router" edge to the Router entity.
-func (ruo *RodentUpdateOne) SetRouter(r *Router) *RodentUpdateOne {
-	return ruo.SetRouterID(r.ID)
+	return ruo.AddRouterIDs(ids...)
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
@@ -904,10 +1022,25 @@ func (ruo *RodentUpdateOne) ClearProject() *RodentUpdateOne {
 	return ruo
 }
 
-// ClearRouter clears the "router" edge to the Router entity.
+// ClearRouter clears all "router" edges to the Router entity.
 func (ruo *RodentUpdateOne) ClearRouter() *RodentUpdateOne {
 	ruo.mutation.ClearRouter()
 	return ruo
+}
+
+// RemoveRouterIDs removes the "router" edge to Router entities by IDs.
+func (ruo *RodentUpdateOne) RemoveRouterIDs(ids ...int) *RodentUpdateOne {
+	ruo.mutation.RemoveRouterIDs(ids...)
+	return ruo
+}
+
+// RemoveRouter removes "router" edges to Router entities.
+func (ruo *RodentUpdateOne) RemoveRouter(r ...*Router) *RodentUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return ruo.RemoveRouterIDs(ids...)
 }
 
 // ClearTasks clears all "tasks" edges to the Task entity.
@@ -1036,6 +1169,18 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 	if ruo.mutation.UsercontextCleared() {
 		_spec.ClearField(rodent.FieldUsercontext, field.TypeString)
 	}
+	if value, ok := ruo.mutation.Comms(); ok {
+		_spec.SetField(rodent.FieldComms, field.TypeString, value)
+	}
+	if ruo.mutation.CommsCleared() {
+		_spec.ClearField(rodent.FieldComms, field.TypeString)
+	}
+	if value, ok := ruo.mutation.CommsInspected(); ok {
+		_spec.SetField(rodent.FieldCommsInspected, field.TypeBool, value)
+	}
+	if ruo.mutation.CommsInspectedCleared() {
+		_spec.ClearField(rodent.FieldCommsInspected, field.TypeBool)
+	}
 	if value, ok := ruo.mutation.Beacontime(); ok {
 		_spec.SetField(rodent.FieldBeacontime, field.TypeString, value)
 	}
@@ -1161,10 +1306,10 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 	}
 	if ruo.mutation.RouterCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
 			Table:   rodent.RouterTable,
-			Columns: []string{rodent.RouterColumn},
+			Columns: rodent.RouterPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -1175,12 +1320,31 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ruo.mutation.RouterIDs(); len(nodes) > 0 {
+	if nodes := ruo.mutation.RemovedRouterIDs(); len(nodes) > 0 && !ruo.mutation.RouterCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.M2M,
 			Inverse: true,
 			Table:   rodent.RouterTable,
-			Columns: []string{rodent.RouterColumn},
+			Columns: rodent.RouterPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: router.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RouterIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   rodent.RouterTable,
+			Columns: rodent.RouterPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

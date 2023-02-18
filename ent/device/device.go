@@ -15,8 +15,8 @@ const (
 	FieldArch = "arch"
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
-	// FieldLocaladdress holds the string denoting the localaddress field in the database.
-	FieldLocaladdress = "localaddress"
+	// FieldNetInterfaces holds the string denoting the net_interfaces field in the database.
+	FieldNetInterfaces = "net_interfaces"
 	// FieldMachinepass holds the string denoting the machinepass field in the database.
 	FieldMachinepass = "machinepass"
 	// FieldCertificates holds the string denoting the certificates field in the database.
@@ -31,6 +31,8 @@ const (
 	EdgeDomain = "domain"
 	// EdgeSubnets holds the string denoting the subnets edge name in mutations.
 	EdgeSubnets = "subnets"
+	// EdgeServices holds the string denoting the services edge name in mutations.
+	EdgeServices = "services"
 	// Table holds the table name of the device in the database.
 	Table = "devices"
 	// UsersTable is the table that holds the users relation/edge. The primary key declared below.
@@ -62,6 +64,11 @@ const (
 	// SubnetsInverseTable is the table name for the Subnet entity.
 	// It exists in this package in order to avoid circular dependency with the "subnet" package.
 	SubnetsInverseTable = "subnets"
+	// ServicesTable is the table that holds the services relation/edge. The primary key declared below.
+	ServicesTable = "services_devices"
+	// ServicesInverseTable is the table name for the Services entity.
+	// It exists in this package in order to avoid circular dependency with the "services" package.
+	ServicesInverseTable = "services"
 )
 
 // Columns holds all SQL columns for device fields.
@@ -71,7 +78,7 @@ var Columns = []string{
 	FieldOs,
 	FieldArch,
 	FieldVersion,
-	FieldLocaladdress,
+	FieldNetInterfaces,
 	FieldMachinepass,
 	FieldCertificates,
 }
@@ -92,6 +99,9 @@ var (
 	// SubnetsPrimaryKey and SubnetsColumn2 are the table columns denoting the
 	// primary key for the subnets relation (M2M).
 	SubnetsPrimaryKey = []string{"subnet_id", "device_id"}
+	// ServicesPrimaryKey and ServicesColumn2 are the table columns denoting the
+	// primary key for the services relation (M2M).
+	ServicesPrimaryKey = []string{"services_id", "device_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -116,6 +126,4 @@ var (
 	DefaultArch string
 	// DefaultVersion holds the default value on creation for the "version" field.
 	DefaultVersion string
-	// DefaultLocaladdress holds the default value on creation for the "localaddress" field.
-	DefaultLocaladdress string
 )

@@ -80,6 +80,16 @@ func Usercontext(v string) predicate.Rodent {
 	return predicate.Rodent(sql.FieldEQ(FieldUsercontext, v))
 }
 
+// Comms applies equality check predicate on the "comms" field. It's identical to CommsEQ.
+func Comms(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldEQ(FieldComms, v))
+}
+
+// CommsInspected applies equality check predicate on the "comms_inspected" field. It's identical to CommsInspectedEQ.
+func CommsInspected(v bool) predicate.Rodent {
+	return predicate.Rodent(sql.FieldEQ(FieldCommsInspected, v))
+}
+
 // Beacontime applies equality check predicate on the "beacontime" field. It's identical to BeacontimeEQ.
 func Beacontime(v string) predicate.Rodent {
 	return predicate.Rodent(sql.FieldEQ(FieldBeacontime, v))
@@ -440,6 +450,101 @@ func UsercontextContainsFold(v string) predicate.Rodent {
 	return predicate.Rodent(sql.FieldContainsFold(FieldUsercontext, v))
 }
 
+// CommsEQ applies the EQ predicate on the "comms" field.
+func CommsEQ(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldEQ(FieldComms, v))
+}
+
+// CommsNEQ applies the NEQ predicate on the "comms" field.
+func CommsNEQ(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldNEQ(FieldComms, v))
+}
+
+// CommsIn applies the In predicate on the "comms" field.
+func CommsIn(vs ...string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldIn(FieldComms, vs...))
+}
+
+// CommsNotIn applies the NotIn predicate on the "comms" field.
+func CommsNotIn(vs ...string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldNotIn(FieldComms, vs...))
+}
+
+// CommsGT applies the GT predicate on the "comms" field.
+func CommsGT(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldGT(FieldComms, v))
+}
+
+// CommsGTE applies the GTE predicate on the "comms" field.
+func CommsGTE(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldGTE(FieldComms, v))
+}
+
+// CommsLT applies the LT predicate on the "comms" field.
+func CommsLT(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldLT(FieldComms, v))
+}
+
+// CommsLTE applies the LTE predicate on the "comms" field.
+func CommsLTE(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldLTE(FieldComms, v))
+}
+
+// CommsContains applies the Contains predicate on the "comms" field.
+func CommsContains(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldContains(FieldComms, v))
+}
+
+// CommsHasPrefix applies the HasPrefix predicate on the "comms" field.
+func CommsHasPrefix(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldHasPrefix(FieldComms, v))
+}
+
+// CommsHasSuffix applies the HasSuffix predicate on the "comms" field.
+func CommsHasSuffix(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldHasSuffix(FieldComms, v))
+}
+
+// CommsIsNil applies the IsNil predicate on the "comms" field.
+func CommsIsNil() predicate.Rodent {
+	return predicate.Rodent(sql.FieldIsNull(FieldComms))
+}
+
+// CommsNotNil applies the NotNil predicate on the "comms" field.
+func CommsNotNil() predicate.Rodent {
+	return predicate.Rodent(sql.FieldNotNull(FieldComms))
+}
+
+// CommsEqualFold applies the EqualFold predicate on the "comms" field.
+func CommsEqualFold(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldEqualFold(FieldComms, v))
+}
+
+// CommsContainsFold applies the ContainsFold predicate on the "comms" field.
+func CommsContainsFold(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldContainsFold(FieldComms, v))
+}
+
+// CommsInspectedEQ applies the EQ predicate on the "comms_inspected" field.
+func CommsInspectedEQ(v bool) predicate.Rodent {
+	return predicate.Rodent(sql.FieldEQ(FieldCommsInspected, v))
+}
+
+// CommsInspectedNEQ applies the NEQ predicate on the "comms_inspected" field.
+func CommsInspectedNEQ(v bool) predicate.Rodent {
+	return predicate.Rodent(sql.FieldNEQ(FieldCommsInspected, v))
+}
+
+// CommsInspectedIsNil applies the IsNil predicate on the "comms_inspected" field.
+func CommsInspectedIsNil() predicate.Rodent {
+	return predicate.Rodent(sql.FieldIsNull(FieldCommsInspected))
+}
+
+// CommsInspectedNotNil applies the NotNil predicate on the "comms_inspected" field.
+func CommsInspectedNotNil() predicate.Rodent {
+	return predicate.Rodent(sql.FieldNotNull(FieldCommsInspected))
+}
+
 // BeacontimeEQ applies the EQ predicate on the "beacontime" field.
 func BeacontimeEQ(v string) predicate.Rodent {
 	return predicate.Rodent(sql.FieldEQ(FieldBeacontime, v))
@@ -701,7 +806,7 @@ func HasRouter() predicate.Rodent {
 	return predicate.Rodent(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, RouterTable, RouterColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, RouterTable, RouterPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -713,7 +818,7 @@ func HasRouterWith(preds ...predicate.Router) predicate.Rodent {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(RouterInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, RouterTable, RouterColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, RouterTable, RouterPrimaryKey...),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

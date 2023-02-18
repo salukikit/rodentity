@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/task"
 )
@@ -40,19 +41,22 @@ type Task struct {
 	TTPs []string `json:"TTPs,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TaskQuery when eager-loading is set.
-	Edges        TaskEdges `json:"edges"`
-	rodent_tasks *int
+	Edges          TaskEdges `json:"edges"`
+	operator_tasks *int
+	rodent_tasks   *int
 }
 
 // TaskEdges holds the relations/edges for other nodes in the graph.
 type TaskEdges struct {
 	// Rodent holds the value of the rodent edge.
 	Rodent *Rodent `json:"rodent,omitempty"`
+	// Operator holds the value of the operator edge.
+	Operator *Operator `json:"operator,omitempty"`
 	// Loot holds the value of the loot edge.
 	Loot []*Loot `json:"loot,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // RodentOrErr returns the Rodent value or an error if the edge
@@ -68,10 +72,23 @@ func (e TaskEdges) RodentOrErr() (*Rodent, error) {
 	return nil, &NotLoadedError{edge: "rodent"}
 }
 
+// OperatorOrErr returns the Operator value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TaskEdges) OperatorOrErr() (*Operator, error) {
+	if e.loadedTypes[1] {
+		if e.Operator == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: operator.Label}
+		}
+		return e.Operator, nil
+	}
+	return nil, &NotLoadedError{edge: "operator"}
+}
+
 // LootOrErr returns the Loot value or an error if the edge
 // was not loaded in eager-loading.
 func (e TaskEdges) LootOrErr() ([]*Loot, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.Loot, nil
 	}
 	return nil, &NotLoadedError{edge: "loot"}
@@ -92,7 +109,9 @@ func (*Task) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case task.FieldRequestedat, task.FieldCompletedat:
 			values[i] = new(sql.NullTime)
-		case task.ForeignKeys[0]: // rodent_tasks
+		case task.ForeignKeys[0]: // operator_tasks
+			values[i] = new(sql.NullInt64)
+		case task.ForeignKeys[1]: // rodent_tasks
 			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Task", columns[i])
@@ -181,6 +200,13 @@ func (t *Task) assignValues(columns []string, values []any) error {
 			}
 		case task.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field operator_tasks", value)
+			} else if value.Valid {
+				t.operator_tasks = new(int)
+				*t.operator_tasks = int(value.Int64)
+			}
+		case task.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field rodent_tasks", value)
 			} else if value.Valid {
 				t.rodent_tasks = new(int)
@@ -194,6 +220,11 @@ func (t *Task) assignValues(columns []string, values []any) error {
 // QueryRodent queries the "rodent" edge of the Task entity.
 func (t *Task) QueryRodent() *RodentQuery {
 	return NewTaskClient(t.config).QueryRodent(t)
+}
+
+// QueryOperator queries the "operator" edge of the Task entity.
+func (t *Task) QueryOperator() *OperatorQuery {
+	return NewTaskClient(t.config).QueryOperator(t)
 }
 
 // QueryLoot queries the "loot" edge of the Task entity.

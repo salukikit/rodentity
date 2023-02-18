@@ -32,6 +32,32 @@ func (sc *SubnetCreate) SetMask(b []byte) *SubnetCreate {
 	return sc
 }
 
+// SetOutboundTcpports sets the "outbound_tcpports" field.
+func (sc *SubnetCreate) SetOutboundTcpports(s []string) *SubnetCreate {
+	sc.mutation.SetOutboundTcpports(s)
+	return sc
+}
+
+// SetOutboundUdpports sets the "outbound_udpports" field.
+func (sc *SubnetCreate) SetOutboundUdpports(s []string) *SubnetCreate {
+	sc.mutation.SetOutboundUdpports(s)
+	return sc
+}
+
+// SetProxy sets the "proxy" field.
+func (sc *SubnetCreate) SetProxy(b bool) *SubnetCreate {
+	sc.mutation.SetProxy(b)
+	return sc
+}
+
+// SetNillableProxy sets the "proxy" field if the given value is not nil.
+func (sc *SubnetCreate) SetNillableProxy(b *bool) *SubnetCreate {
+	if b != nil {
+		sc.SetProxy(*b)
+	}
+	return sc
+}
+
 // AddHostIDs adds the "hosts" edge to the Device entity by IDs.
 func (sc *SubnetCreate) AddHostIDs(ids ...int) *SubnetCreate {
 	sc.mutation.AddHostIDs(ids...)
@@ -117,6 +143,18 @@ func (sc *SubnetCreate) createSpec() (*Subnet, *sqlgraph.CreateSpec) {
 	if value, ok := sc.mutation.Mask(); ok {
 		_spec.SetField(subnet.FieldMask, field.TypeBytes, value)
 		_node.Mask = value
+	}
+	if value, ok := sc.mutation.OutboundTcpports(); ok {
+		_spec.SetField(subnet.FieldOutboundTcpports, field.TypeJSON, value)
+		_node.OutboundTcpports = value
+	}
+	if value, ok := sc.mutation.OutboundUdpports(); ok {
+		_spec.SetField(subnet.FieldOutboundUdpports, field.TypeJSON, value)
+		_node.OutboundUdpports = value
+	}
+	if value, ok := sc.mutation.Proxy(); ok {
+		_spec.SetField(subnet.FieldProxy, field.TypeBool, value)
+		_node.Proxy = value
 	}
 	if nodes := sc.mutation.HostsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

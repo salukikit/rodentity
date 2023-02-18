@@ -482,6 +482,33 @@ func HasRodentWith(preds ...predicate.Rodent) predicate.Task {
 	})
 }
 
+// HasOperator applies the HasEdge predicate on the "operator" edge.
+func HasOperator() predicate.Task {
+	return predicate.Task(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, OperatorTable, OperatorColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOperatorWith applies the HasEdge predicate on the "operator" edge with a given conditions (other predicates).
+func HasOperatorWith(preds ...predicate.Operator) predicate.Task {
+	return predicate.Task(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(OperatorInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, OperatorTable, OperatorColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasLoot applies the HasEdge predicate on the "loot" edge.
 func HasLoot() predicate.Task {
 	return predicate.Task(func(s *sql.Selector) {

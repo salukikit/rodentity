@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -14,6 +15,7 @@ import (
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/router"
 )
 
 // ProjectUpdate is the builder for updating Project entities.
@@ -26,6 +28,72 @@ type ProjectUpdate struct {
 // Where appends a list predicates to the ProjectUpdate builder.
 func (pu *ProjectUpdate) Where(ps ...predicate.Project) *ProjectUpdate {
 	pu.mutation.Where(ps...)
+	return pu
+}
+
+// SetName sets the "name" field.
+func (pu *ProjectUpdate) SetName(s string) *ProjectUpdate {
+	pu.mutation.SetName(s)
+	return pu
+}
+
+// SetObjective sets the "objective" field.
+func (pu *ProjectUpdate) SetObjective(s string) *ProjectUpdate {
+	pu.mutation.SetObjective(s)
+	return pu
+}
+
+// SetNillableObjective sets the "objective" field if the given value is not nil.
+func (pu *ProjectUpdate) SetNillableObjective(s *string) *ProjectUpdate {
+	if s != nil {
+		pu.SetObjective(*s)
+	}
+	return pu
+}
+
+// ClearObjective clears the value of the "objective" field.
+func (pu *ProjectUpdate) ClearObjective() *ProjectUpdate {
+	pu.mutation.ClearObjective()
+	return pu
+}
+
+// SetEndDate sets the "end_date" field.
+func (pu *ProjectUpdate) SetEndDate(t time.Time) *ProjectUpdate {
+	pu.mutation.SetEndDate(t)
+	return pu
+}
+
+// SetNillableEndDate sets the "end_date" field if the given value is not nil.
+func (pu *ProjectUpdate) SetNillableEndDate(t *time.Time) *ProjectUpdate {
+	if t != nil {
+		pu.SetEndDate(*t)
+	}
+	return pu
+}
+
+// ClearEndDate clears the value of the "end_date" field.
+func (pu *ProjectUpdate) ClearEndDate() *ProjectUpdate {
+	pu.mutation.ClearEndDate()
+	return pu
+}
+
+// SetStartDate sets the "start_date" field.
+func (pu *ProjectUpdate) SetStartDate(t time.Time) *ProjectUpdate {
+	pu.mutation.SetStartDate(t)
+	return pu
+}
+
+// SetNillableStartDate sets the "start_date" field if the given value is not nil.
+func (pu *ProjectUpdate) SetNillableStartDate(t *time.Time) *ProjectUpdate {
+	if t != nil {
+		pu.SetStartDate(*t)
+	}
+	return pu
+}
+
+// ClearStartDate clears the value of the "start_date" field.
+func (pu *ProjectUpdate) ClearStartDate() *ProjectUpdate {
+	pu.mutation.ClearStartDate()
 	return pu
 }
 
@@ -57,6 +125,21 @@ func (pu *ProjectUpdate) AddRodents(r ...*Rodent) *ProjectUpdate {
 		ids[i] = r[i].ID
 	}
 	return pu.AddRodentIDs(ids...)
+}
+
+// AddRouterIDs adds the "routers" edge to the Router entity by IDs.
+func (pu *ProjectUpdate) AddRouterIDs(ids ...int) *ProjectUpdate {
+	pu.mutation.AddRouterIDs(ids...)
+	return pu
+}
+
+// AddRouters adds the "routers" edges to the Router entity.
+func (pu *ProjectUpdate) AddRouters(r ...*Router) *ProjectUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return pu.AddRouterIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -106,6 +189,27 @@ func (pu *ProjectUpdate) RemoveRodents(r ...*Rodent) *ProjectUpdate {
 	return pu.RemoveRodentIDs(ids...)
 }
 
+// ClearRouters clears all "routers" edges to the Router entity.
+func (pu *ProjectUpdate) ClearRouters() *ProjectUpdate {
+	pu.mutation.ClearRouters()
+	return pu
+}
+
+// RemoveRouterIDs removes the "routers" edge to Router entities by IDs.
+func (pu *ProjectUpdate) RemoveRouterIDs(ids ...int) *ProjectUpdate {
+	pu.mutation.RemoveRouterIDs(ids...)
+	return pu
+}
+
+// RemoveRouters removes "routers" edges to Router entities.
+func (pu *ProjectUpdate) RemoveRouters(r ...*Router) *ProjectUpdate {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return pu.RemoveRouterIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (pu *ProjectUpdate) Save(ctx context.Context) (int, error) {
 	return withHooks[int, ProjectMutation](ctx, pu.sqlSave, pu.mutation, pu.hooks)
@@ -141,6 +245,27 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := pu.mutation.Name(); ok {
+		_spec.SetField(project.FieldName, field.TypeString, value)
+	}
+	if value, ok := pu.mutation.Objective(); ok {
+		_spec.SetField(project.FieldObjective, field.TypeString, value)
+	}
+	if pu.mutation.ObjectiveCleared() {
+		_spec.ClearField(project.FieldObjective, field.TypeString)
+	}
+	if value, ok := pu.mutation.EndDate(); ok {
+		_spec.SetField(project.FieldEndDate, field.TypeTime, value)
+	}
+	if pu.mutation.EndDateCleared() {
+		_spec.ClearField(project.FieldEndDate, field.TypeTime)
+	}
+	if value, ok := pu.mutation.StartDate(); ok {
+		_spec.SetField(project.FieldStartDate, field.TypeTime, value)
+	}
+	if pu.mutation.StartDateCleared() {
+		_spec.ClearField(project.FieldStartDate, field.TypeTime)
 	}
 	if pu.mutation.OperatorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -250,6 +375,60 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if pu.mutation.RoutersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RoutersTable,
+			Columns: []string{project.RoutersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: router.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RemovedRoutersIDs(); len(nodes) > 0 && !pu.mutation.RoutersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RoutersTable,
+			Columns: []string{project.RoutersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: router.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.RoutersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RoutersTable,
+			Columns: []string{project.RoutersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: router.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, pu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{project.Label}
@@ -268,6 +447,72 @@ type ProjectUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *ProjectMutation
+}
+
+// SetName sets the "name" field.
+func (puo *ProjectUpdateOne) SetName(s string) *ProjectUpdateOne {
+	puo.mutation.SetName(s)
+	return puo
+}
+
+// SetObjective sets the "objective" field.
+func (puo *ProjectUpdateOne) SetObjective(s string) *ProjectUpdateOne {
+	puo.mutation.SetObjective(s)
+	return puo
+}
+
+// SetNillableObjective sets the "objective" field if the given value is not nil.
+func (puo *ProjectUpdateOne) SetNillableObjective(s *string) *ProjectUpdateOne {
+	if s != nil {
+		puo.SetObjective(*s)
+	}
+	return puo
+}
+
+// ClearObjective clears the value of the "objective" field.
+func (puo *ProjectUpdateOne) ClearObjective() *ProjectUpdateOne {
+	puo.mutation.ClearObjective()
+	return puo
+}
+
+// SetEndDate sets the "end_date" field.
+func (puo *ProjectUpdateOne) SetEndDate(t time.Time) *ProjectUpdateOne {
+	puo.mutation.SetEndDate(t)
+	return puo
+}
+
+// SetNillableEndDate sets the "end_date" field if the given value is not nil.
+func (puo *ProjectUpdateOne) SetNillableEndDate(t *time.Time) *ProjectUpdateOne {
+	if t != nil {
+		puo.SetEndDate(*t)
+	}
+	return puo
+}
+
+// ClearEndDate clears the value of the "end_date" field.
+func (puo *ProjectUpdateOne) ClearEndDate() *ProjectUpdateOne {
+	puo.mutation.ClearEndDate()
+	return puo
+}
+
+// SetStartDate sets the "start_date" field.
+func (puo *ProjectUpdateOne) SetStartDate(t time.Time) *ProjectUpdateOne {
+	puo.mutation.SetStartDate(t)
+	return puo
+}
+
+// SetNillableStartDate sets the "start_date" field if the given value is not nil.
+func (puo *ProjectUpdateOne) SetNillableStartDate(t *time.Time) *ProjectUpdateOne {
+	if t != nil {
+		puo.SetStartDate(*t)
+	}
+	return puo
+}
+
+// ClearStartDate clears the value of the "start_date" field.
+func (puo *ProjectUpdateOne) ClearStartDate() *ProjectUpdateOne {
+	puo.mutation.ClearStartDate()
+	return puo
 }
 
 // AddOperatorIDs adds the "operators" edge to the Operator entity by IDs.
@@ -298,6 +543,21 @@ func (puo *ProjectUpdateOne) AddRodents(r ...*Rodent) *ProjectUpdateOne {
 		ids[i] = r[i].ID
 	}
 	return puo.AddRodentIDs(ids...)
+}
+
+// AddRouterIDs adds the "routers" edge to the Router entity by IDs.
+func (puo *ProjectUpdateOne) AddRouterIDs(ids ...int) *ProjectUpdateOne {
+	puo.mutation.AddRouterIDs(ids...)
+	return puo
+}
+
+// AddRouters adds the "routers" edges to the Router entity.
+func (puo *ProjectUpdateOne) AddRouters(r ...*Router) *ProjectUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return puo.AddRouterIDs(ids...)
 }
 
 // Mutation returns the ProjectMutation object of the builder.
@@ -345,6 +605,27 @@ func (puo *ProjectUpdateOne) RemoveRodents(r ...*Rodent) *ProjectUpdateOne {
 		ids[i] = r[i].ID
 	}
 	return puo.RemoveRodentIDs(ids...)
+}
+
+// ClearRouters clears all "routers" edges to the Router entity.
+func (puo *ProjectUpdateOne) ClearRouters() *ProjectUpdateOne {
+	puo.mutation.ClearRouters()
+	return puo
+}
+
+// RemoveRouterIDs removes the "routers" edge to Router entities by IDs.
+func (puo *ProjectUpdateOne) RemoveRouterIDs(ids ...int) *ProjectUpdateOne {
+	puo.mutation.RemoveRouterIDs(ids...)
+	return puo
+}
+
+// RemoveRouters removes "routers" edges to Router entities.
+func (puo *ProjectUpdateOne) RemoveRouters(r ...*Router) *ProjectUpdateOne {
+	ids := make([]int, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return puo.RemoveRouterIDs(ids...)
 }
 
 // Where appends a list predicates to the ProjectUpdate builder.
@@ -412,6 +693,27 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := puo.mutation.Name(); ok {
+		_spec.SetField(project.FieldName, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.Objective(); ok {
+		_spec.SetField(project.FieldObjective, field.TypeString, value)
+	}
+	if puo.mutation.ObjectiveCleared() {
+		_spec.ClearField(project.FieldObjective, field.TypeString)
+	}
+	if value, ok := puo.mutation.EndDate(); ok {
+		_spec.SetField(project.FieldEndDate, field.TypeTime, value)
+	}
+	if puo.mutation.EndDateCleared() {
+		_spec.ClearField(project.FieldEndDate, field.TypeTime)
+	}
+	if value, ok := puo.mutation.StartDate(); ok {
+		_spec.SetField(project.FieldStartDate, field.TypeTime, value)
+	}
+	if puo.mutation.StartDateCleared() {
+		_spec.ClearField(project.FieldStartDate, field.TypeTime)
 	}
 	if puo.mutation.OperatorsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -513,6 +815,60 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: rodent.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if puo.mutation.RoutersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RoutersTable,
+			Columns: []string{project.RoutersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: router.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RemovedRoutersIDs(); len(nodes) > 0 && !puo.mutation.RoutersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RoutersTable,
+			Columns: []string{project.RoutersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: router.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.RoutersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.RoutersTable,
+			Columns: []string{project.RoutersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: router.FieldID,
 				},
 			},
 		}

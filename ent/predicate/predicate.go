@@ -30,6 +30,9 @@ type Rodent func(*sql.Selector)
 // Router is the predicate function for router builders.
 type Router func(*sql.Selector)
 
+// Services is the predicate function for services builders.
+type Services func(*sql.Selector)
+
 // Subnet is the predicate function for subnet builders.
 type Subnet func(*sql.Selector)
 

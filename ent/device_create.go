@@ -13,6 +13,7 @@ import (
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/services"
 	"github.com/salukikit/rodentity/ent/subnet"
 	"github.com/salukikit/rodentity/ent/user"
 )
@@ -72,17 +73,9 @@ func (dc *DeviceCreate) SetNillableVersion(s *string) *DeviceCreate {
 	return dc
 }
 
-// SetLocaladdress sets the "localaddress" field.
-func (dc *DeviceCreate) SetLocaladdress(s string) *DeviceCreate {
-	dc.mutation.SetLocaladdress(s)
-	return dc
-}
-
-// SetNillableLocaladdress sets the "localaddress" field if the given value is not nil.
-func (dc *DeviceCreate) SetNillableLocaladdress(s *string) *DeviceCreate {
-	if s != nil {
-		dc.SetLocaladdress(*s)
-	}
+// SetNetInterfaces sets the "net_interfaces" field.
+func (dc *DeviceCreate) SetNetInterfaces(s []string) *DeviceCreate {
+	dc.mutation.SetNetInterfaces(s)
 	return dc
 }
 
@@ -101,16 +94,8 @@ func (dc *DeviceCreate) SetNillableMachinepass(s *string) *DeviceCreate {
 }
 
 // SetCertificates sets the "certificates" field.
-func (dc *DeviceCreate) SetCertificates(s string) *DeviceCreate {
+func (dc *DeviceCreate) SetCertificates(s []string) *DeviceCreate {
 	dc.mutation.SetCertificates(s)
-	return dc
-}
-
-// SetNillableCertificates sets the "certificates" field if the given value is not nil.
-func (dc *DeviceCreate) SetNillableCertificates(s *string) *DeviceCreate {
-	if s != nil {
-		dc.SetCertificates(*s)
-	}
 	return dc
 }
 
@@ -193,6 +178,21 @@ func (dc *DeviceCreate) AddSubnets(s ...*Subnet) *DeviceCreate {
 	return dc.AddSubnetIDs(ids...)
 }
 
+// AddServiceIDs adds the "services" edge to the Services entity by IDs.
+func (dc *DeviceCreate) AddServiceIDs(ids ...int) *DeviceCreate {
+	dc.mutation.AddServiceIDs(ids...)
+	return dc
+}
+
+// AddServices adds the "services" edges to the Services entity.
+func (dc *DeviceCreate) AddServices(s ...*Services) *DeviceCreate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return dc.AddServiceIDs(ids...)
+}
+
 // Mutation returns the DeviceMutation object of the builder.
 func (dc *DeviceCreate) Mutation() *DeviceMutation {
 	return dc.mutation
@@ -240,10 +240,6 @@ func (dc *DeviceCreate) defaults() {
 		v := device.DefaultVersion
 		dc.mutation.SetVersion(v)
 	}
-	if _, ok := dc.mutation.Localaddress(); !ok {
-		v := device.DefaultLocaladdress
-		dc.mutation.SetLocaladdress(v)
-	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -259,9 +255,6 @@ func (dc *DeviceCreate) check() error {
 	}
 	if _, ok := dc.mutation.Version(); !ok {
 		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Device.version"`)}
-	}
-	if _, ok := dc.mutation.Localaddress(); !ok {
-		return &ValidationError{Name: "localaddress", err: errors.New(`ent: missing required field "Device.localaddress"`)}
 	}
 	return nil
 }
@@ -305,16 +298,16 @@ func (dc *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 		_spec.SetField(device.FieldVersion, field.TypeString, value)
 		_node.Version = value
 	}
-	if value, ok := dc.mutation.Localaddress(); ok {
-		_spec.SetField(device.FieldLocaladdress, field.TypeString, value)
-		_node.Localaddress = value
+	if value, ok := dc.mutation.NetInterfaces(); ok {
+		_spec.SetField(device.FieldNetInterfaces, field.TypeJSON, value)
+		_node.NetInterfaces = value
 	}
 	if value, ok := dc.mutation.Machinepass(); ok {
 		_spec.SetField(device.FieldMachinepass, field.TypeString, value)
 		_node.Machinepass = value
 	}
 	if value, ok := dc.mutation.Certificates(); ok {
-		_spec.SetField(device.FieldCertificates, field.TypeString, value)
+		_spec.SetField(device.FieldCertificates, field.TypeJSON, value)
 		_node.Certificates = value
 	}
 	if nodes := dc.mutation.UsersIDs(); len(nodes) > 0 {
@@ -405,6 +398,25 @@ func (dc *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: subnet.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := dc.mutation.ServicesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   device.ServicesTable,
+			Columns: device.ServicesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: services.FieldID,
 				},
 			},
 		}

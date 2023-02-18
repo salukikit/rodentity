@@ -11,7 +11,6 @@ import (
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
-	"github.com/salukikit/rodentity/ent/router"
 	"github.com/salukikit/rodentity/ent/user"
 )
 
@@ -30,6 +29,10 @@ type Rodent struct {
 	Key string `json:"key,omitempty"`
 	// Usercontext holds the value of the "usercontext" field.
 	Usercontext string `json:"usercontext,omitempty"`
+	// Comms holds the value of the "comms" field.
+	Comms string `json:"comms,omitempty"`
+	// CommsInspected holds the value of the "comms_inspected" field.
+	CommsInspected bool `json:"comms_inspected,omitempty"`
 	// Beacontime holds the value of the "beacontime" field.
 	Beacontime string `json:"beacontime,omitempty"`
 	// Burned holds the value of the "burned" field.
@@ -45,7 +48,6 @@ type Rodent struct {
 	Edges           RodentEdges `json:"edges"`
 	device_rodents  *int
 	project_rodents *int
-	router_rodents  *int
 	user_rodents    *int
 }
 
@@ -58,7 +60,7 @@ type RodentEdges struct {
 	// Project holds the value of the project edge.
 	Project *Project `json:"project,omitempty"`
 	// Router holds the value of the router edge.
-	Router *Router `json:"router,omitempty"`
+	Router []*Router `json:"router,omitempty"`
 	// Tasks holds the value of the tasks edge.
 	Tasks []*Task `json:"tasks,omitempty"`
 	// Loot holds the value of the loot edge.
@@ -108,13 +110,9 @@ func (e RodentEdges) ProjectOrErr() (*Project, error) {
 }
 
 // RouterOrErr returns the Router value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e RodentEdges) RouterOrErr() (*Router, error) {
+// was not loaded in eager-loading.
+func (e RodentEdges) RouterOrErr() ([]*Router, error) {
 	if e.loadedTypes[3] {
-		if e.Router == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: router.Label}
-		}
 		return e.Router, nil
 	}
 	return nil, &NotLoadedError{edge: "router"}
@@ -143,11 +141,11 @@ func (*Rodent) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case rodent.FieldBurned, rodent.FieldAlive:
+		case rodent.FieldCommsInspected, rodent.FieldBurned, rodent.FieldAlive:
 			values[i] = new(sql.NullBool)
 		case rodent.FieldID:
 			values[i] = new(sql.NullInt64)
-		case rodent.FieldXid, rodent.FieldType, rodent.FieldCodename, rodent.FieldKey, rodent.FieldUsercontext, rodent.FieldBeacontime:
+		case rodent.FieldXid, rodent.FieldType, rodent.FieldCodename, rodent.FieldKey, rodent.FieldUsercontext, rodent.FieldComms, rodent.FieldBeacontime:
 			values[i] = new(sql.NullString)
 		case rodent.FieldJoined, rodent.FieldLastseen:
 			values[i] = new(sql.NullTime)
@@ -155,9 +153,7 @@ func (*Rodent) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case rodent.ForeignKeys[1]: // project_rodents
 			values[i] = new(sql.NullInt64)
-		case rodent.ForeignKeys[2]: // router_rodents
-			values[i] = new(sql.NullInt64)
-		case rodent.ForeignKeys[3]: // user_rodents
+		case rodent.ForeignKeys[2]: // user_rodents
 			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Rodent", columns[i])
@@ -210,6 +206,18 @@ func (r *Rodent) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				r.Usercontext = value.String
 			}
+		case rodent.FieldComms:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field comms", values[i])
+			} else if value.Valid {
+				r.Comms = value.String
+			}
+		case rodent.FieldCommsInspected:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field comms_inspected", values[i])
+			} else if value.Valid {
+				r.CommsInspected = value.Bool
+			}
 		case rodent.FieldBeacontime:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field beacontime", values[i])
@@ -255,13 +263,6 @@ func (r *Rodent) assignValues(columns []string, values []any) error {
 				*r.project_rodents = int(value.Int64)
 			}
 		case rodent.ForeignKeys[2]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field router_rodents", value)
-			} else if value.Valid {
-				r.router_rodents = new(int)
-				*r.router_rodents = int(value.Int64)
-			}
-		case rodent.ForeignKeys[3]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field user_rodents", value)
 			} else if value.Valid {
@@ -340,6 +341,12 @@ func (r *Rodent) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("usercontext=")
 	builder.WriteString(r.Usercontext)
+	builder.WriteString(", ")
+	builder.WriteString("comms=")
+	builder.WriteString(r.Comms)
+	builder.WriteString(", ")
+	builder.WriteString("comms_inspected=")
+	builder.WriteString(fmt.Sprintf("%v", r.CommsInspected))
 	builder.WriteString(", ")
 	builder.WriteString("beacontime=")
 	builder.WriteString(r.Beacontime)

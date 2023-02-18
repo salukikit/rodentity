@@ -25,5 +25,8 @@ func (Router) Fields() []ent.Field {
 func (Router) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("rodents", Rodent.Type),
+		edge.From("project", Project.Type).
+			Ref("routers").
+			Unique(),
 	}
 }

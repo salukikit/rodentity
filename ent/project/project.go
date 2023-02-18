@@ -7,10 +7,20 @@ const (
 	Label = "project"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
+	// FieldObjective holds the string denoting the objective field in the database.
+	FieldObjective = "objective"
+	// FieldEndDate holds the string denoting the end_date field in the database.
+	FieldEndDate = "end_date"
+	// FieldStartDate holds the string denoting the start_date field in the database.
+	FieldStartDate = "start_date"
 	// EdgeOperators holds the string denoting the operators edge name in mutations.
 	EdgeOperators = "operators"
 	// EdgeRodents holds the string denoting the rodents edge name in mutations.
 	EdgeRodents = "rodents"
+	// EdgeRouters holds the string denoting the routers edge name in mutations.
+	EdgeRouters = "routers"
 	// Table holds the table name of the project in the database.
 	Table = "projects"
 	// OperatorsTable is the table that holds the operators relation/edge. The primary key declared below.
@@ -25,11 +35,22 @@ const (
 	RodentsInverseTable = "rodents"
 	// RodentsColumn is the table column denoting the rodents relation/edge.
 	RodentsColumn = "project_rodents"
+	// RoutersTable is the table that holds the routers relation/edge.
+	RoutersTable = "routers"
+	// RoutersInverseTable is the table name for the Router entity.
+	// It exists in this package in order to avoid circular dependency with the "router" package.
+	RoutersInverseTable = "routers"
+	// RoutersColumn is the table column denoting the routers relation/edge.
+	RoutersColumn = "project_routers"
 )
 
 // Columns holds all SQL columns for project fields.
 var Columns = []string{
 	FieldID,
+	FieldName,
+	FieldObjective,
+	FieldEndDate,
+	FieldStartDate,
 }
 
 var (
