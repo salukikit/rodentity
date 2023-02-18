@@ -19,8 +19,8 @@ type Rodent struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// Xid holds the value of the "xid" field.
-	Xid string `json:"xid,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
 	// Type holds the value of the "type" field.
 	Type string `json:"type,omitempty"`
 	// Key holds the value of the "key" field.
@@ -143,7 +143,7 @@ func (*Rodent) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case rodent.FieldID:
 			values[i] = new(sql.NullInt64)
-		case rodent.FieldXid, rodent.FieldType, rodent.FieldKey, rodent.FieldUsercontext, rodent.FieldComms, rodent.FieldBeacontime:
+		case rodent.FieldName, rodent.FieldType, rodent.FieldKey, rodent.FieldUsercontext, rodent.FieldComms, rodent.FieldBeacontime:
 			values[i] = new(sql.NullString)
 		case rodent.FieldJoined, rodent.FieldLastseen:
 			values[i] = new(sql.NullTime)
@@ -174,11 +174,11 @@ func (r *Rodent) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			r.ID = int(value.Int64)
-		case rodent.FieldXid:
+		case rodent.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field xid", values[i])
+				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				r.Xid = value.String
+				r.Name = value.String
 			}
 		case rodent.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -319,8 +319,8 @@ func (r *Rodent) String() string {
 	var builder strings.Builder
 	builder.WriteString("Rodent(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", r.ID))
-	builder.WriteString("xid=")
-	builder.WriteString(r.Xid)
+	builder.WriteString("name=")
+	builder.WriteString(r.Name)
 	builder.WriteString(", ")
 	builder.WriteString("type=")
 	builder.WriteString(r.Type)

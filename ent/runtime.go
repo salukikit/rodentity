@@ -58,7 +58,7 @@ func init() {
 	lootFields := schema.Loot{}.Fields()
 	_ = lootFields
 	// lootDescLocation is the schema descriptor for location field.
-	lootDescLocation := lootFields[2].Descriptor()
+	lootDescLocation := lootFields[1].Descriptor()
 	// loot.DefaultLocation holds the default value on creation for the location field.
 	loot.DefaultLocation = lootDescLocation.Default.(string)
 	rodentFields := schema.Rodent{}.Fields()

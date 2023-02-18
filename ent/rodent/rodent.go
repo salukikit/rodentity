@@ -7,8 +7,8 @@ const (
 	Label = "rodent"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldXid holds the string denoting the xid field in the database.
-	FieldXid = "xid"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
 	// FieldKey holds the string denoting the key field in the database.
@@ -88,7 +88,7 @@ const (
 // Columns holds all SQL columns for rodent fields.
 var Columns = []string{
 	FieldID,
-	FieldXid,
+	FieldName,
 	FieldType,
 	FieldKey,
 	FieldUsercontext,

@@ -34,9 +34,9 @@ func (ru *RodentUpdate) Where(ps ...predicate.Rodent) *RodentUpdate {
 	return ru
 }
 
-// SetXid sets the "xid" field.
-func (ru *RodentUpdate) SetXid(s string) *RodentUpdate {
-	ru.mutation.SetXid(s)
+// SetName sets the "name" field.
+func (ru *RodentUpdate) SetName(s string) *RodentUpdate {
+	ru.mutation.SetName(s)
 	return ru
 }
 
@@ -404,8 +404,8 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := ru.mutation.Xid(); ok {
-		_spec.SetField(rodent.FieldXid, field.TypeString, value)
+	if value, ok := ru.mutation.Name(); ok {
+		_spec.SetField(rodent.FieldName, field.TypeString, value)
 	}
 	if value, ok := ru.mutation.GetType(); ok {
 		_spec.SetField(rodent.FieldType, field.TypeString, value)
@@ -736,9 +736,9 @@ type RodentUpdateOne struct {
 	mutation *RodentMutation
 }
 
-// SetXid sets the "xid" field.
-func (ruo *RodentUpdateOne) SetXid(s string) *RodentUpdateOne {
-	ruo.mutation.SetXid(s)
+// SetName sets the "name" field.
+func (ruo *RodentUpdateOne) SetName(s string) *RodentUpdateOne {
+	ruo.mutation.SetName(s)
 	return ruo
 }
 
@@ -1136,8 +1136,8 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			}
 		}
 	}
-	if value, ok := ruo.mutation.Xid(); ok {
-		_spec.SetField(rodent.FieldXid, field.TypeString, value)
+	if value, ok := ruo.mutation.Name(); ok {
+		_spec.SetField(rodent.FieldName, field.TypeString, value)
 	}
 	if value, ok := ruo.mutation.GetType(); ok {
 		_spec.SetField(rodent.FieldType, field.TypeString, value)

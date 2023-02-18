@@ -14,7 +14,7 @@ type Rodent struct {
 // Fields of the Rodent.
 func (Rodent) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("xid"),
+		field.String("name"),
 		field.String("type").Default("FancyRat"),
 		field.String("key"),
 		field.String("usercontext").Optional(),

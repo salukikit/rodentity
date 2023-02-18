@@ -82,7 +82,6 @@ var (
 	// LootsColumns holds the columns for the "loots" table.
 	LootsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "xid", Type: field.TypeString},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"cred", "key", "cert", "enum", "objective", "pii", "other"}},
 		{Name: "location", Type: field.TypeString, Default: "unknown"},
 		{Name: "data", Type: field.TypeBytes},
@@ -98,13 +97,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "loots_rodents_loot",
-				Columns:    []*schema.Column{LootsColumns[6]},
+				Columns:    []*schema.Column{LootsColumns[5]},
 				RefColumns: []*schema.Column{RodentsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "loots_tasks_loot",
-				Columns:    []*schema.Column{LootsColumns[7]},
+				Columns:    []*schema.Column{LootsColumns[6]},
 				RefColumns: []*schema.Column{TasksColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -140,7 +139,7 @@ var (
 	// RodentsColumns holds the columns for the "rodents" table.
 	RodentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "xid", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
 		{Name: "type", Type: field.TypeString, Default: "FancyRat"},
 		{Name: "key", Type: field.TypeString},
 		{Name: "usercontext", Type: field.TypeString, Nullable: true},

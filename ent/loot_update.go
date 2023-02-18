@@ -30,12 +30,6 @@ func (lu *LootUpdate) Where(ps ...predicate.Loot) *LootUpdate {
 	return lu
 }
 
-// SetXid sets the "xid" field.
-func (lu *LootUpdate) SetXid(s string) *LootUpdate {
-	lu.mutation.SetXid(s)
-	return lu
-}
-
 // SetType sets the "type" field.
 func (lu *LootUpdate) SetType(l loot.Type) *LootUpdate {
 	lu.mutation.SetType(l)
@@ -172,9 +166,6 @@ func (lu *LootUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := lu.mutation.Xid(); ok {
-		_spec.SetField(loot.FieldXid, field.TypeString, value)
-	}
 	if value, ok := lu.mutation.GetType(); ok {
 		_spec.SetField(loot.FieldType, field.TypeEnum, value)
 	}
@@ -275,12 +266,6 @@ type LootUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *LootMutation
-}
-
-// SetXid sets the "xid" field.
-func (luo *LootUpdateOne) SetXid(s string) *LootUpdateOne {
-	luo.mutation.SetXid(s)
-	return luo
 }
 
 // SetType sets the "type" field.
@@ -448,9 +433,6 @@ func (luo *LootUpdateOne) sqlSave(ctx context.Context) (_node *Loot, err error) 
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := luo.mutation.Xid(); ok {
-		_spec.SetField(loot.FieldXid, field.TypeString, value)
 	}
 	if value, ok := luo.mutation.GetType(); ok {
 		_spec.SetField(loot.FieldType, field.TypeEnum, value)

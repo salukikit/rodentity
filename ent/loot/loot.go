@@ -11,8 +11,6 @@ const (
 	Label = "loot"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldXid holds the string denoting the xid field in the database.
-	FieldXid = "xid"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
 	// FieldLocation holds the string denoting the location field in the database.
@@ -46,7 +44,6 @@ const (
 // Columns holds all SQL columns for loot fields.
 var Columns = []string{
 	FieldID,
-	FieldXid,
 	FieldType,
 	FieldLocation,
 	FieldData,

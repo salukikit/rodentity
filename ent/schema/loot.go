@@ -14,7 +14,6 @@ type Loot struct {
 // Fields of the Loot.
 func (Loot) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("xid"),
 		field.Enum("type").Values("cred", "key", "cert", "enum", "objective", "pii", "other"),
 		field.String("location").Default("unknown"),
 		field.Bytes("data"),

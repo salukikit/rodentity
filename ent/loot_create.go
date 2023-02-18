@@ -22,12 +22,6 @@ type LootCreate struct {
 	hooks    []Hook
 }
 
-// SetXid sets the "xid" field.
-func (lc *LootCreate) SetXid(s string) *LootCreate {
-	lc.mutation.SetXid(s)
-	return lc
-}
-
 // SetType sets the "type" field.
 func (lc *LootCreate) SetType(l loot.Type) *LootCreate {
 	lc.mutation.SetType(l)
@@ -141,9 +135,6 @@ func (lc *LootCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (lc *LootCreate) check() error {
-	if _, ok := lc.mutation.Xid(); !ok {
-		return &ValidationError{Name: "xid", err: errors.New(`ent: missing required field "Loot.xid"`)}
-	}
 	if _, ok := lc.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Loot.type"`)}
 	}
@@ -187,10 +178,6 @@ func (lc *LootCreate) createSpec() (*Loot, *sqlgraph.CreateSpec) {
 		_node = &Loot{config: lc.config}
 		_spec = sqlgraph.NewCreateSpec(loot.Table, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeInt))
 	)
-	if value, ok := lc.mutation.Xid(); ok {
-		_spec.SetField(loot.FieldXid, field.TypeString, value)
-		_node.Xid = value
-	}
 	if value, ok := lc.mutation.GetType(); ok {
 		_spec.SetField(loot.FieldType, field.TypeEnum, value)
 		_node.Type = value

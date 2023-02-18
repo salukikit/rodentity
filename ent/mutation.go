@@ -2842,7 +2842,6 @@ type LootMutation struct {
 	op            Op
 	typ           string
 	id            *int
-	xid           *string
 	_type         *loot.Type
 	location      *string
 	data          *[]byte
@@ -2953,42 +2952,6 @@ func (m *LootMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetXid sets the "xid" field.
-func (m *LootMutation) SetXid(s string) {
-	m.xid = &s
-}
-
-// Xid returns the value of the "xid" field in the mutation.
-func (m *LootMutation) Xid() (r string, exists bool) {
-	v := m.xid
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldXid returns the old "xid" field's value of the Loot entity.
-// If the Loot object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LootMutation) OldXid(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldXid is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldXid requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldXid: %w", err)
-	}
-	return oldValue.Xid, nil
-}
-
-// ResetXid resets all changes to the "xid" field.
-func (m *LootMutation) ResetXid() {
-	m.xid = nil
 }
 
 // SetType sets the "type" field.
@@ -3247,10 +3210,7 @@ func (m *LootMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LootMutation) Fields() []string {
-	fields := make([]string, 0, 5)
-	if m.xid != nil {
-		fields = append(fields, loot.FieldXid)
-	}
+	fields := make([]string, 0, 4)
 	if m._type != nil {
 		fields = append(fields, loot.FieldType)
 	}
@@ -3271,8 +3231,6 @@ func (m *LootMutation) Fields() []string {
 // schema.
 func (m *LootMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case loot.FieldXid:
-		return m.Xid()
 	case loot.FieldType:
 		return m.GetType()
 	case loot.FieldLocation:
@@ -3290,8 +3248,6 @@ func (m *LootMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *LootMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case loot.FieldXid:
-		return m.OldXid(ctx)
 	case loot.FieldType:
 		return m.OldType(ctx)
 	case loot.FieldLocation:
@@ -3309,13 +3265,6 @@ func (m *LootMutation) OldField(ctx context.Context, name string) (ent.Value, er
 // type.
 func (m *LootMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case loot.FieldXid:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetXid(v)
-		return nil
 	case loot.FieldType:
 		v, ok := value.(loot.Type)
 		if !ok {
@@ -3393,9 +3342,6 @@ func (m *LootMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *LootMutation) ResetField(name string) error {
 	switch name {
-	case loot.FieldXid:
-		m.ResetXid()
-		return nil
 	case loot.FieldType:
 		m.ResetType()
 		return nil
@@ -4968,7 +4914,7 @@ type RodentMutation struct {
 	op              Op
 	typ             string
 	id              *int
-	xid             *string
+	name            *string
 	_type           *string
 	key             *string
 	usercontext     *string
@@ -5098,40 +5044,40 @@ func (m *RodentMutation) IDs(ctx context.Context) ([]int, error) {
 	}
 }
 
-// SetXid sets the "xid" field.
-func (m *RodentMutation) SetXid(s string) {
-	m.xid = &s
+// SetName sets the "name" field.
+func (m *RodentMutation) SetName(s string) {
+	m.name = &s
 }
 
-// Xid returns the value of the "xid" field in the mutation.
-func (m *RodentMutation) Xid() (r string, exists bool) {
-	v := m.xid
+// Name returns the value of the "name" field in the mutation.
+func (m *RodentMutation) Name() (r string, exists bool) {
+	v := m.name
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldXid returns the old "xid" field's value of the Rodent entity.
+// OldName returns the old "name" field's value of the Rodent entity.
 // If the Rodent object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RodentMutation) OldXid(ctx context.Context) (v string, err error) {
+func (m *RodentMutation) OldName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldXid is only allowed on UpdateOne operations")
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldXid requires an ID field in the mutation")
+		return v, errors.New("OldName requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldXid: %w", err)
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
 	}
-	return oldValue.Xid, nil
+	return oldValue.Name, nil
 }
 
-// ResetXid resets all changes to the "xid" field.
-func (m *RodentMutation) ResetXid() {
-	m.xid = nil
+// ResetName resets all changes to the "name" field.
+func (m *RodentMutation) ResetName() {
+	m.name = nil
 }
 
 // SetType sets the "type" field.
@@ -5860,8 +5806,8 @@ func (m *RodentMutation) Type() string {
 // AddedFields().
 func (m *RodentMutation) Fields() []string {
 	fields := make([]string, 0, 11)
-	if m.xid != nil {
-		fields = append(fields, rodent.FieldXid)
+	if m.name != nil {
+		fields = append(fields, rodent.FieldName)
 	}
 	if m._type != nil {
 		fields = append(fields, rodent.FieldType)
@@ -5901,8 +5847,8 @@ func (m *RodentMutation) Fields() []string {
 // schema.
 func (m *RodentMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case rodent.FieldXid:
-		return m.Xid()
+	case rodent.FieldName:
+		return m.Name()
 	case rodent.FieldType:
 		return m.GetType()
 	case rodent.FieldKey:
@@ -5932,8 +5878,8 @@ func (m *RodentMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *RodentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case rodent.FieldXid:
-		return m.OldXid(ctx)
+	case rodent.FieldName:
+		return m.OldName(ctx)
 	case rodent.FieldType:
 		return m.OldType(ctx)
 	case rodent.FieldKey:
@@ -5963,12 +5909,12 @@ func (m *RodentMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *RodentMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case rodent.FieldXid:
+	case rodent.FieldName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetXid(v)
+		m.SetName(v)
 		return nil
 	case rodent.FieldType:
 		v, ok := value.(string)
@@ -6116,8 +6062,8 @@ func (m *RodentMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *RodentMutation) ResetField(name string) error {
 	switch name {
-	case rodent.FieldXid:
-		m.ResetXid()
+	case rodent.FieldName:
+		m.ResetName()
 		return nil
 	case rodent.FieldType:
 		m.ResetType()

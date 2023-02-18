@@ -55,9 +55,9 @@ func IDLTE(id int) predicate.Rodent {
 	return predicate.Rodent(sql.FieldLTE(FieldID, id))
 }
 
-// Xid applies equality check predicate on the "xid" field. It's identical to XidEQ.
-func Xid(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldEQ(FieldXid, v))
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldEQ(FieldName, v))
 }
 
 // Type applies equality check predicate on the "type" field. It's identical to TypeEQ.
@@ -110,69 +110,69 @@ func Lastseen(v time.Time) predicate.Rodent {
 	return predicate.Rodent(sql.FieldEQ(FieldLastseen, v))
 }
 
-// XidEQ applies the EQ predicate on the "xid" field.
-func XidEQ(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldEQ(FieldXid, v))
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldEQ(FieldName, v))
 }
 
-// XidNEQ applies the NEQ predicate on the "xid" field.
-func XidNEQ(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldNEQ(FieldXid, v))
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldNEQ(FieldName, v))
 }
 
-// XidIn applies the In predicate on the "xid" field.
-func XidIn(vs ...string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldIn(FieldXid, vs...))
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldIn(FieldName, vs...))
 }
 
-// XidNotIn applies the NotIn predicate on the "xid" field.
-func XidNotIn(vs ...string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldNotIn(FieldXid, vs...))
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldNotIn(FieldName, vs...))
 }
 
-// XidGT applies the GT predicate on the "xid" field.
-func XidGT(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldGT(FieldXid, v))
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldGT(FieldName, v))
 }
 
-// XidGTE applies the GTE predicate on the "xid" field.
-func XidGTE(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldGTE(FieldXid, v))
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldGTE(FieldName, v))
 }
 
-// XidLT applies the LT predicate on the "xid" field.
-func XidLT(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldLT(FieldXid, v))
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldLT(FieldName, v))
 }
 
-// XidLTE applies the LTE predicate on the "xid" field.
-func XidLTE(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldLTE(FieldXid, v))
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldLTE(FieldName, v))
 }
 
-// XidContains applies the Contains predicate on the "xid" field.
-func XidContains(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldContains(FieldXid, v))
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldContains(FieldName, v))
 }
 
-// XidHasPrefix applies the HasPrefix predicate on the "xid" field.
-func XidHasPrefix(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldHasPrefix(FieldXid, v))
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldHasPrefix(FieldName, v))
 }
 
-// XidHasSuffix applies the HasSuffix predicate on the "xid" field.
-func XidHasSuffix(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldHasSuffix(FieldXid, v))
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldHasSuffix(FieldName, v))
 }
 
-// XidEqualFold applies the EqualFold predicate on the "xid" field.
-func XidEqualFold(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldEqualFold(FieldXid, v))
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldEqualFold(FieldName, v))
 }
 
-// XidContainsFold applies the ContainsFold predicate on the "xid" field.
-func XidContainsFold(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldContainsFold(FieldXid, v))
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.Rodent {
+	return predicate.Rodent(sql.FieldContainsFold(FieldName, v))
 }
 
 // TypeEQ applies the EQ predicate on the "type" field.

@@ -26,9 +26,9 @@ type RodentCreate struct {
 	hooks    []Hook
 }
 
-// SetXid sets the "xid" field.
-func (rc *RodentCreate) SetXid(s string) *RodentCreate {
-	rc.mutation.SetXid(s)
+// SetName sets the "name" field.
+func (rc *RodentCreate) SetName(s string) *RodentCreate {
+	rc.mutation.SetName(s)
 	return rc
 }
 
@@ -301,8 +301,8 @@ func (rc *RodentCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (rc *RodentCreate) check() error {
-	if _, ok := rc.mutation.Xid(); !ok {
-		return &ValidationError{Name: "xid", err: errors.New(`ent: missing required field "Rodent.xid"`)}
+	if _, ok := rc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Rodent.name"`)}
 	}
 	if _, ok := rc.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Rodent.type"`)}
@@ -348,9 +348,9 @@ func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 		_node = &Rodent{config: rc.config}
 		_spec = sqlgraph.NewCreateSpec(rodent.Table, sqlgraph.NewFieldSpec(rodent.FieldID, field.TypeInt))
 	)
-	if value, ok := rc.mutation.Xid(); ok {
-		_spec.SetField(rodent.FieldXid, field.TypeString, value)
-		_node.Xid = value
+	if value, ok := rc.mutation.Name(); ok {
+		_spec.SetField(rodent.FieldName, field.TypeString, value)
+		_node.Name = value
 	}
 	if value, ok := rc.mutation.GetType(); ok {
 		_spec.SetField(rodent.FieldType, field.TypeString, value)

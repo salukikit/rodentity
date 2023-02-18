@@ -479,12 +479,12 @@ func (rq *RodentQuery) WithLoot(opts ...func(*LootQuery)) *RodentQuery {
 // Example:
 //
 //	var v []struct {
-//		Xid string `json:"xid,omitempty"`
+//		Name string `json:"name,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Rodent.Query().
-//		GroupBy(rodent.FieldXid).
+//		GroupBy(rodent.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (rq *RodentQuery) GroupBy(field string, fields ...string) *RodentGroupBy {
@@ -502,11 +502,11 @@ func (rq *RodentQuery) GroupBy(field string, fields ...string) *RodentGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Xid string `json:"xid,omitempty"`
+//		Name string `json:"name,omitempty"`
 //	}
 //
 //	client.Rodent.Query().
-//		Select(rodent.FieldXid).
+//		Select(rodent.FieldName).
 //		Scan(ctx, &v)
 func (rq *RodentQuery) Select(fields ...string) *RodentSelect {
 	rq.ctx.Fields = append(rq.ctx.Fields, fields...)

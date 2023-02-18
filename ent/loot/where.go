@@ -55,11 +55,6 @@ func IDLTE(id int) predicate.Loot {
 	return predicate.Loot(sql.FieldLTE(FieldID, id))
 }
 
-// Xid applies equality check predicate on the "xid" field. It's identical to XidEQ.
-func Xid(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldEQ(FieldXid, v))
-}
-
 // Location applies equality check predicate on the "location" field. It's identical to LocationEQ.
 func Location(v string) predicate.Loot {
 	return predicate.Loot(sql.FieldEQ(FieldLocation, v))
@@ -73,71 +68,6 @@ func Data(v []byte) predicate.Loot {
 // Collectedon applies equality check predicate on the "collectedon" field. It's identical to CollectedonEQ.
 func Collectedon(v time.Time) predicate.Loot {
 	return predicate.Loot(sql.FieldEQ(FieldCollectedon, v))
-}
-
-// XidEQ applies the EQ predicate on the "xid" field.
-func XidEQ(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldEQ(FieldXid, v))
-}
-
-// XidNEQ applies the NEQ predicate on the "xid" field.
-func XidNEQ(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldNEQ(FieldXid, v))
-}
-
-// XidIn applies the In predicate on the "xid" field.
-func XidIn(vs ...string) predicate.Loot {
-	return predicate.Loot(sql.FieldIn(FieldXid, vs...))
-}
-
-// XidNotIn applies the NotIn predicate on the "xid" field.
-func XidNotIn(vs ...string) predicate.Loot {
-	return predicate.Loot(sql.FieldNotIn(FieldXid, vs...))
-}
-
-// XidGT applies the GT predicate on the "xid" field.
-func XidGT(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldGT(FieldXid, v))
-}
-
-// XidGTE applies the GTE predicate on the "xid" field.
-func XidGTE(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldGTE(FieldXid, v))
-}
-
-// XidLT applies the LT predicate on the "xid" field.
-func XidLT(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldLT(FieldXid, v))
-}
-
-// XidLTE applies the LTE predicate on the "xid" field.
-func XidLTE(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldLTE(FieldXid, v))
-}
-
-// XidContains applies the Contains predicate on the "xid" field.
-func XidContains(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldContains(FieldXid, v))
-}
-
-// XidHasPrefix applies the HasPrefix predicate on the "xid" field.
-func XidHasPrefix(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldHasPrefix(FieldXid, v))
-}
-
-// XidHasSuffix applies the HasSuffix predicate on the "xid" field.
-func XidHasSuffix(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldHasSuffix(FieldXid, v))
-}
-
-// XidEqualFold applies the EqualFold predicate on the "xid" field.
-func XidEqualFold(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldEqualFold(FieldXid, v))
-}
-
-// XidContainsFold applies the ContainsFold predicate on the "xid" field.
-func XidContainsFold(v string) predicate.Loot {
-	return predicate.Loot(sql.FieldContainsFold(FieldXid, v))
 }
 
 // TypeEQ applies the EQ predicate on the "type" field.

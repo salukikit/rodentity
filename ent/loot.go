@@ -18,8 +18,6 @@ type Loot struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// Xid holds the value of the "xid" field.
-	Xid string `json:"xid,omitempty"`
 	// Type holds the value of the "type" field.
 	Type loot.Type `json:"type,omitempty"`
 	// Location holds the value of the "location" field.
@@ -81,7 +79,7 @@ func (*Loot) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case loot.FieldID:
 			values[i] = new(sql.NullInt64)
-		case loot.FieldXid, loot.FieldType, loot.FieldLocation:
+		case loot.FieldType, loot.FieldLocation:
 			values[i] = new(sql.NullString)
 		case loot.FieldCollectedon:
 			values[i] = new(sql.NullTime)
@@ -110,12 +108,6 @@ func (l *Loot) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			l.ID = int(value.Int64)
-		case loot.FieldXid:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field xid", values[i])
-			} else if value.Valid {
-				l.Xid = value.String
-			}
 		case loot.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
@@ -192,9 +184,6 @@ func (l *Loot) String() string {
 	var builder strings.Builder
 	builder.WriteString("Loot(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", l.ID))
-	builder.WriteString("xid=")
-	builder.WriteString(l.Xid)
-	builder.WriteString(", ")
 	builder.WriteString("type=")
 	builder.WriteString(fmt.Sprintf("%v", l.Type))
 	builder.WriteString(", ")
