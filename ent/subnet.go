@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/subnet"
 )
 
@@ -15,7 +16,7 @@ import (
 type Subnet struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID xid.ID `json:"id,omitempty"`
 	// Cidr holds the value of the "cidr" field.
 	Cidr string `json:"cidr,omitempty"`
 	// Mask holds the value of the "mask" field.
@@ -59,10 +60,10 @@ func (*Subnet) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case subnet.FieldProxy:
 			values[i] = new(sql.NullBool)
-		case subnet.FieldID:
-			values[i] = new(sql.NullInt64)
 		case subnet.FieldCidr:
 			values[i] = new(sql.NullString)
+		case subnet.FieldID:
+			values[i] = new(xid.ID)
 		case subnet.ForeignKeys[0]: // services_subnet
 			values[i] = new(sql.NullInt64)
 		default:
@@ -81,11 +82,11 @@ func (s *Subnet) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case subnet.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*xid.ID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				s.ID = *value
 			}
-			s.ID = int(value.Int64)
 		case subnet.FieldCidr:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field cidr", values[i])

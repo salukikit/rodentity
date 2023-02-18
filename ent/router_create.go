@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/router"
@@ -51,15 +52,29 @@ func (rc *RouterCreate) SetInterfaces(s []string) *RouterCreate {
 	return rc
 }
 
+// SetID sets the "id" field.
+func (rc *RouterCreate) SetID(x xid.ID) *RouterCreate {
+	rc.mutation.SetID(x)
+	return rc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (rc *RouterCreate) SetNillableID(x *xid.ID) *RouterCreate {
+	if x != nil {
+		rc.SetID(*x)
+	}
+	return rc
+}
+
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
-func (rc *RouterCreate) AddRodentIDs(ids ...int) *RouterCreate {
+func (rc *RouterCreate) AddRodentIDs(ids ...xid.ID) *RouterCreate {
 	rc.mutation.AddRodentIDs(ids...)
 	return rc
 }
 
 // AddRodents adds the "rodents" edges to the Rodent entity.
 func (rc *RouterCreate) AddRodents(r ...*Rodent) *RouterCreate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -67,13 +82,13 @@ func (rc *RouterCreate) AddRodents(r ...*Rodent) *RouterCreate {
 }
 
 // SetProjectID sets the "project" edge to the Project entity by ID.
-func (rc *RouterCreate) SetProjectID(id int) *RouterCreate {
+func (rc *RouterCreate) SetProjectID(id xid.ID) *RouterCreate {
 	rc.mutation.SetProjectID(id)
 	return rc
 }
 
 // SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
-func (rc *RouterCreate) SetNillableProjectID(id *int) *RouterCreate {
+func (rc *RouterCreate) SetNillableProjectID(id *xid.ID) *RouterCreate {
 	if id != nil {
 		rc = rc.SetProjectID(*id)
 	}
@@ -92,6 +107,7 @@ func (rc *RouterCreate) Mutation() *RouterMutation {
 
 // Save creates the Router in the database.
 func (rc *RouterCreate) Save(ctx context.Context) (*Router, error) {
+	rc.defaults()
 	return withHooks[*Router, RouterMutation](ctx, rc.sqlSave, rc.mutation, rc.hooks)
 }
 
@@ -114,6 +130,14 @@ func (rc *RouterCreate) Exec(ctx context.Context) error {
 func (rc *RouterCreate) ExecX(ctx context.Context) {
 	if err := rc.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (rc *RouterCreate) defaults() {
+	if _, ok := rc.mutation.ID(); !ok {
+		v := router.DefaultID()
+		rc.mutation.SetID(v)
 	}
 }
 
@@ -142,8 +166,13 @@ func (rc *RouterCreate) sqlSave(ctx context.Context) (*Router, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*xid.ID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	rc.mutation.id = &_node.ID
 	rc.mutation.done = true
 	return _node, nil
@@ -152,8 +181,12 @@ func (rc *RouterCreate) sqlSave(ctx context.Context) (*Router, error) {
 func (rc *RouterCreate) createSpec() (*Router, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Router{config: rc.config}
-		_spec = sqlgraph.NewCreateSpec(router.Table, sqlgraph.NewFieldSpec(router.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(router.Table, sqlgraph.NewFieldSpec(router.FieldID, field.TypeString))
 	)
+	if id, ok := rc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := rc.mutation.Rname(); ok {
 		_spec.SetField(router.FieldRname, field.TypeString, value)
 		_node.Rname = value
@@ -183,7 +216,7 @@ func (rc *RouterCreate) createSpec() (*Router, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -202,7 +235,7 @@ func (rc *RouterCreate) createSpec() (*Router, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -230,6 +263,7 @@ func (rcb *RouterCreateBulk) Save(ctx context.Context) ([]*Router, error) {
 	for i := range rcb.builders {
 		func(i int, root context.Context) {
 			builder := rcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*RouterMutation)
 				if !ok {
@@ -256,10 +290,6 @@ func (rcb *RouterCreateBulk) Save(ctx context.Context) ([]*Router, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

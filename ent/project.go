@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/project"
 )
 
@@ -15,7 +16,7 @@ import (
 type Project struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID xid.ID `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Objective holds the value of the "objective" field.
@@ -74,12 +75,12 @@ func (*Project) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case project.FieldID:
-			values[i] = new(sql.NullInt64)
 		case project.FieldName, project.FieldObjective:
 			values[i] = new(sql.NullString)
 		case project.FieldEndDate, project.FieldStartDate:
 			values[i] = new(sql.NullTime)
+		case project.FieldID:
+			values[i] = new(xid.ID)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Project", columns[i])
 		}
@@ -96,11 +97,11 @@ func (pr *Project) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case project.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*xid.ID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				pr.ID = *value
 			}
-			pr.ID = int(value.Int64)
 		case project.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])

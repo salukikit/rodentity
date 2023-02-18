@@ -2,6 +2,10 @@
 
 package task
 
+import (
+	"github.com/rs/xid"
+)
+
 const (
 	// Label holds the string label denoting the task type in the database.
 	Label = "task"
@@ -99,4 +103,6 @@ var (
 	DefaultExecuted bool
 	// DefaultLooted holds the default value on creation for the "looted" field.
 	DefaultLooted bool
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() xid.ID
 )

@@ -11,6 +11,13 @@ type Loot struct {
 	ent.Schema
 }
 
+func (Loot) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		// Embed the BaseMixin in the user schema.
+		BaseMixin{},
+	}
+}
+
 // Fields of the Loot.
 func (Loot) Fields() []ent.Field {
 	return []ent.Field{

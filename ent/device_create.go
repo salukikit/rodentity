@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
@@ -99,15 +100,29 @@ func (dc *DeviceCreate) SetCertificates(s []string) *DeviceCreate {
 	return dc
 }
 
+// SetID sets the "id" field.
+func (dc *DeviceCreate) SetID(x xid.ID) *DeviceCreate {
+	dc.mutation.SetID(x)
+	return dc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (dc *DeviceCreate) SetNillableID(x *xid.ID) *DeviceCreate {
+	if x != nil {
+		dc.SetID(*x)
+	}
+	return dc
+}
+
 // AddUserIDs adds the "users" edge to the User entity by IDs.
-func (dc *DeviceCreate) AddUserIDs(ids ...int) *DeviceCreate {
+func (dc *DeviceCreate) AddUserIDs(ids ...xid.ID) *DeviceCreate {
 	dc.mutation.AddUserIDs(ids...)
 	return dc
 }
 
 // AddUsers adds the "users" edges to the User entity.
 func (dc *DeviceCreate) AddUsers(u ...*User) *DeviceCreate {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -115,14 +130,14 @@ func (dc *DeviceCreate) AddUsers(u ...*User) *DeviceCreate {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
-func (dc *DeviceCreate) AddRodentIDs(ids ...int) *DeviceCreate {
+func (dc *DeviceCreate) AddRodentIDs(ids ...xid.ID) *DeviceCreate {
 	dc.mutation.AddRodentIDs(ids...)
 	return dc
 }
 
 // AddRodents adds the "rodents" edges to the Rodent entity.
 func (dc *DeviceCreate) AddRodents(r ...*Rodent) *DeviceCreate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -130,14 +145,14 @@ func (dc *DeviceCreate) AddRodents(r ...*Rodent) *DeviceCreate {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
-func (dc *DeviceCreate) AddGroupIDs(ids ...int) *DeviceCreate {
+func (dc *DeviceCreate) AddGroupIDs(ids ...xid.ID) *DeviceCreate {
 	dc.mutation.AddGroupIDs(ids...)
 	return dc
 }
 
 // AddGroups adds the "groups" edges to the Group entity.
 func (dc *DeviceCreate) AddGroups(g ...*Group) *DeviceCreate {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -145,13 +160,13 @@ func (dc *DeviceCreate) AddGroups(g ...*Group) *DeviceCreate {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by ID.
-func (dc *DeviceCreate) SetDomainID(id int) *DeviceCreate {
+func (dc *DeviceCreate) SetDomainID(id xid.ID) *DeviceCreate {
 	dc.mutation.SetDomainID(id)
 	return dc
 }
 
 // SetNillableDomainID sets the "domain" edge to the Domain entity by ID if the given value is not nil.
-func (dc *DeviceCreate) SetNillableDomainID(id *int) *DeviceCreate {
+func (dc *DeviceCreate) SetNillableDomainID(id *xid.ID) *DeviceCreate {
 	if id != nil {
 		dc = dc.SetDomainID(*id)
 	}
@@ -164,14 +179,14 @@ func (dc *DeviceCreate) SetDomain(d *Domain) *DeviceCreate {
 }
 
 // AddSubnetIDs adds the "subnets" edge to the Subnet entity by IDs.
-func (dc *DeviceCreate) AddSubnetIDs(ids ...int) *DeviceCreate {
+func (dc *DeviceCreate) AddSubnetIDs(ids ...xid.ID) *DeviceCreate {
 	dc.mutation.AddSubnetIDs(ids...)
 	return dc
 }
 
 // AddSubnets adds the "subnets" edges to the Subnet entity.
 func (dc *DeviceCreate) AddSubnets(s ...*Subnet) *DeviceCreate {
-	ids := make([]int, len(s))
+	ids := make([]xid.ID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -240,6 +255,10 @@ func (dc *DeviceCreate) defaults() {
 		v := device.DefaultVersion
 		dc.mutation.SetVersion(v)
 	}
+	if _, ok := dc.mutation.ID(); !ok {
+		v := device.DefaultID()
+		dc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -270,8 +289,13 @@ func (dc *DeviceCreate) sqlSave(ctx context.Context) (*Device, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*xid.ID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	dc.mutation.id = &_node.ID
 	dc.mutation.done = true
 	return _node, nil
@@ -280,8 +304,12 @@ func (dc *DeviceCreate) sqlSave(ctx context.Context) (*Device, error) {
 func (dc *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Device{config: dc.config}
-		_spec = sqlgraph.NewCreateSpec(device.Table, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(device.Table, sqlgraph.NewFieldSpec(device.FieldID, field.TypeString))
 	)
+	if id, ok := dc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := dc.mutation.Hostname(); ok {
 		_spec.SetField(device.FieldHostname, field.TypeString, value)
 		_node.Hostname = value
@@ -319,7 +347,7 @@ func (dc *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -338,7 +366,7 @@ func (dc *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -357,7 +385,7 @@ func (dc *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -376,7 +404,7 @@ func (dc *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -396,7 +424,7 @@ func (dc *DeviceCreate) createSpec() (*Device, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: subnet.FieldID,
 				},
 			},
@@ -469,10 +497,6 @@ func (dcb *DeviceCreateBulk) Save(ctx context.Context) ([]*Device, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/subnet"
 )
@@ -58,15 +59,29 @@ func (sc *SubnetCreate) SetNillableProxy(b *bool) *SubnetCreate {
 	return sc
 }
 
+// SetID sets the "id" field.
+func (sc *SubnetCreate) SetID(x xid.ID) *SubnetCreate {
+	sc.mutation.SetID(x)
+	return sc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (sc *SubnetCreate) SetNillableID(x *xid.ID) *SubnetCreate {
+	if x != nil {
+		sc.SetID(*x)
+	}
+	return sc
+}
+
 // AddHostIDs adds the "hosts" edge to the Device entity by IDs.
-func (sc *SubnetCreate) AddHostIDs(ids ...int) *SubnetCreate {
+func (sc *SubnetCreate) AddHostIDs(ids ...xid.ID) *SubnetCreate {
 	sc.mutation.AddHostIDs(ids...)
 	return sc
 }
 
 // AddHosts adds the "hosts" edges to the Device entity.
 func (sc *SubnetCreate) AddHosts(d ...*Device) *SubnetCreate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -80,6 +95,7 @@ func (sc *SubnetCreate) Mutation() *SubnetMutation {
 
 // Save creates the Subnet in the database.
 func (sc *SubnetCreate) Save(ctx context.Context) (*Subnet, error) {
+	sc.defaults()
 	return withHooks[*Subnet, SubnetMutation](ctx, sc.sqlSave, sc.mutation, sc.hooks)
 }
 
@@ -105,6 +121,14 @@ func (sc *SubnetCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (sc *SubnetCreate) defaults() {
+	if _, ok := sc.mutation.ID(); !ok {
+		v := subnet.DefaultID()
+		sc.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (sc *SubnetCreate) check() error {
 	if _, ok := sc.mutation.Cidr(); !ok {
@@ -124,8 +148,13 @@ func (sc *SubnetCreate) sqlSave(ctx context.Context) (*Subnet, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*xid.ID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	sc.mutation.id = &_node.ID
 	sc.mutation.done = true
 	return _node, nil
@@ -134,8 +163,12 @@ func (sc *SubnetCreate) sqlSave(ctx context.Context) (*Subnet, error) {
 func (sc *SubnetCreate) createSpec() (*Subnet, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Subnet{config: sc.config}
-		_spec = sqlgraph.NewCreateSpec(subnet.Table, sqlgraph.NewFieldSpec(subnet.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(subnet.Table, sqlgraph.NewFieldSpec(subnet.FieldID, field.TypeString))
 	)
+	if id, ok := sc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := sc.mutation.Cidr(); ok {
 		_spec.SetField(subnet.FieldCidr, field.TypeString, value)
 		_node.Cidr = value
@@ -165,7 +198,7 @@ func (sc *SubnetCreate) createSpec() (*Subnet, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -192,6 +225,7 @@ func (scb *SubnetCreateBulk) Save(ctx context.Context) ([]*Subnet, error) {
 	for i := range scb.builders {
 		func(i int, root context.Context) {
 			builder := scb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*SubnetMutation)
 				if !ok {
@@ -218,10 +252,6 @@ func (scb *SubnetCreateBulk) Save(ctx context.Context) ([]*Subnet, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

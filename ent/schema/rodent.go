@@ -11,6 +11,13 @@ type Rodent struct {
 	ent.Schema
 }
 
+func (Rodent) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		// Embed the BaseMixin in the Project schema.
+		BaseMixin{},
+	}
+}
+
 // Fields of the Rodent.
 func (Rodent) Fields() []ent.Field {
 	return []ent.Field{

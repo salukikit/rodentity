@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
@@ -128,14 +129,14 @@ func (uu *UserUpdate) SetNillableEnabled(b *bool) *UserUpdate {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (uu *UserUpdate) AddDeviceIDs(ids ...int) *UserUpdate {
+func (uu *UserUpdate) AddDeviceIDs(ids ...xid.ID) *UserUpdate {
 	uu.mutation.AddDeviceIDs(ids...)
 	return uu
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (uu *UserUpdate) AddDevices(d ...*Device) *UserUpdate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -143,14 +144,14 @@ func (uu *UserUpdate) AddDevices(d ...*Device) *UserUpdate {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
-func (uu *UserUpdate) AddRodentIDs(ids ...int) *UserUpdate {
+func (uu *UserUpdate) AddRodentIDs(ids ...xid.ID) *UserUpdate {
 	uu.mutation.AddRodentIDs(ids...)
 	return uu
 }
 
 // AddRodents adds the "rodents" edges to the Rodent entity.
 func (uu *UserUpdate) AddRodents(r ...*Rodent) *UserUpdate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -158,14 +159,14 @@ func (uu *UserUpdate) AddRodents(r ...*Rodent) *UserUpdate {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
-func (uu *UserUpdate) AddGroupIDs(ids ...int) *UserUpdate {
+func (uu *UserUpdate) AddGroupIDs(ids ...xid.ID) *UserUpdate {
 	uu.mutation.AddGroupIDs(ids...)
 	return uu
 }
 
 // AddGroups adds the "groups" edges to the Group entity.
 func (uu *UserUpdate) AddGroups(g ...*Group) *UserUpdate {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -173,13 +174,13 @@ func (uu *UserUpdate) AddGroups(g ...*Group) *UserUpdate {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by ID.
-func (uu *UserUpdate) SetDomainID(id int) *UserUpdate {
+func (uu *UserUpdate) SetDomainID(id xid.ID) *UserUpdate {
 	uu.mutation.SetDomainID(id)
 	return uu
 }
 
 // SetNillableDomainID sets the "domain" edge to the Domain entity by ID if the given value is not nil.
-func (uu *UserUpdate) SetNillableDomainID(id *int) *UserUpdate {
+func (uu *UserUpdate) SetNillableDomainID(id *xid.ID) *UserUpdate {
 	if id != nil {
 		uu = uu.SetDomainID(*id)
 	}
@@ -203,14 +204,14 @@ func (uu *UserUpdate) ClearDevices() *UserUpdate {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to Device entities by IDs.
-func (uu *UserUpdate) RemoveDeviceIDs(ids ...int) *UserUpdate {
+func (uu *UserUpdate) RemoveDeviceIDs(ids ...xid.ID) *UserUpdate {
 	uu.mutation.RemoveDeviceIDs(ids...)
 	return uu
 }
 
 // RemoveDevices removes "devices" edges to Device entities.
 func (uu *UserUpdate) RemoveDevices(d ...*Device) *UserUpdate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -224,14 +225,14 @@ func (uu *UserUpdate) ClearRodents() *UserUpdate {
 }
 
 // RemoveRodentIDs removes the "rodents" edge to Rodent entities by IDs.
-func (uu *UserUpdate) RemoveRodentIDs(ids ...int) *UserUpdate {
+func (uu *UserUpdate) RemoveRodentIDs(ids ...xid.ID) *UserUpdate {
 	uu.mutation.RemoveRodentIDs(ids...)
 	return uu
 }
 
 // RemoveRodents removes "rodents" edges to Rodent entities.
 func (uu *UserUpdate) RemoveRodents(r ...*Rodent) *UserUpdate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -245,14 +246,14 @@ func (uu *UserUpdate) ClearGroups() *UserUpdate {
 }
 
 // RemoveGroupIDs removes the "groups" edge to Group entities by IDs.
-func (uu *UserUpdate) RemoveGroupIDs(ids ...int) *UserUpdate {
+func (uu *UserUpdate) RemoveGroupIDs(ids ...xid.ID) *UserUpdate {
 	uu.mutation.RemoveGroupIDs(ids...)
 	return uu
 }
 
 // RemoveGroups removes "groups" edges to Group entities.
 func (uu *UserUpdate) RemoveGroups(g ...*Group) *UserUpdate {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -293,7 +294,7 @@ func (uu *UserUpdate) ExecX(ctx context.Context) {
 }
 
 func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeString))
 	if ps := uu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -334,7 +335,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -350,7 +351,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -369,7 +370,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -388,7 +389,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -404,7 +405,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -423,7 +424,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -442,7 +443,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -458,7 +459,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -477,7 +478,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -496,7 +497,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -512,7 +513,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -639,14 +640,14 @@ func (uuo *UserUpdateOne) SetNillableEnabled(b *bool) *UserUpdateOne {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (uuo *UserUpdateOne) AddDeviceIDs(ids ...int) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddDeviceIDs(ids ...xid.ID) *UserUpdateOne {
 	uuo.mutation.AddDeviceIDs(ids...)
 	return uuo
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (uuo *UserUpdateOne) AddDevices(d ...*Device) *UserUpdateOne {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -654,14 +655,14 @@ func (uuo *UserUpdateOne) AddDevices(d ...*Device) *UserUpdateOne {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
-func (uuo *UserUpdateOne) AddRodentIDs(ids ...int) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddRodentIDs(ids ...xid.ID) *UserUpdateOne {
 	uuo.mutation.AddRodentIDs(ids...)
 	return uuo
 }
 
 // AddRodents adds the "rodents" edges to the Rodent entity.
 func (uuo *UserUpdateOne) AddRodents(r ...*Rodent) *UserUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -669,14 +670,14 @@ func (uuo *UserUpdateOne) AddRodents(r ...*Rodent) *UserUpdateOne {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
-func (uuo *UserUpdateOne) AddGroupIDs(ids ...int) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddGroupIDs(ids ...xid.ID) *UserUpdateOne {
 	uuo.mutation.AddGroupIDs(ids...)
 	return uuo
 }
 
 // AddGroups adds the "groups" edges to the Group entity.
 func (uuo *UserUpdateOne) AddGroups(g ...*Group) *UserUpdateOne {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -684,13 +685,13 @@ func (uuo *UserUpdateOne) AddGroups(g ...*Group) *UserUpdateOne {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by ID.
-func (uuo *UserUpdateOne) SetDomainID(id int) *UserUpdateOne {
+func (uuo *UserUpdateOne) SetDomainID(id xid.ID) *UserUpdateOne {
 	uuo.mutation.SetDomainID(id)
 	return uuo
 }
 
 // SetNillableDomainID sets the "domain" edge to the Domain entity by ID if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableDomainID(id *int) *UserUpdateOne {
+func (uuo *UserUpdateOne) SetNillableDomainID(id *xid.ID) *UserUpdateOne {
 	if id != nil {
 		uuo = uuo.SetDomainID(*id)
 	}
@@ -714,14 +715,14 @@ func (uuo *UserUpdateOne) ClearDevices() *UserUpdateOne {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to Device entities by IDs.
-func (uuo *UserUpdateOne) RemoveDeviceIDs(ids ...int) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveDeviceIDs(ids ...xid.ID) *UserUpdateOne {
 	uuo.mutation.RemoveDeviceIDs(ids...)
 	return uuo
 }
 
 // RemoveDevices removes "devices" edges to Device entities.
 func (uuo *UserUpdateOne) RemoveDevices(d ...*Device) *UserUpdateOne {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -735,14 +736,14 @@ func (uuo *UserUpdateOne) ClearRodents() *UserUpdateOne {
 }
 
 // RemoveRodentIDs removes the "rodents" edge to Rodent entities by IDs.
-func (uuo *UserUpdateOne) RemoveRodentIDs(ids ...int) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveRodentIDs(ids ...xid.ID) *UserUpdateOne {
 	uuo.mutation.RemoveRodentIDs(ids...)
 	return uuo
 }
 
 // RemoveRodents removes "rodents" edges to Rodent entities.
 func (uuo *UserUpdateOne) RemoveRodents(r ...*Rodent) *UserUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -756,14 +757,14 @@ func (uuo *UserUpdateOne) ClearGroups() *UserUpdateOne {
 }
 
 // RemoveGroupIDs removes the "groups" edge to Group entities by IDs.
-func (uuo *UserUpdateOne) RemoveGroupIDs(ids ...int) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveGroupIDs(ids ...xid.ID) *UserUpdateOne {
 	uuo.mutation.RemoveGroupIDs(ids...)
 	return uuo
 }
 
 // RemoveGroups removes "groups" edges to Group entities.
 func (uuo *UserUpdateOne) RemoveGroups(g ...*Group) *UserUpdateOne {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -817,7 +818,7 @@ func (uuo *UserUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
-	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeString))
 	id, ok := uuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "User.id" for update`)}
@@ -875,7 +876,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -891,7 +892,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -910,7 +911,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -929,7 +930,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -945,7 +946,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -964,7 +965,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -983,7 +984,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -999,7 +1000,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -1018,7 +1019,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -1037,7 +1038,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -1053,7 +1054,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},

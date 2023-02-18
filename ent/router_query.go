@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
@@ -131,8 +132,8 @@ func (rq *RouterQuery) FirstX(ctx context.Context) *Router {
 
 // FirstID returns the first Router ID from the query.
 // Returns a *NotFoundError when no Router ID was found.
-func (rq *RouterQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (rq *RouterQuery) FirstID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = rq.Limit(1).IDs(setContextOp(ctx, rq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -144,7 +145,7 @@ func (rq *RouterQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (rq *RouterQuery) FirstIDX(ctx context.Context) int {
+func (rq *RouterQuery) FirstIDX(ctx context.Context) xid.ID {
 	id, err := rq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -182,8 +183,8 @@ func (rq *RouterQuery) OnlyX(ctx context.Context) *Router {
 // OnlyID is like Only, but returns the only Router ID in the query.
 // Returns a *NotSingularError when more than one Router ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (rq *RouterQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (rq *RouterQuery) OnlyID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = rq.Limit(2).IDs(setContextOp(ctx, rq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -199,7 +200,7 @@ func (rq *RouterQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (rq *RouterQuery) OnlyIDX(ctx context.Context) int {
+func (rq *RouterQuery) OnlyIDX(ctx context.Context) xid.ID {
 	id, err := rq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -227,7 +228,7 @@ func (rq *RouterQuery) AllX(ctx context.Context) []*Router {
 }
 
 // IDs executes the query and returns a list of Router IDs.
-func (rq *RouterQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (rq *RouterQuery) IDs(ctx context.Context) (ids []xid.ID, err error) {
 	if rq.ctx.Unique == nil && rq.path != nil {
 		rq.Unique(true)
 	}
@@ -239,7 +240,7 @@ func (rq *RouterQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (rq *RouterQuery) IDsX(ctx context.Context) []int {
+func (rq *RouterQuery) IDsX(ctx context.Context) []xid.ID {
 	ids, err := rq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -455,8 +456,8 @@ func (rq *RouterQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Route
 
 func (rq *RouterQuery) loadRodents(ctx context.Context, query *RodentQuery, nodes []*Router, init func(*Router), assign func(*Router, *Rodent)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Router)
-	nids := make(map[int]map[*Router]struct{})
+	byID := make(map[xid.ID]*Router)
+	nids := make(map[xid.ID]map[*Router]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -485,11 +486,11 @@ func (rq *RouterQuery) loadRodents(ctx context.Context, query *RodentQuery, node
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
+				return append([]any{new(xid.ID)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
+				outValue := *values[0].(*xid.ID)
+				inValue := *values[1].(*xid.ID)
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Router]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -515,8 +516,8 @@ func (rq *RouterQuery) loadRodents(ctx context.Context, query *RodentQuery, node
 	return nil
 }
 func (rq *RouterQuery) loadProject(ctx context.Context, query *ProjectQuery, nodes []*Router, init func(*Router), assign func(*Router, *Project)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Router)
+	ids := make([]xid.ID, 0, len(nodes))
+	nodeids := make(map[xid.ID][]*Router)
 	for i := range nodes {
 		if nodes[i].project_routers == nil {
 			continue
@@ -557,7 +558,7 @@ func (rq *RouterQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (rq *RouterQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(router.Table, router.Columns, sqlgraph.NewFieldSpec(router.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(router.Table, router.Columns, sqlgraph.NewFieldSpec(router.FieldID, field.TypeString))
 	_spec.From = rq.sql
 	if unique := rq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/subnet"
@@ -107,8 +108,8 @@ func (sq *SubnetQuery) FirstX(ctx context.Context) *Subnet {
 
 // FirstID returns the first Subnet ID from the query.
 // Returns a *NotFoundError when no Subnet ID was found.
-func (sq *SubnetQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (sq *SubnetQuery) FirstID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = sq.Limit(1).IDs(setContextOp(ctx, sq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -120,7 +121,7 @@ func (sq *SubnetQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (sq *SubnetQuery) FirstIDX(ctx context.Context) int {
+func (sq *SubnetQuery) FirstIDX(ctx context.Context) xid.ID {
 	id, err := sq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -158,8 +159,8 @@ func (sq *SubnetQuery) OnlyX(ctx context.Context) *Subnet {
 // OnlyID is like Only, but returns the only Subnet ID in the query.
 // Returns a *NotSingularError when more than one Subnet ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (sq *SubnetQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (sq *SubnetQuery) OnlyID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = sq.Limit(2).IDs(setContextOp(ctx, sq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -175,7 +176,7 @@ func (sq *SubnetQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (sq *SubnetQuery) OnlyIDX(ctx context.Context) int {
+func (sq *SubnetQuery) OnlyIDX(ctx context.Context) xid.ID {
 	id, err := sq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -203,7 +204,7 @@ func (sq *SubnetQuery) AllX(ctx context.Context) []*Subnet {
 }
 
 // IDs executes the query and returns a list of Subnet IDs.
-func (sq *SubnetQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (sq *SubnetQuery) IDs(ctx context.Context) (ids []xid.ID, err error) {
 	if sq.ctx.Unique == nil && sq.path != nil {
 		sq.Unique(true)
 	}
@@ -215,7 +216,7 @@ func (sq *SubnetQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (sq *SubnetQuery) IDsX(ctx context.Context) []int {
+func (sq *SubnetQuery) IDsX(ctx context.Context) []xid.ID {
 	ids, err := sq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -409,8 +410,8 @@ func (sq *SubnetQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Subne
 
 func (sq *SubnetQuery) loadHosts(ctx context.Context, query *DeviceQuery, nodes []*Subnet, init func(*Subnet), assign func(*Subnet, *Device)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Subnet)
-	nids := make(map[int]map[*Subnet]struct{})
+	byID := make(map[xid.ID]*Subnet)
+	nids := make(map[xid.ID]map[*Subnet]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -439,11 +440,11 @@ func (sq *SubnetQuery) loadHosts(ctx context.Context, query *DeviceQuery, nodes 
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
+				return append([]any{new(xid.ID)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
+				outValue := *values[0].(*xid.ID)
+				inValue := *values[1].(*xid.ID)
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Subnet]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -479,7 +480,7 @@ func (sq *SubnetQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (sq *SubnetQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(subnet.Table, subnet.Columns, sqlgraph.NewFieldSpec(subnet.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(subnet.Table, subnet.Columns, sqlgraph.NewFieldSpec(subnet.FieldID, field.TypeString))
 	_spec.From = sq.sql
 	if unique := sq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

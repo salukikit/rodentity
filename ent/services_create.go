@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/services"
 	"github.com/salukikit/rodentity/ent/subnet"
@@ -34,14 +35,14 @@ func (sc *ServicesCreate) SetPort(s string) *ServicesCreate {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (sc *ServicesCreate) AddDeviceIDs(ids ...int) *ServicesCreate {
+func (sc *ServicesCreate) AddDeviceIDs(ids ...xid.ID) *ServicesCreate {
 	sc.mutation.AddDeviceIDs(ids...)
 	return sc
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (sc *ServicesCreate) AddDevices(d ...*Device) *ServicesCreate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -49,14 +50,14 @@ func (sc *ServicesCreate) AddDevices(d ...*Device) *ServicesCreate {
 }
 
 // AddSubnetIDs adds the "subnet" edge to the Subnet entity by IDs.
-func (sc *ServicesCreate) AddSubnetIDs(ids ...int) *ServicesCreate {
+func (sc *ServicesCreate) AddSubnetIDs(ids ...xid.ID) *ServicesCreate {
 	sc.mutation.AddSubnetIDs(ids...)
 	return sc
 }
 
 // AddSubnet adds the "subnet" edges to the Subnet entity.
 func (sc *ServicesCreate) AddSubnet(s ...*Subnet) *ServicesCreate {
-	ids := make([]int, len(s))
+	ids := make([]xid.ID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -146,7 +147,7 @@ func (sc *ServicesCreate) createSpec() (*Services, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -165,7 +166,7 @@ func (sc *ServicesCreate) createSpec() (*Services, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: subnet.FieldID,
 				},
 			},

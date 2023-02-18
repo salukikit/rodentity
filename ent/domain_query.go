@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
@@ -201,8 +202,8 @@ func (dq *DomainQuery) FirstX(ctx context.Context) *Domain {
 
 // FirstID returns the first Domain ID from the query.
 // Returns a *NotFoundError when no Domain ID was found.
-func (dq *DomainQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (dq *DomainQuery) FirstID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = dq.Limit(1).IDs(setContextOp(ctx, dq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -214,7 +215,7 @@ func (dq *DomainQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (dq *DomainQuery) FirstIDX(ctx context.Context) int {
+func (dq *DomainQuery) FirstIDX(ctx context.Context) xid.ID {
 	id, err := dq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -252,8 +253,8 @@ func (dq *DomainQuery) OnlyX(ctx context.Context) *Domain {
 // OnlyID is like Only, but returns the only Domain ID in the query.
 // Returns a *NotSingularError when more than one Domain ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (dq *DomainQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (dq *DomainQuery) OnlyID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = dq.Limit(2).IDs(setContextOp(ctx, dq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -269,7 +270,7 @@ func (dq *DomainQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (dq *DomainQuery) OnlyIDX(ctx context.Context) int {
+func (dq *DomainQuery) OnlyIDX(ctx context.Context) xid.ID {
 	id, err := dq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -297,7 +298,7 @@ func (dq *DomainQuery) AllX(ctx context.Context) []*Domain {
 }
 
 // IDs executes the query and returns a list of Domain IDs.
-func (dq *DomainQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (dq *DomainQuery) IDs(ctx context.Context) (ids []xid.ID, err error) {
 	if dq.ctx.Unique == nil && dq.path != nil {
 		dq.Unique(true)
 	}
@@ -309,7 +310,7 @@ func (dq *DomainQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (dq *DomainQuery) IDsX(ctx context.Context) []int {
+func (dq *DomainQuery) IDsX(ctx context.Context) []xid.ID {
 	ids, err := dq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -585,7 +586,7 @@ func (dq *DomainQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Domai
 
 func (dq *DomainQuery) loadDevices(ctx context.Context, query *DeviceQuery, nodes []*Domain, init func(*Domain), assign func(*Domain, *Device)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Domain)
+	nodeids := make(map[xid.ID]*Domain)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -616,7 +617,7 @@ func (dq *DomainQuery) loadDevices(ctx context.Context, query *DeviceQuery, node
 }
 func (dq *DomainQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []*Domain, init func(*Domain), assign func(*Domain, *User)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Domain)
+	nodeids := make(map[xid.ID]*Domain)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -647,7 +648,7 @@ func (dq *DomainQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []
 }
 func (dq *DomainQuery) loadGroups(ctx context.Context, query *GroupQuery, nodes []*Domain, init func(*Domain), assign func(*Domain, *Group)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Domain)
+	nodeids := make(map[xid.ID]*Domain)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -678,7 +679,7 @@ func (dq *DomainQuery) loadGroups(ctx context.Context, query *GroupQuery, nodes 
 }
 func (dq *DomainQuery) loadChilddomains(ctx context.Context, query *DomainQuery, nodes []*Domain, init func(*Domain), assign func(*Domain, *Domain)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Domain)
+	nodeids := make(map[xid.ID]*Domain)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -708,8 +709,8 @@ func (dq *DomainQuery) loadChilddomains(ctx context.Context, query *DomainQuery,
 	return nil
 }
 func (dq *DomainQuery) loadParentdomain(ctx context.Context, query *DomainQuery, nodes []*Domain, init func(*Domain), assign func(*Domain, *Domain)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Domain)
+	ids := make([]xid.ID, 0, len(nodes))
+	nodeids := make(map[xid.ID][]*Domain)
 	for i := range nodes {
 		if nodes[i].domain_childdomains == nil {
 			continue
@@ -750,7 +751,7 @@ func (dq *DomainQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (dq *DomainQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(domain.Table, domain.Columns, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(domain.Table, domain.Columns, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeString))
 	_spec.From = dq.sql
 	if unique := dq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

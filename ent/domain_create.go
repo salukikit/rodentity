@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
@@ -70,15 +71,29 @@ func (dc *DomainCreate) SetNillableCloud(s *string) *DomainCreate {
 	return dc
 }
 
+// SetID sets the "id" field.
+func (dc *DomainCreate) SetID(x xid.ID) *DomainCreate {
+	dc.mutation.SetID(x)
+	return dc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (dc *DomainCreate) SetNillableID(x *xid.ID) *DomainCreate {
+	if x != nil {
+		dc.SetID(*x)
+	}
+	return dc
+}
+
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (dc *DomainCreate) AddDeviceIDs(ids ...int) *DomainCreate {
+func (dc *DomainCreate) AddDeviceIDs(ids ...xid.ID) *DomainCreate {
 	dc.mutation.AddDeviceIDs(ids...)
 	return dc
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (dc *DomainCreate) AddDevices(d ...*Device) *DomainCreate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -86,14 +101,14 @@ func (dc *DomainCreate) AddDevices(d ...*Device) *DomainCreate {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by IDs.
-func (dc *DomainCreate) AddUserIDs(ids ...int) *DomainCreate {
+func (dc *DomainCreate) AddUserIDs(ids ...xid.ID) *DomainCreate {
 	dc.mutation.AddUserIDs(ids...)
 	return dc
 }
 
 // AddUsers adds the "users" edges to the User entity.
 func (dc *DomainCreate) AddUsers(u ...*User) *DomainCreate {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -101,14 +116,14 @@ func (dc *DomainCreate) AddUsers(u ...*User) *DomainCreate {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
-func (dc *DomainCreate) AddGroupIDs(ids ...int) *DomainCreate {
+func (dc *DomainCreate) AddGroupIDs(ids ...xid.ID) *DomainCreate {
 	dc.mutation.AddGroupIDs(ids...)
 	return dc
 }
 
 // AddGroups adds the "groups" edges to the Group entity.
 func (dc *DomainCreate) AddGroups(g ...*Group) *DomainCreate {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -116,14 +131,14 @@ func (dc *DomainCreate) AddGroups(g ...*Group) *DomainCreate {
 }
 
 // AddChilddomainIDs adds the "childdomains" edge to the Domain entity by IDs.
-func (dc *DomainCreate) AddChilddomainIDs(ids ...int) *DomainCreate {
+func (dc *DomainCreate) AddChilddomainIDs(ids ...xid.ID) *DomainCreate {
 	dc.mutation.AddChilddomainIDs(ids...)
 	return dc
 }
 
 // AddChilddomains adds the "childdomains" edges to the Domain entity.
 func (dc *DomainCreate) AddChilddomains(d ...*Domain) *DomainCreate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -131,13 +146,13 @@ func (dc *DomainCreate) AddChilddomains(d ...*Domain) *DomainCreate {
 }
 
 // SetParentdomainID sets the "parentdomain" edge to the Domain entity by ID.
-func (dc *DomainCreate) SetParentdomainID(id int) *DomainCreate {
+func (dc *DomainCreate) SetParentdomainID(id xid.ID) *DomainCreate {
 	dc.mutation.SetParentdomainID(id)
 	return dc
 }
 
 // SetNillableParentdomainID sets the "parentdomain" edge to the Domain entity by ID if the given value is not nil.
-func (dc *DomainCreate) SetNillableParentdomainID(id *int) *DomainCreate {
+func (dc *DomainCreate) SetNillableParentdomainID(id *xid.ID) *DomainCreate {
 	if id != nil {
 		dc = dc.SetParentdomainID(*id)
 	}
@@ -196,6 +211,10 @@ func (dc *DomainCreate) defaults() {
 		v := domain.DefaultCloud
 		dc.mutation.SetCloud(v)
 	}
+	if _, ok := dc.mutation.ID(); !ok {
+		v := domain.DefaultID()
+		dc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -226,8 +245,13 @@ func (dc *DomainCreate) sqlSave(ctx context.Context) (*Domain, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*xid.ID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	dc.mutation.id = &_node.ID
 	dc.mutation.done = true
 	return _node, nil
@@ -236,8 +260,12 @@ func (dc *DomainCreate) sqlSave(ctx context.Context) (*Domain, error) {
 func (dc *DomainCreate) createSpec() (*Domain, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Domain{config: dc.config}
-		_spec = sqlgraph.NewCreateSpec(domain.Table, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(domain.Table, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeString))
 	)
+	if id, ok := dc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := dc.mutation.Name(); ok {
 		_spec.SetField(domain.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -263,7 +291,7 @@ func (dc *DomainCreate) createSpec() (*Domain, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -282,7 +310,7 @@ func (dc *DomainCreate) createSpec() (*Domain, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -301,7 +329,7 @@ func (dc *DomainCreate) createSpec() (*Domain, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -320,7 +348,7 @@ func (dc *DomainCreate) createSpec() (*Domain, *sqlgraph.CreateSpec) {
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -339,7 +367,7 @@ func (dc *DomainCreate) createSpec() (*Domain, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -394,10 +422,6 @@ func (dcb *DomainCreateBulk) Save(ctx context.Context) ([]*Domain, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

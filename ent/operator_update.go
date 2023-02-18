@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/project"
@@ -60,14 +61,14 @@ func (ou *OperatorUpdate) ClearCert() *OperatorUpdate {
 }
 
 // AddProjectIDs adds the "projects" edge to the Project entity by IDs.
-func (ou *OperatorUpdate) AddProjectIDs(ids ...int) *OperatorUpdate {
+func (ou *OperatorUpdate) AddProjectIDs(ids ...xid.ID) *OperatorUpdate {
 	ou.mutation.AddProjectIDs(ids...)
 	return ou
 }
 
 // AddProjects adds the "projects" edges to the Project entity.
 func (ou *OperatorUpdate) AddProjects(p ...*Project) *OperatorUpdate {
-	ids := make([]int, len(p))
+	ids := make([]xid.ID, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
 	}
@@ -75,14 +76,14 @@ func (ou *OperatorUpdate) AddProjects(p ...*Project) *OperatorUpdate {
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
-func (ou *OperatorUpdate) AddTaskIDs(ids ...int) *OperatorUpdate {
+func (ou *OperatorUpdate) AddTaskIDs(ids ...xid.ID) *OperatorUpdate {
 	ou.mutation.AddTaskIDs(ids...)
 	return ou
 }
 
 // AddTasks adds the "tasks" edges to the Task entity.
 func (ou *OperatorUpdate) AddTasks(t ...*Task) *OperatorUpdate {
-	ids := make([]int, len(t))
+	ids := make([]xid.ID, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -101,14 +102,14 @@ func (ou *OperatorUpdate) ClearProjects() *OperatorUpdate {
 }
 
 // RemoveProjectIDs removes the "projects" edge to Project entities by IDs.
-func (ou *OperatorUpdate) RemoveProjectIDs(ids ...int) *OperatorUpdate {
+func (ou *OperatorUpdate) RemoveProjectIDs(ids ...xid.ID) *OperatorUpdate {
 	ou.mutation.RemoveProjectIDs(ids...)
 	return ou
 }
 
 // RemoveProjects removes "projects" edges to Project entities.
 func (ou *OperatorUpdate) RemoveProjects(p ...*Project) *OperatorUpdate {
-	ids := make([]int, len(p))
+	ids := make([]xid.ID, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
 	}
@@ -122,14 +123,14 @@ func (ou *OperatorUpdate) ClearTasks() *OperatorUpdate {
 }
 
 // RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
-func (ou *OperatorUpdate) RemoveTaskIDs(ids ...int) *OperatorUpdate {
+func (ou *OperatorUpdate) RemoveTaskIDs(ids ...xid.ID) *OperatorUpdate {
 	ou.mutation.RemoveTaskIDs(ids...)
 	return ou
 }
 
 // RemoveTasks removes "tasks" edges to Task entities.
 func (ou *OperatorUpdate) RemoveTasks(t ...*Task) *OperatorUpdate {
-	ids := make([]int, len(t))
+	ids := make([]xid.ID, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -164,7 +165,7 @@ func (ou *OperatorUpdate) ExecX(ctx context.Context) {
 }
 
 func (ou *OperatorUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(operator.Table, operator.Columns, sqlgraph.NewFieldSpec(operator.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(operator.Table, operator.Columns, sqlgraph.NewFieldSpec(operator.FieldID, field.TypeString))
 	if ps := ou.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -196,7 +197,7 @@ func (ou *OperatorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -212,7 +213,7 @@ func (ou *OperatorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -231,7 +232,7 @@ func (ou *OperatorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -250,7 +251,7 @@ func (ou *OperatorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -266,7 +267,7 @@ func (ou *OperatorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -285,7 +286,7 @@ func (ou *OperatorUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -346,14 +347,14 @@ func (ouo *OperatorUpdateOne) ClearCert() *OperatorUpdateOne {
 }
 
 // AddProjectIDs adds the "projects" edge to the Project entity by IDs.
-func (ouo *OperatorUpdateOne) AddProjectIDs(ids ...int) *OperatorUpdateOne {
+func (ouo *OperatorUpdateOne) AddProjectIDs(ids ...xid.ID) *OperatorUpdateOne {
 	ouo.mutation.AddProjectIDs(ids...)
 	return ouo
 }
 
 // AddProjects adds the "projects" edges to the Project entity.
 func (ouo *OperatorUpdateOne) AddProjects(p ...*Project) *OperatorUpdateOne {
-	ids := make([]int, len(p))
+	ids := make([]xid.ID, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
 	}
@@ -361,14 +362,14 @@ func (ouo *OperatorUpdateOne) AddProjects(p ...*Project) *OperatorUpdateOne {
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
-func (ouo *OperatorUpdateOne) AddTaskIDs(ids ...int) *OperatorUpdateOne {
+func (ouo *OperatorUpdateOne) AddTaskIDs(ids ...xid.ID) *OperatorUpdateOne {
 	ouo.mutation.AddTaskIDs(ids...)
 	return ouo
 }
 
 // AddTasks adds the "tasks" edges to the Task entity.
 func (ouo *OperatorUpdateOne) AddTasks(t ...*Task) *OperatorUpdateOne {
-	ids := make([]int, len(t))
+	ids := make([]xid.ID, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -387,14 +388,14 @@ func (ouo *OperatorUpdateOne) ClearProjects() *OperatorUpdateOne {
 }
 
 // RemoveProjectIDs removes the "projects" edge to Project entities by IDs.
-func (ouo *OperatorUpdateOne) RemoveProjectIDs(ids ...int) *OperatorUpdateOne {
+func (ouo *OperatorUpdateOne) RemoveProjectIDs(ids ...xid.ID) *OperatorUpdateOne {
 	ouo.mutation.RemoveProjectIDs(ids...)
 	return ouo
 }
 
 // RemoveProjects removes "projects" edges to Project entities.
 func (ouo *OperatorUpdateOne) RemoveProjects(p ...*Project) *OperatorUpdateOne {
-	ids := make([]int, len(p))
+	ids := make([]xid.ID, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
 	}
@@ -408,14 +409,14 @@ func (ouo *OperatorUpdateOne) ClearTasks() *OperatorUpdateOne {
 }
 
 // RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
-func (ouo *OperatorUpdateOne) RemoveTaskIDs(ids ...int) *OperatorUpdateOne {
+func (ouo *OperatorUpdateOne) RemoveTaskIDs(ids ...xid.ID) *OperatorUpdateOne {
 	ouo.mutation.RemoveTaskIDs(ids...)
 	return ouo
 }
 
 // RemoveTasks removes "tasks" edges to Task entities.
 func (ouo *OperatorUpdateOne) RemoveTasks(t ...*Task) *OperatorUpdateOne {
-	ids := make([]int, len(t))
+	ids := make([]xid.ID, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -463,7 +464,7 @@ func (ouo *OperatorUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (ouo *OperatorUpdateOne) sqlSave(ctx context.Context) (_node *Operator, err error) {
-	_spec := sqlgraph.NewUpdateSpec(operator.Table, operator.Columns, sqlgraph.NewFieldSpec(operator.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(operator.Table, operator.Columns, sqlgraph.NewFieldSpec(operator.FieldID, field.TypeString))
 	id, ok := ouo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Operator.id" for update`)}
@@ -512,7 +513,7 @@ func (ouo *OperatorUpdateOne) sqlSave(ctx context.Context) (_node *Operator, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -528,7 +529,7 @@ func (ouo *OperatorUpdateOne) sqlSave(ctx context.Context) (_node *Operator, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -547,7 +548,7 @@ func (ouo *OperatorUpdateOne) sqlSave(ctx context.Context) (_node *Operator, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -566,7 +567,7 @@ func (ouo *OperatorUpdateOne) sqlSave(ctx context.Context) (_node *Operator, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -582,7 +583,7 @@ func (ouo *OperatorUpdateOne) sqlSave(ctx context.Context) (_node *Operator, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -601,7 +602,7 @@ func (ouo *OperatorUpdateOne) sqlSave(ctx context.Context) (_node *Operator, err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},

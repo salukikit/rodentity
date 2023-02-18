@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/project"
@@ -98,14 +99,14 @@ func (pu *ProjectUpdate) ClearStartDate() *ProjectUpdate {
 }
 
 // AddOperatorIDs adds the "operators" edge to the Operator entity by IDs.
-func (pu *ProjectUpdate) AddOperatorIDs(ids ...int) *ProjectUpdate {
+func (pu *ProjectUpdate) AddOperatorIDs(ids ...xid.ID) *ProjectUpdate {
 	pu.mutation.AddOperatorIDs(ids...)
 	return pu
 }
 
 // AddOperators adds the "operators" edges to the Operator entity.
 func (pu *ProjectUpdate) AddOperators(o ...*Operator) *ProjectUpdate {
-	ids := make([]int, len(o))
+	ids := make([]xid.ID, len(o))
 	for i := range o {
 		ids[i] = o[i].ID
 	}
@@ -113,14 +114,14 @@ func (pu *ProjectUpdate) AddOperators(o ...*Operator) *ProjectUpdate {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
-func (pu *ProjectUpdate) AddRodentIDs(ids ...int) *ProjectUpdate {
+func (pu *ProjectUpdate) AddRodentIDs(ids ...xid.ID) *ProjectUpdate {
 	pu.mutation.AddRodentIDs(ids...)
 	return pu
 }
 
 // AddRodents adds the "rodents" edges to the Rodent entity.
 func (pu *ProjectUpdate) AddRodents(r ...*Rodent) *ProjectUpdate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -128,14 +129,14 @@ func (pu *ProjectUpdate) AddRodents(r ...*Rodent) *ProjectUpdate {
 }
 
 // AddRouterIDs adds the "routers" edge to the Router entity by IDs.
-func (pu *ProjectUpdate) AddRouterIDs(ids ...int) *ProjectUpdate {
+func (pu *ProjectUpdate) AddRouterIDs(ids ...xid.ID) *ProjectUpdate {
 	pu.mutation.AddRouterIDs(ids...)
 	return pu
 }
 
 // AddRouters adds the "routers" edges to the Router entity.
 func (pu *ProjectUpdate) AddRouters(r ...*Router) *ProjectUpdate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -154,14 +155,14 @@ func (pu *ProjectUpdate) ClearOperators() *ProjectUpdate {
 }
 
 // RemoveOperatorIDs removes the "operators" edge to Operator entities by IDs.
-func (pu *ProjectUpdate) RemoveOperatorIDs(ids ...int) *ProjectUpdate {
+func (pu *ProjectUpdate) RemoveOperatorIDs(ids ...xid.ID) *ProjectUpdate {
 	pu.mutation.RemoveOperatorIDs(ids...)
 	return pu
 }
 
 // RemoveOperators removes "operators" edges to Operator entities.
 func (pu *ProjectUpdate) RemoveOperators(o ...*Operator) *ProjectUpdate {
-	ids := make([]int, len(o))
+	ids := make([]xid.ID, len(o))
 	for i := range o {
 		ids[i] = o[i].ID
 	}
@@ -175,14 +176,14 @@ func (pu *ProjectUpdate) ClearRodents() *ProjectUpdate {
 }
 
 // RemoveRodentIDs removes the "rodents" edge to Rodent entities by IDs.
-func (pu *ProjectUpdate) RemoveRodentIDs(ids ...int) *ProjectUpdate {
+func (pu *ProjectUpdate) RemoveRodentIDs(ids ...xid.ID) *ProjectUpdate {
 	pu.mutation.RemoveRodentIDs(ids...)
 	return pu
 }
 
 // RemoveRodents removes "rodents" edges to Rodent entities.
 func (pu *ProjectUpdate) RemoveRodents(r ...*Rodent) *ProjectUpdate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -196,14 +197,14 @@ func (pu *ProjectUpdate) ClearRouters() *ProjectUpdate {
 }
 
 // RemoveRouterIDs removes the "routers" edge to Router entities by IDs.
-func (pu *ProjectUpdate) RemoveRouterIDs(ids ...int) *ProjectUpdate {
+func (pu *ProjectUpdate) RemoveRouterIDs(ids ...xid.ID) *ProjectUpdate {
 	pu.mutation.RemoveRouterIDs(ids...)
 	return pu
 }
 
 // RemoveRouters removes "routers" edges to Router entities.
 func (pu *ProjectUpdate) RemoveRouters(r ...*Router) *ProjectUpdate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -238,7 +239,7 @@ func (pu *ProjectUpdate) ExecX(ctx context.Context) {
 }
 
 func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(project.Table, project.Columns, sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(project.Table, project.Columns, sqlgraph.NewFieldSpec(project.FieldID, field.TypeString))
 	if ps := pu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -276,7 +277,7 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -292,7 +293,7 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -311,7 +312,7 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -330,7 +331,7 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -346,7 +347,7 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -365,7 +366,7 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -384,7 +385,7 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -400,7 +401,7 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -419,7 +420,7 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -516,14 +517,14 @@ func (puo *ProjectUpdateOne) ClearStartDate() *ProjectUpdateOne {
 }
 
 // AddOperatorIDs adds the "operators" edge to the Operator entity by IDs.
-func (puo *ProjectUpdateOne) AddOperatorIDs(ids ...int) *ProjectUpdateOne {
+func (puo *ProjectUpdateOne) AddOperatorIDs(ids ...xid.ID) *ProjectUpdateOne {
 	puo.mutation.AddOperatorIDs(ids...)
 	return puo
 }
 
 // AddOperators adds the "operators" edges to the Operator entity.
 func (puo *ProjectUpdateOne) AddOperators(o ...*Operator) *ProjectUpdateOne {
-	ids := make([]int, len(o))
+	ids := make([]xid.ID, len(o))
 	for i := range o {
 		ids[i] = o[i].ID
 	}
@@ -531,14 +532,14 @@ func (puo *ProjectUpdateOne) AddOperators(o ...*Operator) *ProjectUpdateOne {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
-func (puo *ProjectUpdateOne) AddRodentIDs(ids ...int) *ProjectUpdateOne {
+func (puo *ProjectUpdateOne) AddRodentIDs(ids ...xid.ID) *ProjectUpdateOne {
 	puo.mutation.AddRodentIDs(ids...)
 	return puo
 }
 
 // AddRodents adds the "rodents" edges to the Rodent entity.
 func (puo *ProjectUpdateOne) AddRodents(r ...*Rodent) *ProjectUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -546,14 +547,14 @@ func (puo *ProjectUpdateOne) AddRodents(r ...*Rodent) *ProjectUpdateOne {
 }
 
 // AddRouterIDs adds the "routers" edge to the Router entity by IDs.
-func (puo *ProjectUpdateOne) AddRouterIDs(ids ...int) *ProjectUpdateOne {
+func (puo *ProjectUpdateOne) AddRouterIDs(ids ...xid.ID) *ProjectUpdateOne {
 	puo.mutation.AddRouterIDs(ids...)
 	return puo
 }
 
 // AddRouters adds the "routers" edges to the Router entity.
 func (puo *ProjectUpdateOne) AddRouters(r ...*Router) *ProjectUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -572,14 +573,14 @@ func (puo *ProjectUpdateOne) ClearOperators() *ProjectUpdateOne {
 }
 
 // RemoveOperatorIDs removes the "operators" edge to Operator entities by IDs.
-func (puo *ProjectUpdateOne) RemoveOperatorIDs(ids ...int) *ProjectUpdateOne {
+func (puo *ProjectUpdateOne) RemoveOperatorIDs(ids ...xid.ID) *ProjectUpdateOne {
 	puo.mutation.RemoveOperatorIDs(ids...)
 	return puo
 }
 
 // RemoveOperators removes "operators" edges to Operator entities.
 func (puo *ProjectUpdateOne) RemoveOperators(o ...*Operator) *ProjectUpdateOne {
-	ids := make([]int, len(o))
+	ids := make([]xid.ID, len(o))
 	for i := range o {
 		ids[i] = o[i].ID
 	}
@@ -593,14 +594,14 @@ func (puo *ProjectUpdateOne) ClearRodents() *ProjectUpdateOne {
 }
 
 // RemoveRodentIDs removes the "rodents" edge to Rodent entities by IDs.
-func (puo *ProjectUpdateOne) RemoveRodentIDs(ids ...int) *ProjectUpdateOne {
+func (puo *ProjectUpdateOne) RemoveRodentIDs(ids ...xid.ID) *ProjectUpdateOne {
 	puo.mutation.RemoveRodentIDs(ids...)
 	return puo
 }
 
 // RemoveRodents removes "rodents" edges to Rodent entities.
 func (puo *ProjectUpdateOne) RemoveRodents(r ...*Rodent) *ProjectUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -614,14 +615,14 @@ func (puo *ProjectUpdateOne) ClearRouters() *ProjectUpdateOne {
 }
 
 // RemoveRouterIDs removes the "routers" edge to Router entities by IDs.
-func (puo *ProjectUpdateOne) RemoveRouterIDs(ids ...int) *ProjectUpdateOne {
+func (puo *ProjectUpdateOne) RemoveRouterIDs(ids ...xid.ID) *ProjectUpdateOne {
 	puo.mutation.RemoveRouterIDs(ids...)
 	return puo
 }
 
 // RemoveRouters removes "routers" edges to Router entities.
 func (puo *ProjectUpdateOne) RemoveRouters(r ...*Router) *ProjectUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -669,7 +670,7 @@ func (puo *ProjectUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err error) {
-	_spec := sqlgraph.NewUpdateSpec(project.Table, project.Columns, sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(project.Table, project.Columns, sqlgraph.NewFieldSpec(project.FieldID, field.TypeString))
 	id, ok := puo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Project.id" for update`)}
@@ -724,7 +725,7 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -740,7 +741,7 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -759,7 +760,7 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -778,7 +779,7 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -794,7 +795,7 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -813,7 +814,7 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -832,7 +833,7 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -848,7 +849,7 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -867,7 +868,7 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},

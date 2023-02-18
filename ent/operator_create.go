@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/task"
@@ -39,15 +40,29 @@ func (oc *OperatorCreate) SetCert(b []byte) *OperatorCreate {
 	return oc
 }
 
+// SetID sets the "id" field.
+func (oc *OperatorCreate) SetID(x xid.ID) *OperatorCreate {
+	oc.mutation.SetID(x)
+	return oc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (oc *OperatorCreate) SetNillableID(x *xid.ID) *OperatorCreate {
+	if x != nil {
+		oc.SetID(*x)
+	}
+	return oc
+}
+
 // AddProjectIDs adds the "projects" edge to the Project entity by IDs.
-func (oc *OperatorCreate) AddProjectIDs(ids ...int) *OperatorCreate {
+func (oc *OperatorCreate) AddProjectIDs(ids ...xid.ID) *OperatorCreate {
 	oc.mutation.AddProjectIDs(ids...)
 	return oc
 }
 
 // AddProjects adds the "projects" edges to the Project entity.
 func (oc *OperatorCreate) AddProjects(p ...*Project) *OperatorCreate {
-	ids := make([]int, len(p))
+	ids := make([]xid.ID, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
 	}
@@ -55,14 +70,14 @@ func (oc *OperatorCreate) AddProjects(p ...*Project) *OperatorCreate {
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
-func (oc *OperatorCreate) AddTaskIDs(ids ...int) *OperatorCreate {
+func (oc *OperatorCreate) AddTaskIDs(ids ...xid.ID) *OperatorCreate {
 	oc.mutation.AddTaskIDs(ids...)
 	return oc
 }
 
 // AddTasks adds the "tasks" edges to the Task entity.
 func (oc *OperatorCreate) AddTasks(t ...*Task) *OperatorCreate {
-	ids := make([]int, len(t))
+	ids := make([]xid.ID, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -76,6 +91,7 @@ func (oc *OperatorCreate) Mutation() *OperatorMutation {
 
 // Save creates the Operator in the database.
 func (oc *OperatorCreate) Save(ctx context.Context) (*Operator, error) {
+	oc.defaults()
 	return withHooks[*Operator, OperatorMutation](ctx, oc.sqlSave, oc.mutation, oc.hooks)
 }
 
@@ -101,6 +117,14 @@ func (oc *OperatorCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (oc *OperatorCreate) defaults() {
+	if _, ok := oc.mutation.ID(); !ok {
+		v := operator.DefaultID()
+		oc.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (oc *OperatorCreate) check() error {
 	if _, ok := oc.mutation.Username(); !ok {
@@ -120,8 +144,13 @@ func (oc *OperatorCreate) sqlSave(ctx context.Context) (*Operator, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*xid.ID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	oc.mutation.id = &_node.ID
 	oc.mutation.done = true
 	return _node, nil
@@ -130,8 +159,12 @@ func (oc *OperatorCreate) sqlSave(ctx context.Context) (*Operator, error) {
 func (oc *OperatorCreate) createSpec() (*Operator, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Operator{config: oc.config}
-		_spec = sqlgraph.NewCreateSpec(operator.Table, sqlgraph.NewFieldSpec(operator.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(operator.Table, sqlgraph.NewFieldSpec(operator.FieldID, field.TypeString))
 	)
+	if id, ok := oc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := oc.mutation.Username(); ok {
 		_spec.SetField(operator.FieldUsername, field.TypeString, value)
 		_node.Username = value
@@ -153,7 +186,7 @@ func (oc *OperatorCreate) createSpec() (*Operator, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -172,7 +205,7 @@ func (oc *OperatorCreate) createSpec() (*Operator, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -199,6 +232,7 @@ func (ocb *OperatorCreateBulk) Save(ctx context.Context) ([]*Operator, error) {
 	for i := range ocb.builders {
 		func(i int, root context.Context) {
 			builder := ocb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*OperatorMutation)
 				if !ok {
@@ -225,10 +259,6 @@ func (ocb *OperatorCreateBulk) Save(ctx context.Context) ([]*Operator, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

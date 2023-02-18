@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/rodent"
@@ -63,13 +64,13 @@ func (lu *LootUpdate) SetCollectedon(t time.Time) *LootUpdate {
 }
 
 // SetRodentID sets the "rodent" edge to the Rodent entity by ID.
-func (lu *LootUpdate) SetRodentID(id int) *LootUpdate {
+func (lu *LootUpdate) SetRodentID(id xid.ID) *LootUpdate {
 	lu.mutation.SetRodentID(id)
 	return lu
 }
 
 // SetNillableRodentID sets the "rodent" edge to the Rodent entity by ID if the given value is not nil.
-func (lu *LootUpdate) SetNillableRodentID(id *int) *LootUpdate {
+func (lu *LootUpdate) SetNillableRodentID(id *xid.ID) *LootUpdate {
 	if id != nil {
 		lu = lu.SetRodentID(*id)
 	}
@@ -82,13 +83,13 @@ func (lu *LootUpdate) SetRodent(r *Rodent) *LootUpdate {
 }
 
 // SetTaskID sets the "task" edge to the Task entity by ID.
-func (lu *LootUpdate) SetTaskID(id int) *LootUpdate {
+func (lu *LootUpdate) SetTaskID(id xid.ID) *LootUpdate {
 	lu.mutation.SetTaskID(id)
 	return lu
 }
 
 // SetNillableTaskID sets the "task" edge to the Task entity by ID if the given value is not nil.
-func (lu *LootUpdate) SetNillableTaskID(id *int) *LootUpdate {
+func (lu *LootUpdate) SetNillableTaskID(id *xid.ID) *LootUpdate {
 	if id != nil {
 		lu = lu.SetTaskID(*id)
 	}
@@ -158,7 +159,7 @@ func (lu *LootUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := lu.check(); err != nil {
 		return n, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(loot.Table, loot.Columns, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(loot.Table, loot.Columns, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeString))
 	if ps := lu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -187,7 +188,7 @@ func (lu *LootUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -203,7 +204,7 @@ func (lu *LootUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -222,7 +223,7 @@ func (lu *LootUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -238,7 +239,7 @@ func (lu *LootUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -301,13 +302,13 @@ func (luo *LootUpdateOne) SetCollectedon(t time.Time) *LootUpdateOne {
 }
 
 // SetRodentID sets the "rodent" edge to the Rodent entity by ID.
-func (luo *LootUpdateOne) SetRodentID(id int) *LootUpdateOne {
+func (luo *LootUpdateOne) SetRodentID(id xid.ID) *LootUpdateOne {
 	luo.mutation.SetRodentID(id)
 	return luo
 }
 
 // SetNillableRodentID sets the "rodent" edge to the Rodent entity by ID if the given value is not nil.
-func (luo *LootUpdateOne) SetNillableRodentID(id *int) *LootUpdateOne {
+func (luo *LootUpdateOne) SetNillableRodentID(id *xid.ID) *LootUpdateOne {
 	if id != nil {
 		luo = luo.SetRodentID(*id)
 	}
@@ -320,13 +321,13 @@ func (luo *LootUpdateOne) SetRodent(r *Rodent) *LootUpdateOne {
 }
 
 // SetTaskID sets the "task" edge to the Task entity by ID.
-func (luo *LootUpdateOne) SetTaskID(id int) *LootUpdateOne {
+func (luo *LootUpdateOne) SetTaskID(id xid.ID) *LootUpdateOne {
 	luo.mutation.SetTaskID(id)
 	return luo
 }
 
 // SetNillableTaskID sets the "task" edge to the Task entity by ID if the given value is not nil.
-func (luo *LootUpdateOne) SetNillableTaskID(id *int) *LootUpdateOne {
+func (luo *LootUpdateOne) SetNillableTaskID(id *xid.ID) *LootUpdateOne {
 	if id != nil {
 		luo = luo.SetTaskID(*id)
 	}
@@ -409,7 +410,7 @@ func (luo *LootUpdateOne) sqlSave(ctx context.Context) (_node *Loot, err error) 
 	if err := luo.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(loot.Table, loot.Columns, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(loot.Table, loot.Columns, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeString))
 	id, ok := luo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Loot.id" for update`)}
@@ -455,7 +456,7 @@ func (luo *LootUpdateOne) sqlSave(ctx context.Context) (_node *Loot, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -471,7 +472,7 @@ func (luo *LootUpdateOne) sqlSave(ctx context.Context) (_node *Loot, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -490,7 +491,7 @@ func (luo *LootUpdateOne) sqlSave(ctx context.Context) (_node *Loot, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -506,7 +507,7 @@ func (luo *LootUpdateOne) sqlSave(ctx context.Context) (_node *Loot, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},

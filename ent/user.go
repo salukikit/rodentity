@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/user"
 )
@@ -15,7 +16,7 @@ import (
 type User struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID xid.ID `json:"id,omitempty"`
 	// Username holds the value of the "username" field.
 	Username string `json:"username,omitempty"`
 	// Givenname holds the value of the "givenname" field.
@@ -33,7 +34,7 @@ type User struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
-	domain_users *int
+	domain_users *xid.ID
 }
 
 // UserEdges holds the relations/edges for other nodes in the graph.
@@ -98,12 +99,12 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldOwned, user.FieldEnabled:
 			values[i] = new(sql.NullBool)
-		case user.FieldID:
-			values[i] = new(sql.NullInt64)
 		case user.FieldUsername, user.FieldGivenname, user.FieldEmail, user.FieldAge, user.FieldHomedir:
 			values[i] = new(sql.NullString)
+		case user.FieldID:
+			values[i] = new(xid.ID)
 		case user.ForeignKeys[0]: // domain_users
-			values[i] = new(sql.NullInt64)
+			values[i] = &sql.NullScanner{S: new(xid.ID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type User", columns[i])
 		}
@@ -120,11 +121,11 @@ func (u *User) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case user.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*xid.ID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				u.ID = *value
 			}
-			u.ID = int(value.Int64)
 		case user.FieldUsername:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field username", values[i])
@@ -168,11 +169,11 @@ func (u *User) assignValues(columns []string, values []any) error {
 				u.Enabled = value.Bool
 			}
 		case user.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field domain_users", value)
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field domain_users", values[i])
 			} else if value.Valid {
-				u.domain_users = new(int)
-				*u.domain_users = int(value.Int64)
+				u.domain_users = new(xid.ID)
+				*u.domain_users = *value.S.(*xid.ID)
 			}
 		}
 	}

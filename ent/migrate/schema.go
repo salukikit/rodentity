@@ -10,7 +10,7 @@ import (
 var (
 	// DevicesColumns holds the columns for the "devices" table.
 	DevicesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "hostname", Type: field.TypeString},
 		{Name: "os", Type: field.TypeString, Default: "unknown"},
 		{Name: "arch", Type: field.TypeString, Default: "unknown"},
@@ -18,7 +18,7 @@ var (
 		{Name: "net_interfaces", Type: field.TypeJSON, Nullable: true},
 		{Name: "machinepass", Type: field.TypeString, Nullable: true},
 		{Name: "certificates", Type: field.TypeJSON, Nullable: true},
-		{Name: "domain_devices", Type: field.TypeInt, Nullable: true},
+		{Name: "domain_devices", Type: field.TypeString, Nullable: true},
 	}
 	// DevicesTable holds the schema information for the "devices" table.
 	DevicesTable = &schema.Table{
@@ -36,12 +36,12 @@ var (
 	}
 	// DomainsColumns holds the columns for the "domains" table.
 	DomainsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "ad", Type: field.TypeBool, Default: true},
 		{Name: "owned", Type: field.TypeBool, Default: false},
 		{Name: "cloud", Type: field.TypeString, Default: "unknown"},
-		{Name: "domain_childdomains", Type: field.TypeInt, Nullable: true},
+		{Name: "domain_childdomains", Type: field.TypeString, Nullable: true},
 	}
 	// DomainsTable holds the schema information for the "domains" table.
 	DomainsTable = &schema.Table{
@@ -59,11 +59,11 @@ var (
 	}
 	// GroupsColumns holds the columns for the "groups" table.
 	GroupsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Default: "unknown"},
 		{Name: "permissions", Type: field.TypeString, Default: "unknown"},
-		{Name: "domain_groups", Type: field.TypeInt, Nullable: true},
+		{Name: "domain_groups", Type: field.TypeString, Nullable: true},
 	}
 	// GroupsTable holds the schema information for the "groups" table.
 	GroupsTable = &schema.Table{
@@ -81,13 +81,13 @@ var (
 	}
 	// LootsColumns holds the columns for the "loots" table.
 	LootsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "type", Type: field.TypeEnum, Enums: []string{"cred", "key", "cert", "enum", "objective", "pii", "other"}},
 		{Name: "location", Type: field.TypeString, Default: "unknown"},
 		{Name: "data", Type: field.TypeBytes},
 		{Name: "collectedon", Type: field.TypeTime},
-		{Name: "rodent_loot", Type: field.TypeInt, Nullable: true},
-		{Name: "task_loot", Type: field.TypeInt, Nullable: true},
+		{Name: "rodent_loot", Type: field.TypeString, Nullable: true},
+		{Name: "task_loot", Type: field.TypeString, Nullable: true},
 	}
 	// LootsTable holds the schema information for the "loots" table.
 	LootsTable = &schema.Table{
@@ -111,7 +111,7 @@ var (
 	}
 	// OperatorsColumns holds the columns for the "operators" table.
 	OperatorsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "username", Type: field.TypeString},
 		{Name: "privkey", Type: field.TypeBytes, Nullable: true},
 		{Name: "cert", Type: field.TypeBytes, Nullable: true},
@@ -124,7 +124,7 @@ var (
 	}
 	// ProjectsColumns holds the columns for the "projects" table.
 	ProjectsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "objective", Type: field.TypeString, Nullable: true},
 		{Name: "end_date", Type: field.TypeTime, Nullable: true},
@@ -138,7 +138,7 @@ var (
 	}
 	// RodentsColumns holds the columns for the "rodents" table.
 	RodentsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "type", Type: field.TypeString, Default: "FancyRat"},
 		{Name: "key", Type: field.TypeString},
@@ -150,9 +150,9 @@ var (
 		{Name: "alive", Type: field.TypeBool, Default: true},
 		{Name: "joined", Type: field.TypeTime},
 		{Name: "lastseen", Type: field.TypeTime},
-		{Name: "device_rodents", Type: field.TypeInt, Nullable: true},
-		{Name: "project_rodents", Type: field.TypeInt, Nullable: true},
-		{Name: "user_rodents", Type: field.TypeInt, Nullable: true},
+		{Name: "device_rodents", Type: field.TypeString, Nullable: true},
+		{Name: "project_rodents", Type: field.TypeString, Nullable: true},
+		{Name: "user_rodents", Type: field.TypeString, Nullable: true},
 	}
 	// RodentsTable holds the schema information for the "rodents" table.
 	RodentsTable = &schema.Table{
@@ -182,13 +182,13 @@ var (
 	}
 	// RoutersColumns holds the columns for the "routers" table.
 	RoutersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "rname", Type: field.TypeString},
 		{Name: "privkey", Type: field.TypeBytes},
 		{Name: "cert", Type: field.TypeBytes},
 		{Name: "commands", Type: field.TypeJSON, Nullable: true},
 		{Name: "interfaces", Type: field.TypeJSON, Nullable: true},
-		{Name: "project_routers", Type: field.TypeInt, Nullable: true},
+		{Name: "project_routers", Type: field.TypeString, Nullable: true},
 	}
 	// RoutersTable holds the schema information for the "routers" table.
 	RoutersTable = &schema.Table{
@@ -218,7 +218,7 @@ var (
 	}
 	// SubnetsColumns holds the columns for the "subnets" table.
 	SubnetsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "cidr", Type: field.TypeString},
 		{Name: "mask", Type: field.TypeBytes, Nullable: true},
 		{Name: "outbound_tcpports", Type: field.TypeJSON, Nullable: true},
@@ -242,7 +242,7 @@ var (
 	}
 	// TasksColumns holds the columns for the "tasks" table.
 	TasksColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "type", Type: field.TypeString, Default: "cmd"},
 		{Name: "args", Type: field.TypeJSON, Nullable: true},
 		{Name: "data", Type: field.TypeBytes, Nullable: true},
@@ -252,8 +252,8 @@ var (
 		{Name: "requestedat", Type: field.TypeTime},
 		{Name: "completedat", Type: field.TypeTime, Nullable: true},
 		{Name: "tt_ps", Type: field.TypeJSON, Nullable: true},
-		{Name: "operator_tasks", Type: field.TypeInt, Nullable: true},
-		{Name: "rodent_tasks", Type: field.TypeInt, Nullable: true},
+		{Name: "operator_tasks", Type: field.TypeString, Nullable: true},
+		{Name: "rodent_tasks", Type: field.TypeString, Nullable: true},
 	}
 	// TasksTable holds the schema information for the "tasks" table.
 	TasksTable = &schema.Table{
@@ -277,7 +277,7 @@ var (
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeString},
 		{Name: "username", Type: field.TypeString},
 		{Name: "givenname", Type: field.TypeString, Default: "unknown"},
 		{Name: "email", Type: field.TypeString, Default: "unknown"},
@@ -285,7 +285,7 @@ var (
 		{Name: "age", Type: field.TypeString, Nullable: true, Default: "unknown"},
 		{Name: "homedir", Type: field.TypeString, Default: "unknown"},
 		{Name: "enabled", Type: field.TypeBool, Default: true},
-		{Name: "domain_users", Type: field.TypeInt, Nullable: true},
+		{Name: "domain_users", Type: field.TypeString, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -303,8 +303,8 @@ var (
 	}
 	// DeviceUsersColumns holds the columns for the "device_users" table.
 	DeviceUsersColumns = []*schema.Column{
-		{Name: "device_id", Type: field.TypeInt},
-		{Name: "user_id", Type: field.TypeInt},
+		{Name: "device_id", Type: field.TypeString},
+		{Name: "user_id", Type: field.TypeString},
 	}
 	// DeviceUsersTable holds the schema information for the "device_users" table.
 	DeviceUsersTable = &schema.Table{
@@ -328,8 +328,8 @@ var (
 	}
 	// GroupDevicesColumns holds the columns for the "group_devices" table.
 	GroupDevicesColumns = []*schema.Column{
-		{Name: "group_id", Type: field.TypeInt},
-		{Name: "device_id", Type: field.TypeInt},
+		{Name: "group_id", Type: field.TypeString},
+		{Name: "device_id", Type: field.TypeString},
 	}
 	// GroupDevicesTable holds the schema information for the "group_devices" table.
 	GroupDevicesTable = &schema.Table{
@@ -353,8 +353,8 @@ var (
 	}
 	// GroupUsersColumns holds the columns for the "group_users" table.
 	GroupUsersColumns = []*schema.Column{
-		{Name: "group_id", Type: field.TypeInt},
-		{Name: "user_id", Type: field.TypeInt},
+		{Name: "group_id", Type: field.TypeString},
+		{Name: "user_id", Type: field.TypeString},
 	}
 	// GroupUsersTable holds the schema information for the "group_users" table.
 	GroupUsersTable = &schema.Table{
@@ -378,8 +378,8 @@ var (
 	}
 	// ProjectOperatorsColumns holds the columns for the "project_operators" table.
 	ProjectOperatorsColumns = []*schema.Column{
-		{Name: "project_id", Type: field.TypeInt},
-		{Name: "operator_id", Type: field.TypeInt},
+		{Name: "project_id", Type: field.TypeString},
+		{Name: "operator_id", Type: field.TypeString},
 	}
 	// ProjectOperatorsTable holds the schema information for the "project_operators" table.
 	ProjectOperatorsTable = &schema.Table{
@@ -403,8 +403,8 @@ var (
 	}
 	// RouterRodentsColumns holds the columns for the "router_rodents" table.
 	RouterRodentsColumns = []*schema.Column{
-		{Name: "router_id", Type: field.TypeInt},
-		{Name: "rodent_id", Type: field.TypeInt},
+		{Name: "router_id", Type: field.TypeString},
+		{Name: "rodent_id", Type: field.TypeString},
 	}
 	// RouterRodentsTable holds the schema information for the "router_rodents" table.
 	RouterRodentsTable = &schema.Table{
@@ -429,7 +429,7 @@ var (
 	// ServicesDevicesColumns holds the columns for the "services_devices" table.
 	ServicesDevicesColumns = []*schema.Column{
 		{Name: "services_id", Type: field.TypeInt},
-		{Name: "device_id", Type: field.TypeInt},
+		{Name: "device_id", Type: field.TypeString},
 	}
 	// ServicesDevicesTable holds the schema information for the "services_devices" table.
 	ServicesDevicesTable = &schema.Table{
@@ -453,8 +453,8 @@ var (
 	}
 	// SubnetHostsColumns holds the columns for the "subnet_hosts" table.
 	SubnetHostsColumns = []*schema.Column{
-		{Name: "subnet_id", Type: field.TypeInt},
-		{Name: "device_id", Type: field.TypeInt},
+		{Name: "subnet_id", Type: field.TypeString},
+		{Name: "device_id", Type: field.TypeString},
 	}
 	// SubnetHostsTable holds the schema information for the "subnet_hosts" table.
 	SubnetHostsTable = &schema.Table{

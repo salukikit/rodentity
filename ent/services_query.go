@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/services"
@@ -449,7 +450,7 @@ func (sq *ServicesQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ser
 func (sq *ServicesQuery) loadDevices(ctx context.Context, query *DeviceQuery, nodes []*Services, init func(*Services), assign func(*Services, *Device)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
 	byID := make(map[int]*Services)
-	nids := make(map[int]map[*Services]struct{})
+	nids := make(map[xid.ID]map[*Services]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -482,7 +483,7 @@ func (sq *ServicesQuery) loadDevices(ctx context.Context, query *DeviceQuery, no
 			}
 			spec.Assign = func(columns []string, values []any) error {
 				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
+				inValue := *values[1].(*xid.ID)
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Services]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])

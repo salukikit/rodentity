@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/subnet"
@@ -104,14 +105,14 @@ func (su *SubnetUpdate) ClearProxy() *SubnetUpdate {
 }
 
 // AddHostIDs adds the "hosts" edge to the Device entity by IDs.
-func (su *SubnetUpdate) AddHostIDs(ids ...int) *SubnetUpdate {
+func (su *SubnetUpdate) AddHostIDs(ids ...xid.ID) *SubnetUpdate {
 	su.mutation.AddHostIDs(ids...)
 	return su
 }
 
 // AddHosts adds the "hosts" edges to the Device entity.
 func (su *SubnetUpdate) AddHosts(d ...*Device) *SubnetUpdate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -130,14 +131,14 @@ func (su *SubnetUpdate) ClearHosts() *SubnetUpdate {
 }
 
 // RemoveHostIDs removes the "hosts" edge to Device entities by IDs.
-func (su *SubnetUpdate) RemoveHostIDs(ids ...int) *SubnetUpdate {
+func (su *SubnetUpdate) RemoveHostIDs(ids ...xid.ID) *SubnetUpdate {
 	su.mutation.RemoveHostIDs(ids...)
 	return su
 }
 
 // RemoveHosts removes "hosts" edges to Device entities.
 func (su *SubnetUpdate) RemoveHosts(d ...*Device) *SubnetUpdate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -172,7 +173,7 @@ func (su *SubnetUpdate) ExecX(ctx context.Context) {
 }
 
 func (su *SubnetUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(subnet.Table, subnet.Columns, sqlgraph.NewFieldSpec(subnet.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(subnet.Table, subnet.Columns, sqlgraph.NewFieldSpec(subnet.FieldID, field.TypeString))
 	if ps := su.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -226,7 +227,7 @@ func (su *SubnetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -242,7 +243,7 @@ func (su *SubnetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -261,7 +262,7 @@ func (su *SubnetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -366,14 +367,14 @@ func (suo *SubnetUpdateOne) ClearProxy() *SubnetUpdateOne {
 }
 
 // AddHostIDs adds the "hosts" edge to the Device entity by IDs.
-func (suo *SubnetUpdateOne) AddHostIDs(ids ...int) *SubnetUpdateOne {
+func (suo *SubnetUpdateOne) AddHostIDs(ids ...xid.ID) *SubnetUpdateOne {
 	suo.mutation.AddHostIDs(ids...)
 	return suo
 }
 
 // AddHosts adds the "hosts" edges to the Device entity.
 func (suo *SubnetUpdateOne) AddHosts(d ...*Device) *SubnetUpdateOne {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -392,14 +393,14 @@ func (suo *SubnetUpdateOne) ClearHosts() *SubnetUpdateOne {
 }
 
 // RemoveHostIDs removes the "hosts" edge to Device entities by IDs.
-func (suo *SubnetUpdateOne) RemoveHostIDs(ids ...int) *SubnetUpdateOne {
+func (suo *SubnetUpdateOne) RemoveHostIDs(ids ...xid.ID) *SubnetUpdateOne {
 	suo.mutation.RemoveHostIDs(ids...)
 	return suo
 }
 
 // RemoveHosts removes "hosts" edges to Device entities.
 func (suo *SubnetUpdateOne) RemoveHosts(d ...*Device) *SubnetUpdateOne {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -447,7 +448,7 @@ func (suo *SubnetUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (suo *SubnetUpdateOne) sqlSave(ctx context.Context) (_node *Subnet, err error) {
-	_spec := sqlgraph.NewUpdateSpec(subnet.Table, subnet.Columns, sqlgraph.NewFieldSpec(subnet.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(subnet.Table, subnet.Columns, sqlgraph.NewFieldSpec(subnet.FieldID, field.TypeString))
 	id, ok := suo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Subnet.id" for update`)}
@@ -518,7 +519,7 @@ func (suo *SubnetUpdateOne) sqlSave(ctx context.Context) (_node *Subnet, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -534,7 +535,7 @@ func (suo *SubnetUpdateOne) sqlSave(ctx context.Context) (_node *Subnet, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -553,7 +554,7 @@ func (suo *SubnetUpdateOne) sqlSave(ctx context.Context) (_node *Subnet, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},

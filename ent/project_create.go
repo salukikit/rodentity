@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
@@ -71,15 +72,29 @@ func (pc *ProjectCreate) SetNillableStartDate(t *time.Time) *ProjectCreate {
 	return pc
 }
 
+// SetID sets the "id" field.
+func (pc *ProjectCreate) SetID(x xid.ID) *ProjectCreate {
+	pc.mutation.SetID(x)
+	return pc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (pc *ProjectCreate) SetNillableID(x *xid.ID) *ProjectCreate {
+	if x != nil {
+		pc.SetID(*x)
+	}
+	return pc
+}
+
 // AddOperatorIDs adds the "operators" edge to the Operator entity by IDs.
-func (pc *ProjectCreate) AddOperatorIDs(ids ...int) *ProjectCreate {
+func (pc *ProjectCreate) AddOperatorIDs(ids ...xid.ID) *ProjectCreate {
 	pc.mutation.AddOperatorIDs(ids...)
 	return pc
 }
 
 // AddOperators adds the "operators" edges to the Operator entity.
 func (pc *ProjectCreate) AddOperators(o ...*Operator) *ProjectCreate {
-	ids := make([]int, len(o))
+	ids := make([]xid.ID, len(o))
 	for i := range o {
 		ids[i] = o[i].ID
 	}
@@ -87,14 +102,14 @@ func (pc *ProjectCreate) AddOperators(o ...*Operator) *ProjectCreate {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
-func (pc *ProjectCreate) AddRodentIDs(ids ...int) *ProjectCreate {
+func (pc *ProjectCreate) AddRodentIDs(ids ...xid.ID) *ProjectCreate {
 	pc.mutation.AddRodentIDs(ids...)
 	return pc
 }
 
 // AddRodents adds the "rodents" edges to the Rodent entity.
 func (pc *ProjectCreate) AddRodents(r ...*Rodent) *ProjectCreate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -102,14 +117,14 @@ func (pc *ProjectCreate) AddRodents(r ...*Rodent) *ProjectCreate {
 }
 
 // AddRouterIDs adds the "routers" edge to the Router entity by IDs.
-func (pc *ProjectCreate) AddRouterIDs(ids ...int) *ProjectCreate {
+func (pc *ProjectCreate) AddRouterIDs(ids ...xid.ID) *ProjectCreate {
 	pc.mutation.AddRouterIDs(ids...)
 	return pc
 }
 
 // AddRouters adds the "routers" edges to the Router entity.
 func (pc *ProjectCreate) AddRouters(r ...*Router) *ProjectCreate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -123,6 +138,7 @@ func (pc *ProjectCreate) Mutation() *ProjectMutation {
 
 // Save creates the Project in the database.
 func (pc *ProjectCreate) Save(ctx context.Context) (*Project, error) {
+	pc.defaults()
 	return withHooks[*Project, ProjectMutation](ctx, pc.sqlSave, pc.mutation, pc.hooks)
 }
 
@@ -148,6 +164,14 @@ func (pc *ProjectCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (pc *ProjectCreate) defaults() {
+	if _, ok := pc.mutation.ID(); !ok {
+		v := project.DefaultID()
+		pc.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (pc *ProjectCreate) check() error {
 	if _, ok := pc.mutation.Name(); !ok {
@@ -167,8 +191,13 @@ func (pc *ProjectCreate) sqlSave(ctx context.Context) (*Project, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*xid.ID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	pc.mutation.id = &_node.ID
 	pc.mutation.done = true
 	return _node, nil
@@ -177,8 +206,12 @@ func (pc *ProjectCreate) sqlSave(ctx context.Context) (*Project, error) {
 func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Project{config: pc.config}
-		_spec = sqlgraph.NewCreateSpec(project.Table, sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(project.Table, sqlgraph.NewFieldSpec(project.FieldID, field.TypeString))
 	)
+	if id, ok := pc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := pc.mutation.Name(); ok {
 		_spec.SetField(project.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -204,7 +237,7 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -223,7 +256,7 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -242,7 +275,7 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -269,6 +302,7 @@ func (pcb *ProjectCreateBulk) Save(ctx context.Context) ([]*Project, error) {
 	for i := range pcb.builders {
 		func(i int, root context.Context) {
 			builder := pcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*ProjectMutation)
 				if !ok {
@@ -295,10 +329,6 @@ func (pcb *ProjectCreateBulk) Save(ctx context.Context) ([]*Project, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

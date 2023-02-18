@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
@@ -113,15 +114,29 @@ func (uc *UserCreate) SetNillableEnabled(b *bool) *UserCreate {
 	return uc
 }
 
+// SetID sets the "id" field.
+func (uc *UserCreate) SetID(x xid.ID) *UserCreate {
+	uc.mutation.SetID(x)
+	return uc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (uc *UserCreate) SetNillableID(x *xid.ID) *UserCreate {
+	if x != nil {
+		uc.SetID(*x)
+	}
+	return uc
+}
+
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (uc *UserCreate) AddDeviceIDs(ids ...int) *UserCreate {
+func (uc *UserCreate) AddDeviceIDs(ids ...xid.ID) *UserCreate {
 	uc.mutation.AddDeviceIDs(ids...)
 	return uc
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (uc *UserCreate) AddDevices(d ...*Device) *UserCreate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -129,14 +144,14 @@ func (uc *UserCreate) AddDevices(d ...*Device) *UserCreate {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
-func (uc *UserCreate) AddRodentIDs(ids ...int) *UserCreate {
+func (uc *UserCreate) AddRodentIDs(ids ...xid.ID) *UserCreate {
 	uc.mutation.AddRodentIDs(ids...)
 	return uc
 }
 
 // AddRodents adds the "rodents" edges to the Rodent entity.
 func (uc *UserCreate) AddRodents(r ...*Rodent) *UserCreate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -144,14 +159,14 @@ func (uc *UserCreate) AddRodents(r ...*Rodent) *UserCreate {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
-func (uc *UserCreate) AddGroupIDs(ids ...int) *UserCreate {
+func (uc *UserCreate) AddGroupIDs(ids ...xid.ID) *UserCreate {
 	uc.mutation.AddGroupIDs(ids...)
 	return uc
 }
 
 // AddGroups adds the "groups" edges to the Group entity.
 func (uc *UserCreate) AddGroups(g ...*Group) *UserCreate {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -159,13 +174,13 @@ func (uc *UserCreate) AddGroups(g ...*Group) *UserCreate {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by ID.
-func (uc *UserCreate) SetDomainID(id int) *UserCreate {
+func (uc *UserCreate) SetDomainID(id xid.ID) *UserCreate {
 	uc.mutation.SetDomainID(id)
 	return uc
 }
 
 // SetNillableDomainID sets the "domain" edge to the Domain entity by ID if the given value is not nil.
-func (uc *UserCreate) SetNillableDomainID(id *int) *UserCreate {
+func (uc *UserCreate) SetNillableDomainID(id *xid.ID) *UserCreate {
 	if id != nil {
 		uc = uc.SetDomainID(*id)
 	}
@@ -236,6 +251,10 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultEnabled
 		uc.mutation.SetEnabled(v)
 	}
+	if _, ok := uc.mutation.ID(); !ok {
+		v := user.DefaultID()
+		uc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -272,8 +291,13 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*xid.ID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	uc.mutation.id = &_node.ID
 	uc.mutation.done = true
 	return _node, nil
@@ -282,8 +306,12 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	var (
 		_node = &User{config: uc.config}
-		_spec = sqlgraph.NewCreateSpec(user.Table, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(user.Table, sqlgraph.NewFieldSpec(user.FieldID, field.TypeString))
 	)
+	if id, ok := uc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := uc.mutation.Username(); ok {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
 		_node.Username = value
@@ -321,7 +349,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -340,7 +368,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -359,7 +387,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -378,7 +406,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -433,10 +461,6 @@ func (ucb *UserCreateBulk) Save(ctx context.Context) ([]*User, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

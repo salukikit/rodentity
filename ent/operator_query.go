@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/project"
@@ -130,8 +131,8 @@ func (oq *OperatorQuery) FirstX(ctx context.Context) *Operator {
 
 // FirstID returns the first Operator ID from the query.
 // Returns a *NotFoundError when no Operator ID was found.
-func (oq *OperatorQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (oq *OperatorQuery) FirstID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = oq.Limit(1).IDs(setContextOp(ctx, oq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -143,7 +144,7 @@ func (oq *OperatorQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (oq *OperatorQuery) FirstIDX(ctx context.Context) int {
+func (oq *OperatorQuery) FirstIDX(ctx context.Context) xid.ID {
 	id, err := oq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -181,8 +182,8 @@ func (oq *OperatorQuery) OnlyX(ctx context.Context) *Operator {
 // OnlyID is like Only, but returns the only Operator ID in the query.
 // Returns a *NotSingularError when more than one Operator ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (oq *OperatorQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (oq *OperatorQuery) OnlyID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = oq.Limit(2).IDs(setContextOp(ctx, oq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -198,7 +199,7 @@ func (oq *OperatorQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (oq *OperatorQuery) OnlyIDX(ctx context.Context) int {
+func (oq *OperatorQuery) OnlyIDX(ctx context.Context) xid.ID {
 	id, err := oq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -226,7 +227,7 @@ func (oq *OperatorQuery) AllX(ctx context.Context) []*Operator {
 }
 
 // IDs executes the query and returns a list of Operator IDs.
-func (oq *OperatorQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (oq *OperatorQuery) IDs(ctx context.Context) (ids []xid.ID, err error) {
 	if oq.ctx.Unique == nil && oq.path != nil {
 		oq.Unique(true)
 	}
@@ -238,7 +239,7 @@ func (oq *OperatorQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (oq *OperatorQuery) IDsX(ctx context.Context) []int {
+func (oq *OperatorQuery) IDsX(ctx context.Context) []xid.ID {
 	ids, err := oq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -448,8 +449,8 @@ func (oq *OperatorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ope
 
 func (oq *OperatorQuery) loadProjects(ctx context.Context, query *ProjectQuery, nodes []*Operator, init func(*Operator), assign func(*Operator, *Project)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Operator)
-	nids := make(map[int]map[*Operator]struct{})
+	byID := make(map[xid.ID]*Operator)
+	nids := make(map[xid.ID]map[*Operator]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -478,11 +479,11 @@ func (oq *OperatorQuery) loadProjects(ctx context.Context, query *ProjectQuery, 
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
+				return append([]any{new(xid.ID)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
+				outValue := *values[0].(*xid.ID)
+				inValue := *values[1].(*xid.ID)
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Operator]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -509,7 +510,7 @@ func (oq *OperatorQuery) loadProjects(ctx context.Context, query *ProjectQuery, 
 }
 func (oq *OperatorQuery) loadTasks(ctx context.Context, query *TaskQuery, nodes []*Operator, init func(*Operator), assign func(*Operator, *Task)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Operator)
+	nodeids := make(map[xid.ID]*Operator)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -549,7 +550,7 @@ func (oq *OperatorQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (oq *OperatorQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(operator.Table, operator.Columns, sqlgraph.NewFieldSpec(operator.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(operator.Table, operator.Columns, sqlgraph.NewFieldSpec(operator.FieldID, field.TypeString))
 	_spec.From = oq.sql
 	if unique := oq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

@@ -4,6 +4,8 @@ package loot
 
 import (
 	"fmt"
+
+	"github.com/rs/xid"
 )
 
 const (
@@ -75,6 +77,8 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultLocation holds the default value on creation for the "location" field.
 	DefaultLocation string
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() xid.ID
 )
 
 // Type defines the type for the "type" enum field.

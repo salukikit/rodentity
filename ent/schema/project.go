@@ -11,6 +11,13 @@ type Project struct {
 	ent.Schema
 }
 
+func (Project) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		// Embed the BaseMixin in the Project schema.
+		BaseMixin{},
+	}
+}
+
 // Fields of the Project.
 func (Project) Fields() []ent.Field {
 

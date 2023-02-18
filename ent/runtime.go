@@ -3,12 +3,17 @@
 package ent
 
 import (
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
 	"github.com/salukikit/rodentity/ent/loot"
+	"github.com/salukikit/rodentity/ent/operator"
+	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
+	"github.com/salukikit/rodentity/ent/router"
 	"github.com/salukikit/rodentity/ent/schema"
+	"github.com/salukikit/rodentity/ent/subnet"
 	"github.com/salukikit/rodentity/ent/task"
 	"github.com/salukikit/rodentity/ent/user"
 )
@@ -17,6 +22,9 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	deviceMixin := schema.Device{}.Mixin()
+	deviceMixinFields0 := deviceMixin[0].Fields()
+	_ = deviceMixinFields0
 	deviceFields := schema.Device{}.Fields()
 	_ = deviceFields
 	// deviceDescOs is the schema descriptor for os field.
@@ -31,6 +39,13 @@ func init() {
 	deviceDescVersion := deviceFields[3].Descriptor()
 	// device.DefaultVersion holds the default value on creation for the version field.
 	device.DefaultVersion = deviceDescVersion.Default.(string)
+	// deviceDescID is the schema descriptor for id field.
+	deviceDescID := deviceMixinFields0[0].Descriptor()
+	// device.DefaultID holds the default value on creation for the id field.
+	device.DefaultID = deviceDescID.Default.(func() xid.ID)
+	domainMixin := schema.Domain{}.Mixin()
+	domainMixinFields0 := domainMixin[0].Fields()
+	_ = domainMixinFields0
 	domainFields := schema.Domain{}.Fields()
 	_ = domainFields
 	// domainDescAD is the schema descriptor for AD field.
@@ -45,6 +60,13 @@ func init() {
 	domainDescCloud := domainFields[3].Descriptor()
 	// domain.DefaultCloud holds the default value on creation for the cloud field.
 	domain.DefaultCloud = domainDescCloud.Default.(string)
+	// domainDescID is the schema descriptor for id field.
+	domainDescID := domainMixinFields0[0].Descriptor()
+	// domain.DefaultID holds the default value on creation for the id field.
+	domain.DefaultID = domainDescID.Default.(func() xid.ID)
+	groupMixin := schema.Group{}.Mixin()
+	groupMixinFields0 := groupMixin[0].Fields()
+	_ = groupMixinFields0
 	groupFields := schema.Group{}.Fields()
 	_ = groupFields
 	// groupDescDescription is the schema descriptor for description field.
@@ -55,12 +77,44 @@ func init() {
 	groupDescPermissions := groupFields[2].Descriptor()
 	// group.DefaultPermissions holds the default value on creation for the permissions field.
 	group.DefaultPermissions = groupDescPermissions.Default.(string)
+	// groupDescID is the schema descriptor for id field.
+	groupDescID := groupMixinFields0[0].Descriptor()
+	// group.DefaultID holds the default value on creation for the id field.
+	group.DefaultID = groupDescID.Default.(func() xid.ID)
+	lootMixin := schema.Loot{}.Mixin()
+	lootMixinFields0 := lootMixin[0].Fields()
+	_ = lootMixinFields0
 	lootFields := schema.Loot{}.Fields()
 	_ = lootFields
 	// lootDescLocation is the schema descriptor for location field.
 	lootDescLocation := lootFields[1].Descriptor()
 	// loot.DefaultLocation holds the default value on creation for the location field.
 	loot.DefaultLocation = lootDescLocation.Default.(string)
+	// lootDescID is the schema descriptor for id field.
+	lootDescID := lootMixinFields0[0].Descriptor()
+	// loot.DefaultID holds the default value on creation for the id field.
+	loot.DefaultID = lootDescID.Default.(func() xid.ID)
+	operatorMixin := schema.Operator{}.Mixin()
+	operatorMixinFields0 := operatorMixin[0].Fields()
+	_ = operatorMixinFields0
+	operatorFields := schema.Operator{}.Fields()
+	_ = operatorFields
+	// operatorDescID is the schema descriptor for id field.
+	operatorDescID := operatorMixinFields0[0].Descriptor()
+	// operator.DefaultID holds the default value on creation for the id field.
+	operator.DefaultID = operatorDescID.Default.(func() xid.ID)
+	projectMixin := schema.Project{}.Mixin()
+	projectMixinFields0 := projectMixin[0].Fields()
+	_ = projectMixinFields0
+	projectFields := schema.Project{}.Fields()
+	_ = projectFields
+	// projectDescID is the schema descriptor for id field.
+	projectDescID := projectMixinFields0[0].Descriptor()
+	// project.DefaultID holds the default value on creation for the id field.
+	project.DefaultID = projectDescID.Default.(func() xid.ID)
+	rodentMixin := schema.Rodent{}.Mixin()
+	rodentMixinFields0 := rodentMixin[0].Fields()
+	_ = rodentMixinFields0
 	rodentFields := schema.Rodent{}.Fields()
 	_ = rodentFields
 	// rodentDescType is the schema descriptor for type field.
@@ -75,6 +129,31 @@ func init() {
 	rodentDescAlive := rodentFields[8].Descriptor()
 	// rodent.DefaultAlive holds the default value on creation for the alive field.
 	rodent.DefaultAlive = rodentDescAlive.Default.(bool)
+	// rodentDescID is the schema descriptor for id field.
+	rodentDescID := rodentMixinFields0[0].Descriptor()
+	// rodent.DefaultID holds the default value on creation for the id field.
+	rodent.DefaultID = rodentDescID.Default.(func() xid.ID)
+	routerMixin := schema.Router{}.Mixin()
+	routerMixinFields0 := routerMixin[0].Fields()
+	_ = routerMixinFields0
+	routerFields := schema.Router{}.Fields()
+	_ = routerFields
+	// routerDescID is the schema descriptor for id field.
+	routerDescID := routerMixinFields0[0].Descriptor()
+	// router.DefaultID holds the default value on creation for the id field.
+	router.DefaultID = routerDescID.Default.(func() xid.ID)
+	subnetMixin := schema.Subnet{}.Mixin()
+	subnetMixinFields0 := subnetMixin[0].Fields()
+	_ = subnetMixinFields0
+	subnetFields := schema.Subnet{}.Fields()
+	_ = subnetFields
+	// subnetDescID is the schema descriptor for id field.
+	subnetDescID := subnetMixinFields0[0].Descriptor()
+	// subnet.DefaultID holds the default value on creation for the id field.
+	subnet.DefaultID = subnetDescID.Default.(func() xid.ID)
+	taskMixin := schema.Task{}.Mixin()
+	taskMixinFields0 := taskMixin[0].Fields()
+	_ = taskMixinFields0
 	taskFields := schema.Task{}.Fields()
 	_ = taskFields
 	// taskDescType is the schema descriptor for type field.
@@ -89,6 +168,13 @@ func init() {
 	taskDescLooted := taskFields[5].Descriptor()
 	// task.DefaultLooted holds the default value on creation for the looted field.
 	task.DefaultLooted = taskDescLooted.Default.(bool)
+	// taskDescID is the schema descriptor for id field.
+	taskDescID := taskMixinFields0[0].Descriptor()
+	// task.DefaultID holds the default value on creation for the id field.
+	task.DefaultID = taskDescID.Default.(func() xid.ID)
+	userMixin := schema.User{}.Mixin()
+	userMixinFields0 := userMixin[0].Fields()
+	_ = userMixinFields0
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescGivenname is the schema descriptor for givenname field.
@@ -115,4 +201,8 @@ func init() {
 	userDescEnabled := userFields[6].Descriptor()
 	// user.DefaultEnabled holds the default value on creation for the enabled field.
 	user.DefaultEnabled = userDescEnabled.Default.(bool)
+	// userDescID is the schema descriptor for id field.
+	userDescID := userMixinFields0[0].Descriptor()
+	// user.DefaultID holds the default value on creation for the id field.
+	user.DefaultID = userDescID.Default.(func() xid.ID)
 }

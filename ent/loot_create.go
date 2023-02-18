@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/task"
@@ -54,14 +55,28 @@ func (lc *LootCreate) SetCollectedon(t time.Time) *LootCreate {
 	return lc
 }
 
+// SetID sets the "id" field.
+func (lc *LootCreate) SetID(x xid.ID) *LootCreate {
+	lc.mutation.SetID(x)
+	return lc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (lc *LootCreate) SetNillableID(x *xid.ID) *LootCreate {
+	if x != nil {
+		lc.SetID(*x)
+	}
+	return lc
+}
+
 // SetRodentID sets the "rodent" edge to the Rodent entity by ID.
-func (lc *LootCreate) SetRodentID(id int) *LootCreate {
+func (lc *LootCreate) SetRodentID(id xid.ID) *LootCreate {
 	lc.mutation.SetRodentID(id)
 	return lc
 }
 
 // SetNillableRodentID sets the "rodent" edge to the Rodent entity by ID if the given value is not nil.
-func (lc *LootCreate) SetNillableRodentID(id *int) *LootCreate {
+func (lc *LootCreate) SetNillableRodentID(id *xid.ID) *LootCreate {
 	if id != nil {
 		lc = lc.SetRodentID(*id)
 	}
@@ -74,13 +89,13 @@ func (lc *LootCreate) SetRodent(r *Rodent) *LootCreate {
 }
 
 // SetTaskID sets the "task" edge to the Task entity by ID.
-func (lc *LootCreate) SetTaskID(id int) *LootCreate {
+func (lc *LootCreate) SetTaskID(id xid.ID) *LootCreate {
 	lc.mutation.SetTaskID(id)
 	return lc
 }
 
 // SetNillableTaskID sets the "task" edge to the Task entity by ID if the given value is not nil.
-func (lc *LootCreate) SetNillableTaskID(id *int) *LootCreate {
+func (lc *LootCreate) SetNillableTaskID(id *xid.ID) *LootCreate {
 	if id != nil {
 		lc = lc.SetTaskID(*id)
 	}
@@ -131,6 +146,10 @@ func (lc *LootCreate) defaults() {
 		v := loot.DefaultLocation
 		lc.mutation.SetLocation(v)
 	}
+	if _, ok := lc.mutation.ID(); !ok {
+		v := loot.DefaultID()
+		lc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -166,8 +185,13 @@ func (lc *LootCreate) sqlSave(ctx context.Context) (*Loot, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*xid.ID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	lc.mutation.id = &_node.ID
 	lc.mutation.done = true
 	return _node, nil
@@ -176,8 +200,12 @@ func (lc *LootCreate) sqlSave(ctx context.Context) (*Loot, error) {
 func (lc *LootCreate) createSpec() (*Loot, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Loot{config: lc.config}
-		_spec = sqlgraph.NewCreateSpec(loot.Table, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(loot.Table, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeString))
 	)
+	if id, ok := lc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := lc.mutation.GetType(); ok {
 		_spec.SetField(loot.FieldType, field.TypeEnum, value)
 		_node.Type = value
@@ -203,7 +231,7 @@ func (lc *LootCreate) createSpec() (*Loot, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -223,7 +251,7 @@ func (lc *LootCreate) createSpec() (*Loot, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -278,10 +306,6 @@ func (lcb *LootCreateBulk) Save(ctx context.Context) ([]*Loot, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

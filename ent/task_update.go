@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/predicate"
@@ -161,13 +162,13 @@ func (tu *TaskUpdate) ClearTTPs() *TaskUpdate {
 }
 
 // SetRodentID sets the "rodent" edge to the Rodent entity by ID.
-func (tu *TaskUpdate) SetRodentID(id int) *TaskUpdate {
+func (tu *TaskUpdate) SetRodentID(id xid.ID) *TaskUpdate {
 	tu.mutation.SetRodentID(id)
 	return tu
 }
 
 // SetNillableRodentID sets the "rodent" edge to the Rodent entity by ID if the given value is not nil.
-func (tu *TaskUpdate) SetNillableRodentID(id *int) *TaskUpdate {
+func (tu *TaskUpdate) SetNillableRodentID(id *xid.ID) *TaskUpdate {
 	if id != nil {
 		tu = tu.SetRodentID(*id)
 	}
@@ -180,13 +181,13 @@ func (tu *TaskUpdate) SetRodent(r *Rodent) *TaskUpdate {
 }
 
 // SetOperatorID sets the "operator" edge to the Operator entity by ID.
-func (tu *TaskUpdate) SetOperatorID(id int) *TaskUpdate {
+func (tu *TaskUpdate) SetOperatorID(id xid.ID) *TaskUpdate {
 	tu.mutation.SetOperatorID(id)
 	return tu
 }
 
 // SetNillableOperatorID sets the "operator" edge to the Operator entity by ID if the given value is not nil.
-func (tu *TaskUpdate) SetNillableOperatorID(id *int) *TaskUpdate {
+func (tu *TaskUpdate) SetNillableOperatorID(id *xid.ID) *TaskUpdate {
 	if id != nil {
 		tu = tu.SetOperatorID(*id)
 	}
@@ -199,14 +200,14 @@ func (tu *TaskUpdate) SetOperator(o *Operator) *TaskUpdate {
 }
 
 // AddLootIDs adds the "loot" edge to the Loot entity by IDs.
-func (tu *TaskUpdate) AddLootIDs(ids ...int) *TaskUpdate {
+func (tu *TaskUpdate) AddLootIDs(ids ...xid.ID) *TaskUpdate {
 	tu.mutation.AddLootIDs(ids...)
 	return tu
 }
 
 // AddLoot adds the "loot" edges to the Loot entity.
 func (tu *TaskUpdate) AddLoot(l ...*Loot) *TaskUpdate {
-	ids := make([]int, len(l))
+	ids := make([]xid.ID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -237,14 +238,14 @@ func (tu *TaskUpdate) ClearLoot() *TaskUpdate {
 }
 
 // RemoveLootIDs removes the "loot" edge to Loot entities by IDs.
-func (tu *TaskUpdate) RemoveLootIDs(ids ...int) *TaskUpdate {
+func (tu *TaskUpdate) RemoveLootIDs(ids ...xid.ID) *TaskUpdate {
 	tu.mutation.RemoveLootIDs(ids...)
 	return tu
 }
 
 // RemoveLoot removes "loot" edges to Loot entities.
 func (tu *TaskUpdate) RemoveLoot(l ...*Loot) *TaskUpdate {
-	ids := make([]int, len(l))
+	ids := make([]xid.ID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -279,7 +280,7 @@ func (tu *TaskUpdate) ExecX(ctx context.Context) {
 }
 
 func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(task.Table, task.Columns, sqlgraph.NewFieldSpec(task.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(task.Table, task.Columns, sqlgraph.NewFieldSpec(task.FieldID, field.TypeString))
 	if ps := tu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -348,7 +349,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -364,7 +365,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -383,7 +384,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -399,7 +400,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -418,7 +419,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -434,7 +435,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -453,7 +454,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -612,13 +613,13 @@ func (tuo *TaskUpdateOne) ClearTTPs() *TaskUpdateOne {
 }
 
 // SetRodentID sets the "rodent" edge to the Rodent entity by ID.
-func (tuo *TaskUpdateOne) SetRodentID(id int) *TaskUpdateOne {
+func (tuo *TaskUpdateOne) SetRodentID(id xid.ID) *TaskUpdateOne {
 	tuo.mutation.SetRodentID(id)
 	return tuo
 }
 
 // SetNillableRodentID sets the "rodent" edge to the Rodent entity by ID if the given value is not nil.
-func (tuo *TaskUpdateOne) SetNillableRodentID(id *int) *TaskUpdateOne {
+func (tuo *TaskUpdateOne) SetNillableRodentID(id *xid.ID) *TaskUpdateOne {
 	if id != nil {
 		tuo = tuo.SetRodentID(*id)
 	}
@@ -631,13 +632,13 @@ func (tuo *TaskUpdateOne) SetRodent(r *Rodent) *TaskUpdateOne {
 }
 
 // SetOperatorID sets the "operator" edge to the Operator entity by ID.
-func (tuo *TaskUpdateOne) SetOperatorID(id int) *TaskUpdateOne {
+func (tuo *TaskUpdateOne) SetOperatorID(id xid.ID) *TaskUpdateOne {
 	tuo.mutation.SetOperatorID(id)
 	return tuo
 }
 
 // SetNillableOperatorID sets the "operator" edge to the Operator entity by ID if the given value is not nil.
-func (tuo *TaskUpdateOne) SetNillableOperatorID(id *int) *TaskUpdateOne {
+func (tuo *TaskUpdateOne) SetNillableOperatorID(id *xid.ID) *TaskUpdateOne {
 	if id != nil {
 		tuo = tuo.SetOperatorID(*id)
 	}
@@ -650,14 +651,14 @@ func (tuo *TaskUpdateOne) SetOperator(o *Operator) *TaskUpdateOne {
 }
 
 // AddLootIDs adds the "loot" edge to the Loot entity by IDs.
-func (tuo *TaskUpdateOne) AddLootIDs(ids ...int) *TaskUpdateOne {
+func (tuo *TaskUpdateOne) AddLootIDs(ids ...xid.ID) *TaskUpdateOne {
 	tuo.mutation.AddLootIDs(ids...)
 	return tuo
 }
 
 // AddLoot adds the "loot" edges to the Loot entity.
 func (tuo *TaskUpdateOne) AddLoot(l ...*Loot) *TaskUpdateOne {
-	ids := make([]int, len(l))
+	ids := make([]xid.ID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -688,14 +689,14 @@ func (tuo *TaskUpdateOne) ClearLoot() *TaskUpdateOne {
 }
 
 // RemoveLootIDs removes the "loot" edge to Loot entities by IDs.
-func (tuo *TaskUpdateOne) RemoveLootIDs(ids ...int) *TaskUpdateOne {
+func (tuo *TaskUpdateOne) RemoveLootIDs(ids ...xid.ID) *TaskUpdateOne {
 	tuo.mutation.RemoveLootIDs(ids...)
 	return tuo
 }
 
 // RemoveLoot removes "loot" edges to Loot entities.
 func (tuo *TaskUpdateOne) RemoveLoot(l ...*Loot) *TaskUpdateOne {
-	ids := make([]int, len(l))
+	ids := make([]xid.ID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -743,7 +744,7 @@ func (tuo *TaskUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) {
-	_spec := sqlgraph.NewUpdateSpec(task.Table, task.Columns, sqlgraph.NewFieldSpec(task.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(task.Table, task.Columns, sqlgraph.NewFieldSpec(task.FieldID, field.TypeString))
 	id, ok := tuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Task.id" for update`)}
@@ -829,7 +830,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -845,7 +846,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -864,7 +865,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -880,7 +881,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -899,7 +900,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -915,7 +916,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -934,7 +935,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},

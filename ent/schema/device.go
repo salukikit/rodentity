@@ -11,6 +11,14 @@ type Device struct {
 	ent.Schema
 }
 
+// Mixin of the Device.
+func (Device) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		// Embed the BaseMixin in the user schema.
+		BaseMixin{},
+	}
+}
+
 // Fields of the Device.
 func (Device) Fields() []ent.Field {
 	return []ent.Field{

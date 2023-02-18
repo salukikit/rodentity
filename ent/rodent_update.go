@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/predicate"
@@ -181,13 +182,13 @@ func (ru *RodentUpdate) SetLastseen(t time.Time) *RodentUpdate {
 }
 
 // SetDeviceID sets the "device" edge to the Device entity by ID.
-func (ru *RodentUpdate) SetDeviceID(id int) *RodentUpdate {
+func (ru *RodentUpdate) SetDeviceID(id xid.ID) *RodentUpdate {
 	ru.mutation.SetDeviceID(id)
 	return ru
 }
 
 // SetNillableDeviceID sets the "device" edge to the Device entity by ID if the given value is not nil.
-func (ru *RodentUpdate) SetNillableDeviceID(id *int) *RodentUpdate {
+func (ru *RodentUpdate) SetNillableDeviceID(id *xid.ID) *RodentUpdate {
 	if id != nil {
 		ru = ru.SetDeviceID(*id)
 	}
@@ -200,13 +201,13 @@ func (ru *RodentUpdate) SetDevice(d *Device) *RodentUpdate {
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (ru *RodentUpdate) SetUserID(id int) *RodentUpdate {
+func (ru *RodentUpdate) SetUserID(id xid.ID) *RodentUpdate {
 	ru.mutation.SetUserID(id)
 	return ru
 }
 
 // SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (ru *RodentUpdate) SetNillableUserID(id *int) *RodentUpdate {
+func (ru *RodentUpdate) SetNillableUserID(id *xid.ID) *RodentUpdate {
 	if id != nil {
 		ru = ru.SetUserID(*id)
 	}
@@ -219,13 +220,13 @@ func (ru *RodentUpdate) SetUser(u *User) *RodentUpdate {
 }
 
 // SetProjectID sets the "project" edge to the Project entity by ID.
-func (ru *RodentUpdate) SetProjectID(id int) *RodentUpdate {
+func (ru *RodentUpdate) SetProjectID(id xid.ID) *RodentUpdate {
 	ru.mutation.SetProjectID(id)
 	return ru
 }
 
 // SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
-func (ru *RodentUpdate) SetNillableProjectID(id *int) *RodentUpdate {
+func (ru *RodentUpdate) SetNillableProjectID(id *xid.ID) *RodentUpdate {
 	if id != nil {
 		ru = ru.SetProjectID(*id)
 	}
@@ -238,14 +239,14 @@ func (ru *RodentUpdate) SetProject(p *Project) *RodentUpdate {
 }
 
 // AddRouterIDs adds the "router" edge to the Router entity by IDs.
-func (ru *RodentUpdate) AddRouterIDs(ids ...int) *RodentUpdate {
+func (ru *RodentUpdate) AddRouterIDs(ids ...xid.ID) *RodentUpdate {
 	ru.mutation.AddRouterIDs(ids...)
 	return ru
 }
 
 // AddRouter adds the "router" edges to the Router entity.
 func (ru *RodentUpdate) AddRouter(r ...*Router) *RodentUpdate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -253,14 +254,14 @@ func (ru *RodentUpdate) AddRouter(r ...*Router) *RodentUpdate {
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
-func (ru *RodentUpdate) AddTaskIDs(ids ...int) *RodentUpdate {
+func (ru *RodentUpdate) AddTaskIDs(ids ...xid.ID) *RodentUpdate {
 	ru.mutation.AddTaskIDs(ids...)
 	return ru
 }
 
 // AddTasks adds the "tasks" edges to the Task entity.
 func (ru *RodentUpdate) AddTasks(t ...*Task) *RodentUpdate {
-	ids := make([]int, len(t))
+	ids := make([]xid.ID, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -268,14 +269,14 @@ func (ru *RodentUpdate) AddTasks(t ...*Task) *RodentUpdate {
 }
 
 // AddLootIDs adds the "loot" edge to the Loot entity by IDs.
-func (ru *RodentUpdate) AddLootIDs(ids ...int) *RodentUpdate {
+func (ru *RodentUpdate) AddLootIDs(ids ...xid.ID) *RodentUpdate {
 	ru.mutation.AddLootIDs(ids...)
 	return ru
 }
 
 // AddLoot adds the "loot" edges to the Loot entity.
 func (ru *RodentUpdate) AddLoot(l ...*Loot) *RodentUpdate {
-	ids := make([]int, len(l))
+	ids := make([]xid.ID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -312,14 +313,14 @@ func (ru *RodentUpdate) ClearRouter() *RodentUpdate {
 }
 
 // RemoveRouterIDs removes the "router" edge to Router entities by IDs.
-func (ru *RodentUpdate) RemoveRouterIDs(ids ...int) *RodentUpdate {
+func (ru *RodentUpdate) RemoveRouterIDs(ids ...xid.ID) *RodentUpdate {
 	ru.mutation.RemoveRouterIDs(ids...)
 	return ru
 }
 
 // RemoveRouter removes "router" edges to Router entities.
 func (ru *RodentUpdate) RemoveRouter(r ...*Router) *RodentUpdate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -333,14 +334,14 @@ func (ru *RodentUpdate) ClearTasks() *RodentUpdate {
 }
 
 // RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
-func (ru *RodentUpdate) RemoveTaskIDs(ids ...int) *RodentUpdate {
+func (ru *RodentUpdate) RemoveTaskIDs(ids ...xid.ID) *RodentUpdate {
 	ru.mutation.RemoveTaskIDs(ids...)
 	return ru
 }
 
 // RemoveTasks removes "tasks" edges to Task entities.
 func (ru *RodentUpdate) RemoveTasks(t ...*Task) *RodentUpdate {
-	ids := make([]int, len(t))
+	ids := make([]xid.ID, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -354,14 +355,14 @@ func (ru *RodentUpdate) ClearLoot() *RodentUpdate {
 }
 
 // RemoveLootIDs removes the "loot" edge to Loot entities by IDs.
-func (ru *RodentUpdate) RemoveLootIDs(ids ...int) *RodentUpdate {
+func (ru *RodentUpdate) RemoveLootIDs(ids ...xid.ID) *RodentUpdate {
 	ru.mutation.RemoveLootIDs(ids...)
 	return ru
 }
 
 // RemoveLoot removes "loot" edges to Loot entities.
 func (ru *RodentUpdate) RemoveLoot(l ...*Loot) *RodentUpdate {
-	ids := make([]int, len(l))
+	ids := make([]xid.ID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -396,7 +397,7 @@ func (ru *RodentUpdate) ExecX(ctx context.Context) {
 }
 
 func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(rodent.Table, rodent.Columns, sqlgraph.NewFieldSpec(rodent.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(rodent.Table, rodent.Columns, sqlgraph.NewFieldSpec(rodent.FieldID, field.TypeString))
 	if ps := ru.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -458,7 +459,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -474,7 +475,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -493,7 +494,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -509,7 +510,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -528,7 +529,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -544,7 +545,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -563,7 +564,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -579,7 +580,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -598,7 +599,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -617,7 +618,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -633,7 +634,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -652,7 +653,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -671,7 +672,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -687,7 +688,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -706,7 +707,7 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -883,13 +884,13 @@ func (ruo *RodentUpdateOne) SetLastseen(t time.Time) *RodentUpdateOne {
 }
 
 // SetDeviceID sets the "device" edge to the Device entity by ID.
-func (ruo *RodentUpdateOne) SetDeviceID(id int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) SetDeviceID(id xid.ID) *RodentUpdateOne {
 	ruo.mutation.SetDeviceID(id)
 	return ruo
 }
 
 // SetNillableDeviceID sets the "device" edge to the Device entity by ID if the given value is not nil.
-func (ruo *RodentUpdateOne) SetNillableDeviceID(id *int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) SetNillableDeviceID(id *xid.ID) *RodentUpdateOne {
 	if id != nil {
 		ruo = ruo.SetDeviceID(*id)
 	}
@@ -902,13 +903,13 @@ func (ruo *RodentUpdateOne) SetDevice(d *Device) *RodentUpdateOne {
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (ruo *RodentUpdateOne) SetUserID(id int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) SetUserID(id xid.ID) *RodentUpdateOne {
 	ruo.mutation.SetUserID(id)
 	return ruo
 }
 
 // SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (ruo *RodentUpdateOne) SetNillableUserID(id *int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) SetNillableUserID(id *xid.ID) *RodentUpdateOne {
 	if id != nil {
 		ruo = ruo.SetUserID(*id)
 	}
@@ -921,13 +922,13 @@ func (ruo *RodentUpdateOne) SetUser(u *User) *RodentUpdateOne {
 }
 
 // SetProjectID sets the "project" edge to the Project entity by ID.
-func (ruo *RodentUpdateOne) SetProjectID(id int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) SetProjectID(id xid.ID) *RodentUpdateOne {
 	ruo.mutation.SetProjectID(id)
 	return ruo
 }
 
 // SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
-func (ruo *RodentUpdateOne) SetNillableProjectID(id *int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) SetNillableProjectID(id *xid.ID) *RodentUpdateOne {
 	if id != nil {
 		ruo = ruo.SetProjectID(*id)
 	}
@@ -940,14 +941,14 @@ func (ruo *RodentUpdateOne) SetProject(p *Project) *RodentUpdateOne {
 }
 
 // AddRouterIDs adds the "router" edge to the Router entity by IDs.
-func (ruo *RodentUpdateOne) AddRouterIDs(ids ...int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) AddRouterIDs(ids ...xid.ID) *RodentUpdateOne {
 	ruo.mutation.AddRouterIDs(ids...)
 	return ruo
 }
 
 // AddRouter adds the "router" edges to the Router entity.
 func (ruo *RodentUpdateOne) AddRouter(r ...*Router) *RodentUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -955,14 +956,14 @@ func (ruo *RodentUpdateOne) AddRouter(r ...*Router) *RodentUpdateOne {
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
-func (ruo *RodentUpdateOne) AddTaskIDs(ids ...int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) AddTaskIDs(ids ...xid.ID) *RodentUpdateOne {
 	ruo.mutation.AddTaskIDs(ids...)
 	return ruo
 }
 
 // AddTasks adds the "tasks" edges to the Task entity.
 func (ruo *RodentUpdateOne) AddTasks(t ...*Task) *RodentUpdateOne {
-	ids := make([]int, len(t))
+	ids := make([]xid.ID, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -970,14 +971,14 @@ func (ruo *RodentUpdateOne) AddTasks(t ...*Task) *RodentUpdateOne {
 }
 
 // AddLootIDs adds the "loot" edge to the Loot entity by IDs.
-func (ruo *RodentUpdateOne) AddLootIDs(ids ...int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) AddLootIDs(ids ...xid.ID) *RodentUpdateOne {
 	ruo.mutation.AddLootIDs(ids...)
 	return ruo
 }
 
 // AddLoot adds the "loot" edges to the Loot entity.
 func (ruo *RodentUpdateOne) AddLoot(l ...*Loot) *RodentUpdateOne {
-	ids := make([]int, len(l))
+	ids := make([]xid.ID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -1014,14 +1015,14 @@ func (ruo *RodentUpdateOne) ClearRouter() *RodentUpdateOne {
 }
 
 // RemoveRouterIDs removes the "router" edge to Router entities by IDs.
-func (ruo *RodentUpdateOne) RemoveRouterIDs(ids ...int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) RemoveRouterIDs(ids ...xid.ID) *RodentUpdateOne {
 	ruo.mutation.RemoveRouterIDs(ids...)
 	return ruo
 }
 
 // RemoveRouter removes "router" edges to Router entities.
 func (ruo *RodentUpdateOne) RemoveRouter(r ...*Router) *RodentUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -1035,14 +1036,14 @@ func (ruo *RodentUpdateOne) ClearTasks() *RodentUpdateOne {
 }
 
 // RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
-func (ruo *RodentUpdateOne) RemoveTaskIDs(ids ...int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) RemoveTaskIDs(ids ...xid.ID) *RodentUpdateOne {
 	ruo.mutation.RemoveTaskIDs(ids...)
 	return ruo
 }
 
 // RemoveTasks removes "tasks" edges to Task entities.
 func (ruo *RodentUpdateOne) RemoveTasks(t ...*Task) *RodentUpdateOne {
-	ids := make([]int, len(t))
+	ids := make([]xid.ID, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -1056,14 +1057,14 @@ func (ruo *RodentUpdateOne) ClearLoot() *RodentUpdateOne {
 }
 
 // RemoveLootIDs removes the "loot" edge to Loot entities by IDs.
-func (ruo *RodentUpdateOne) RemoveLootIDs(ids ...int) *RodentUpdateOne {
+func (ruo *RodentUpdateOne) RemoveLootIDs(ids ...xid.ID) *RodentUpdateOne {
 	ruo.mutation.RemoveLootIDs(ids...)
 	return ruo
 }
 
 // RemoveLoot removes "loot" edges to Loot entities.
 func (ruo *RodentUpdateOne) RemoveLoot(l ...*Loot) *RodentUpdateOne {
-	ids := make([]int, len(l))
+	ids := make([]xid.ID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -1111,7 +1112,7 @@ func (ruo *RodentUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err error) {
-	_spec := sqlgraph.NewUpdateSpec(rodent.Table, rodent.Columns, sqlgraph.NewFieldSpec(rodent.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(rodent.Table, rodent.Columns, sqlgraph.NewFieldSpec(rodent.FieldID, field.TypeString))
 	id, ok := ruo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Rodent.id" for update`)}
@@ -1190,7 +1191,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -1206,7 +1207,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -1225,7 +1226,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -1241,7 +1242,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -1260,7 +1261,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -1276,7 +1277,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -1295,7 +1296,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -1311,7 +1312,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -1330,7 +1331,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -1349,7 +1350,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -1365,7 +1366,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -1384,7 +1385,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -1403,7 +1404,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -1419,7 +1420,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -1438,7 +1439,7 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},

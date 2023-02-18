@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/rodent"
@@ -109,14 +110,28 @@ func (tc *TaskCreate) SetTTPs(s []string) *TaskCreate {
 	return tc
 }
 
+// SetID sets the "id" field.
+func (tc *TaskCreate) SetID(x xid.ID) *TaskCreate {
+	tc.mutation.SetID(x)
+	return tc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (tc *TaskCreate) SetNillableID(x *xid.ID) *TaskCreate {
+	if x != nil {
+		tc.SetID(*x)
+	}
+	return tc
+}
+
 // SetRodentID sets the "rodent" edge to the Rodent entity by ID.
-func (tc *TaskCreate) SetRodentID(id int) *TaskCreate {
+func (tc *TaskCreate) SetRodentID(id xid.ID) *TaskCreate {
 	tc.mutation.SetRodentID(id)
 	return tc
 }
 
 // SetNillableRodentID sets the "rodent" edge to the Rodent entity by ID if the given value is not nil.
-func (tc *TaskCreate) SetNillableRodentID(id *int) *TaskCreate {
+func (tc *TaskCreate) SetNillableRodentID(id *xid.ID) *TaskCreate {
 	if id != nil {
 		tc = tc.SetRodentID(*id)
 	}
@@ -129,13 +144,13 @@ func (tc *TaskCreate) SetRodent(r *Rodent) *TaskCreate {
 }
 
 // SetOperatorID sets the "operator" edge to the Operator entity by ID.
-func (tc *TaskCreate) SetOperatorID(id int) *TaskCreate {
+func (tc *TaskCreate) SetOperatorID(id xid.ID) *TaskCreate {
 	tc.mutation.SetOperatorID(id)
 	return tc
 }
 
 // SetNillableOperatorID sets the "operator" edge to the Operator entity by ID if the given value is not nil.
-func (tc *TaskCreate) SetNillableOperatorID(id *int) *TaskCreate {
+func (tc *TaskCreate) SetNillableOperatorID(id *xid.ID) *TaskCreate {
 	if id != nil {
 		tc = tc.SetOperatorID(*id)
 	}
@@ -148,14 +163,14 @@ func (tc *TaskCreate) SetOperator(o *Operator) *TaskCreate {
 }
 
 // AddLootIDs adds the "loot" edge to the Loot entity by IDs.
-func (tc *TaskCreate) AddLootIDs(ids ...int) *TaskCreate {
+func (tc *TaskCreate) AddLootIDs(ids ...xid.ID) *TaskCreate {
 	tc.mutation.AddLootIDs(ids...)
 	return tc
 }
 
 // AddLoot adds the "loot" edges to the Loot entity.
 func (tc *TaskCreate) AddLoot(l ...*Loot) *TaskCreate {
-	ids := make([]int, len(l))
+	ids := make([]xid.ID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -209,6 +224,10 @@ func (tc *TaskCreate) defaults() {
 		v := task.DefaultLooted
 		tc.mutation.SetLooted(v)
 	}
+	if _, ok := tc.mutation.ID(); !ok {
+		v := task.DefaultID()
+		tc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -239,8 +258,13 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*xid.ID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	tc.mutation.id = &_node.ID
 	tc.mutation.done = true
 	return _node, nil
@@ -249,8 +273,12 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Task{config: tc.config}
-		_spec = sqlgraph.NewCreateSpec(task.Table, sqlgraph.NewFieldSpec(task.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(task.Table, sqlgraph.NewFieldSpec(task.FieldID, field.TypeString))
 	)
+	if id, ok := tc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := tc.mutation.GetType(); ok {
 		_spec.SetField(task.FieldType, field.TypeString, value)
 		_node.Type = value
@@ -296,7 +324,7 @@ func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -316,7 +344,7 @@ func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: operator.FieldID,
 				},
 			},
@@ -336,7 +364,7 @@ func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -390,10 +418,6 @@ func (tcb *TaskCreateBulk) Save(ctx context.Context) ([]*Task, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

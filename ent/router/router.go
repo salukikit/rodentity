@@ -2,6 +2,10 @@
 
 package router
 
+import (
+	"github.com/rs/xid"
+)
+
 const (
 	// Label holds the string label denoting the router type in the database.
 	Label = "router"
@@ -73,3 +77,8 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() xid.ID
+)

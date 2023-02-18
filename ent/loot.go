@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/task"
@@ -17,7 +18,7 @@ import (
 type Loot struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID xid.ID `json:"id,omitempty"`
 	// Type holds the value of the "type" field.
 	Type loot.Type `json:"type,omitempty"`
 	// Location holds the value of the "location" field.
@@ -29,8 +30,8 @@ type Loot struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LootQuery when eager-loading is set.
 	Edges       LootEdges `json:"edges"`
-	rodent_loot *int
-	task_loot   *int
+	rodent_loot *xid.ID
+	task_loot   *xid.ID
 }
 
 // LootEdges holds the relations/edges for other nodes in the graph.
@@ -77,16 +78,16 @@ func (*Loot) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case loot.FieldData:
 			values[i] = new([]byte)
-		case loot.FieldID:
-			values[i] = new(sql.NullInt64)
 		case loot.FieldType, loot.FieldLocation:
 			values[i] = new(sql.NullString)
 		case loot.FieldCollectedon:
 			values[i] = new(sql.NullTime)
+		case loot.FieldID:
+			values[i] = new(xid.ID)
 		case loot.ForeignKeys[0]: // rodent_loot
-			values[i] = new(sql.NullInt64)
+			values[i] = &sql.NullScanner{S: new(xid.ID)}
 		case loot.ForeignKeys[1]: // task_loot
-			values[i] = new(sql.NullInt64)
+			values[i] = &sql.NullScanner{S: new(xid.ID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Loot", columns[i])
 		}
@@ -103,11 +104,11 @@ func (l *Loot) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case loot.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*xid.ID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				l.ID = *value
 			}
-			l.ID = int(value.Int64)
 		case loot.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
@@ -133,18 +134,18 @@ func (l *Loot) assignValues(columns []string, values []any) error {
 				l.Collectedon = value.Time
 			}
 		case loot.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field rodent_loot", value)
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field rodent_loot", values[i])
 			} else if value.Valid {
-				l.rodent_loot = new(int)
-				*l.rodent_loot = int(value.Int64)
+				l.rodent_loot = new(xid.ID)
+				*l.rodent_loot = *value.S.(*xid.ID)
 			}
 		case loot.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field task_loot", value)
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field task_loot", values[i])
 			} else if value.Valid {
-				l.task_loot = new(int)
-				*l.task_loot = int(value.Int64)
+				l.task_loot = new(xid.ID)
+				*l.task_loot = *value.S.(*xid.ID)
 			}
 		}
 	}

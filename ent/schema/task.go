@@ -11,6 +11,13 @@ type Task struct {
 	ent.Schema
 }
 
+func (Task) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		// Embed the BaseMixin in the Project schema.
+		BaseMixin{},
+	}
+}
+
 // Fields of the Task.
 func (Task) Fields() []ent.Field {
 	return []ent.Field{

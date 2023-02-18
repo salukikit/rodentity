@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/project"
 	"github.com/salukikit/rodentity/ent/rodent"
@@ -18,7 +19,7 @@ import (
 type Rodent struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID xid.ID `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Type holds the value of the "type" field.
@@ -44,9 +45,9 @@ type Rodent struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RodentQuery when eager-loading is set.
 	Edges           RodentEdges `json:"edges"`
-	device_rodents  *int
-	project_rodents *int
-	user_rodents    *int
+	device_rodents  *xid.ID
+	project_rodents *xid.ID
+	user_rodents    *xid.ID
 }
 
 // RodentEdges holds the relations/edges for other nodes in the graph.
@@ -141,18 +142,18 @@ func (*Rodent) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case rodent.FieldCommsInspected, rodent.FieldBurned, rodent.FieldAlive:
 			values[i] = new(sql.NullBool)
-		case rodent.FieldID:
-			values[i] = new(sql.NullInt64)
 		case rodent.FieldName, rodent.FieldType, rodent.FieldKey, rodent.FieldUsercontext, rodent.FieldComms, rodent.FieldBeacontime:
 			values[i] = new(sql.NullString)
 		case rodent.FieldJoined, rodent.FieldLastseen:
 			values[i] = new(sql.NullTime)
+		case rodent.FieldID:
+			values[i] = new(xid.ID)
 		case rodent.ForeignKeys[0]: // device_rodents
-			values[i] = new(sql.NullInt64)
+			values[i] = &sql.NullScanner{S: new(xid.ID)}
 		case rodent.ForeignKeys[1]: // project_rodents
-			values[i] = new(sql.NullInt64)
+			values[i] = &sql.NullScanner{S: new(xid.ID)}
 		case rodent.ForeignKeys[2]: // user_rodents
-			values[i] = new(sql.NullInt64)
+			values[i] = &sql.NullScanner{S: new(xid.ID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Rodent", columns[i])
 		}
@@ -169,11 +170,11 @@ func (r *Rodent) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case rodent.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*xid.ID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				r.ID = *value
 			}
-			r.ID = int(value.Int64)
 		case rodent.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
@@ -241,25 +242,25 @@ func (r *Rodent) assignValues(columns []string, values []any) error {
 				r.Lastseen = value.Time
 			}
 		case rodent.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field device_rodents", value)
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field device_rodents", values[i])
 			} else if value.Valid {
-				r.device_rodents = new(int)
-				*r.device_rodents = int(value.Int64)
+				r.device_rodents = new(xid.ID)
+				*r.device_rodents = *value.S.(*xid.ID)
 			}
 		case rodent.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field project_rodents", value)
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field project_rodents", values[i])
 			} else if value.Valid {
-				r.project_rodents = new(int)
-				*r.project_rodents = int(value.Int64)
+				r.project_rodents = new(xid.ID)
+				*r.project_rodents = *value.S.(*xid.ID)
 			}
 		case rodent.ForeignKeys[2]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_rodents", value)
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field user_rodents", values[i])
 			} else if value.Valid {
-				r.user_rodents = new(int)
-				*r.user_rodents = int(value.Int64)
+				r.user_rodents = new(xid.ID)
+				*r.user_rodents = *value.S.(*xid.ID)
 			}
 		}
 	}

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/project"
@@ -154,8 +155,8 @@ func (pq *ProjectQuery) FirstX(ctx context.Context) *Project {
 
 // FirstID returns the first Project ID from the query.
 // Returns a *NotFoundError when no Project ID was found.
-func (pq *ProjectQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (pq *ProjectQuery) FirstID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = pq.Limit(1).IDs(setContextOp(ctx, pq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -167,7 +168,7 @@ func (pq *ProjectQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (pq *ProjectQuery) FirstIDX(ctx context.Context) int {
+func (pq *ProjectQuery) FirstIDX(ctx context.Context) xid.ID {
 	id, err := pq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -205,8 +206,8 @@ func (pq *ProjectQuery) OnlyX(ctx context.Context) *Project {
 // OnlyID is like Only, but returns the only Project ID in the query.
 // Returns a *NotSingularError when more than one Project ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (pq *ProjectQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (pq *ProjectQuery) OnlyID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = pq.Limit(2).IDs(setContextOp(ctx, pq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -222,7 +223,7 @@ func (pq *ProjectQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (pq *ProjectQuery) OnlyIDX(ctx context.Context) int {
+func (pq *ProjectQuery) OnlyIDX(ctx context.Context) xid.ID {
 	id, err := pq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -250,7 +251,7 @@ func (pq *ProjectQuery) AllX(ctx context.Context) []*Project {
 }
 
 // IDs executes the query and returns a list of Project IDs.
-func (pq *ProjectQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (pq *ProjectQuery) IDs(ctx context.Context) (ids []xid.ID, err error) {
 	if pq.ctx.Unique == nil && pq.path != nil {
 		pq.Unique(true)
 	}
@@ -262,7 +263,7 @@ func (pq *ProjectQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (pq *ProjectQuery) IDsX(ctx context.Context) []int {
+func (pq *ProjectQuery) IDsX(ctx context.Context) []xid.ID {
 	ids, err := pq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -492,8 +493,8 @@ func (pq *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 
 func (pq *ProjectQuery) loadOperators(ctx context.Context, query *OperatorQuery, nodes []*Project, init func(*Project), assign func(*Project, *Operator)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Project)
-	nids := make(map[int]map[*Project]struct{})
+	byID := make(map[xid.ID]*Project)
+	nids := make(map[xid.ID]map[*Project]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -522,11 +523,11 @@ func (pq *ProjectQuery) loadOperators(ctx context.Context, query *OperatorQuery,
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
+				return append([]any{new(xid.ID)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
+				outValue := *values[0].(*xid.ID)
+				inValue := *values[1].(*xid.ID)
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Project]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -553,7 +554,7 @@ func (pq *ProjectQuery) loadOperators(ctx context.Context, query *OperatorQuery,
 }
 func (pq *ProjectQuery) loadRodents(ctx context.Context, query *RodentQuery, nodes []*Project, init func(*Project), assign func(*Project, *Rodent)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Project)
+	nodeids := make(map[xid.ID]*Project)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -584,7 +585,7 @@ func (pq *ProjectQuery) loadRodents(ctx context.Context, query *RodentQuery, nod
 }
 func (pq *ProjectQuery) loadRouters(ctx context.Context, query *RouterQuery, nodes []*Project, init func(*Project), assign func(*Project, *Router)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Project)
+	nodeids := make(map[xid.ID]*Project)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -624,7 +625,7 @@ func (pq *ProjectQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (pq *ProjectQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(project.Table, project.Columns, sqlgraph.NewFieldSpec(project.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(project.Table, project.Columns, sqlgraph.NewFieldSpec(project.FieldID, field.TypeString))
 	_spec.From = pq.sql
 	if unique := pq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

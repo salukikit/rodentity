@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/operator"
 	"github.com/salukikit/rodentity/ent/rodent"
 	"github.com/salukikit/rodentity/ent/task"
@@ -18,7 +19,7 @@ import (
 type Task struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID xid.ID `json:"id,omitempty"`
 	// Type holds the value of the "type" field.
 	Type string `json:"type,omitempty"`
 	// Args holds the value of the "args" field.
@@ -40,8 +41,8 @@ type Task struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TaskQuery when eager-loading is set.
 	Edges          TaskEdges `json:"edges"`
-	operator_tasks *int
-	rodent_tasks   *int
+	operator_tasks *xid.ID
+	rodent_tasks   *xid.ID
 }
 
 // TaskEdges holds the relations/edges for other nodes in the graph.
@@ -101,16 +102,16 @@ func (*Task) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case task.FieldExecuted, task.FieldLooted:
 			values[i] = new(sql.NullBool)
-		case task.FieldID:
-			values[i] = new(sql.NullInt64)
 		case task.FieldType:
 			values[i] = new(sql.NullString)
 		case task.FieldRequestedat, task.FieldCompletedat:
 			values[i] = new(sql.NullTime)
+		case task.FieldID:
+			values[i] = new(xid.ID)
 		case task.ForeignKeys[0]: // operator_tasks
-			values[i] = new(sql.NullInt64)
+			values[i] = &sql.NullScanner{S: new(xid.ID)}
 		case task.ForeignKeys[1]: // rodent_tasks
-			values[i] = new(sql.NullInt64)
+			values[i] = &sql.NullScanner{S: new(xid.ID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Task", columns[i])
 		}
@@ -127,11 +128,11 @@ func (t *Task) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case task.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*xid.ID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				t.ID = *value
 			}
-			t.ID = int(value.Int64)
 		case task.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
@@ -191,18 +192,18 @@ func (t *Task) assignValues(columns []string, values []any) error {
 				}
 			}
 		case task.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field operator_tasks", value)
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field operator_tasks", values[i])
 			} else if value.Valid {
-				t.operator_tasks = new(int)
-				*t.operator_tasks = int(value.Int64)
+				t.operator_tasks = new(xid.ID)
+				*t.operator_tasks = *value.S.(*xid.ID)
 			}
 		case task.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field rodent_tasks", value)
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field rodent_tasks", values[i])
 			} else if value.Valid {
-				t.rodent_tasks = new(int)
-				*t.rodent_tasks = int(value.Int64)
+				t.rodent_tasks = new(xid.ID)
+				*t.rodent_tasks = *value.S.(*xid.ID)
 			}
 		}
 	}

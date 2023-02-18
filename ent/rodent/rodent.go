@@ -2,6 +2,10 @@
 
 package rodent
 
+import (
+	"github.com/rs/xid"
+)
+
 const (
 	// Label holds the string label denoting the rodent type in the database.
 	Label = "rodent"
@@ -137,4 +141,6 @@ var (
 	DefaultBurned bool
 	// DefaultAlive holds the default value on creation for the "alive" field.
 	DefaultAlive bool
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() xid.ID
 )

@@ -7,51 +7,52 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.Rodent {
+func ID(id xid.ID) predicate.Rodent {
 	return predicate.Rodent(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.Rodent {
+func IDEQ(id xid.ID) predicate.Rodent {
 	return predicate.Rodent(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.Rodent {
+func IDNEQ(id xid.ID) predicate.Rodent {
 	return predicate.Rodent(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.Rodent {
+func IDIn(ids ...xid.ID) predicate.Rodent {
 	return predicate.Rodent(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.Rodent {
+func IDNotIn(ids ...xid.ID) predicate.Rodent {
 	return predicate.Rodent(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.Rodent {
+func IDGT(id xid.ID) predicate.Rodent {
 	return predicate.Rodent(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.Rodent {
+func IDGTE(id xid.ID) predicate.Rodent {
 	return predicate.Rodent(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.Rodent {
+func IDLT(id xid.ID) predicate.Rodent {
 	return predicate.Rodent(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.Rodent {
+func IDLTE(id xid.ID) predicate.Rodent {
 	return predicate.Rodent(sql.FieldLTE(FieldID, id))
 }
 

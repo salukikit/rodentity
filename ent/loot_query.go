@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/predicate"
 	"github.com/salukikit/rodentity/ent/rodent"
@@ -130,8 +131,8 @@ func (lq *LootQuery) FirstX(ctx context.Context) *Loot {
 
 // FirstID returns the first Loot ID from the query.
 // Returns a *NotFoundError when no Loot ID was found.
-func (lq *LootQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (lq *LootQuery) FirstID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = lq.Limit(1).IDs(setContextOp(ctx, lq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -143,7 +144,7 @@ func (lq *LootQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (lq *LootQuery) FirstIDX(ctx context.Context) int {
+func (lq *LootQuery) FirstIDX(ctx context.Context) xid.ID {
 	id, err := lq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -181,8 +182,8 @@ func (lq *LootQuery) OnlyX(ctx context.Context) *Loot {
 // OnlyID is like Only, but returns the only Loot ID in the query.
 // Returns a *NotSingularError when more than one Loot ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (lq *LootQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (lq *LootQuery) OnlyID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = lq.Limit(2).IDs(setContextOp(ctx, lq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -198,7 +199,7 @@ func (lq *LootQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (lq *LootQuery) OnlyIDX(ctx context.Context) int {
+func (lq *LootQuery) OnlyIDX(ctx context.Context) xid.ID {
 	id, err := lq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -226,7 +227,7 @@ func (lq *LootQuery) AllX(ctx context.Context) []*Loot {
 }
 
 // IDs executes the query and returns a list of Loot IDs.
-func (lq *LootQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (lq *LootQuery) IDs(ctx context.Context) (ids []xid.ID, err error) {
 	if lq.ctx.Unique == nil && lq.path != nil {
 		lq.Unique(true)
 	}
@@ -238,7 +239,7 @@ func (lq *LootQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (lq *LootQuery) IDsX(ctx context.Context) []int {
+func (lq *LootQuery) IDsX(ctx context.Context) []xid.ID {
 	ids, err := lq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -452,8 +453,8 @@ func (lq *LootQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Loot, e
 }
 
 func (lq *LootQuery) loadRodent(ctx context.Context, query *RodentQuery, nodes []*Loot, init func(*Loot), assign func(*Loot, *Rodent)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Loot)
+	ids := make([]xid.ID, 0, len(nodes))
+	nodeids := make(map[xid.ID][]*Loot)
 	for i := range nodes {
 		if nodes[i].rodent_loot == nil {
 			continue
@@ -484,8 +485,8 @@ func (lq *LootQuery) loadRodent(ctx context.Context, query *RodentQuery, nodes [
 	return nil
 }
 func (lq *LootQuery) loadTask(ctx context.Context, query *TaskQuery, nodes []*Loot, init func(*Loot), assign func(*Loot, *Task)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Loot)
+	ids := make([]xid.ID, 0, len(nodes))
+	nodeids := make(map[xid.ID][]*Loot)
 	for i := range nodes {
 		if nodes[i].task_loot == nil {
 			continue
@@ -526,7 +527,7 @@ func (lq *LootQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (lq *LootQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(loot.Table, loot.Columns, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(loot.Table, loot.Columns, sqlgraph.NewFieldSpec(loot.FieldID, field.TypeString))
 	_spec.From = lq.sql
 	if unique := lq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

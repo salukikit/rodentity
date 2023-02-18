@@ -2,6 +2,10 @@
 
 package subnet
 
+import (
+	"github.com/rs/xid"
+)
+
 const (
 	// Label holds the string label denoting the subnet type in the database.
 	Label = "subnet"
@@ -64,3 +68,8 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() xid.ID
+)

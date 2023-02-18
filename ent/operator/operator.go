@@ -2,6 +2,10 @@
 
 package operator
 
+import (
+	"github.com/rs/xid"
+)
+
 const (
 	// Label holds the string label denoting the operator type in the database.
 	Label = "operator"
@@ -56,3 +60,8 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() xid.ID
+)

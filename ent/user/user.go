@@ -2,6 +2,10 @@
 
 package user
 
+import (
+	"github.com/rs/xid"
+)
+
 const (
 	// Label holds the string label denoting the user type in the database.
 	Label = "user"
@@ -112,4 +116,6 @@ var (
 	DefaultHomedir string
 	// DefaultEnabled holds the default value on creation for the "enabled" field.
 	DefaultEnabled bool
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() xid.ID
 )

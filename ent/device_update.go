@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
@@ -139,14 +140,14 @@ func (du *DeviceUpdate) ClearCertificates() *DeviceUpdate {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by IDs.
-func (du *DeviceUpdate) AddUserIDs(ids ...int) *DeviceUpdate {
+func (du *DeviceUpdate) AddUserIDs(ids ...xid.ID) *DeviceUpdate {
 	du.mutation.AddUserIDs(ids...)
 	return du
 }
 
 // AddUsers adds the "users" edges to the User entity.
 func (du *DeviceUpdate) AddUsers(u ...*User) *DeviceUpdate {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -154,14 +155,14 @@ func (du *DeviceUpdate) AddUsers(u ...*User) *DeviceUpdate {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
-func (du *DeviceUpdate) AddRodentIDs(ids ...int) *DeviceUpdate {
+func (du *DeviceUpdate) AddRodentIDs(ids ...xid.ID) *DeviceUpdate {
 	du.mutation.AddRodentIDs(ids...)
 	return du
 }
 
 // AddRodents adds the "rodents" edges to the Rodent entity.
 func (du *DeviceUpdate) AddRodents(r ...*Rodent) *DeviceUpdate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -169,14 +170,14 @@ func (du *DeviceUpdate) AddRodents(r ...*Rodent) *DeviceUpdate {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
-func (du *DeviceUpdate) AddGroupIDs(ids ...int) *DeviceUpdate {
+func (du *DeviceUpdate) AddGroupIDs(ids ...xid.ID) *DeviceUpdate {
 	du.mutation.AddGroupIDs(ids...)
 	return du
 }
 
 // AddGroups adds the "groups" edges to the Group entity.
 func (du *DeviceUpdate) AddGroups(g ...*Group) *DeviceUpdate {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -184,13 +185,13 @@ func (du *DeviceUpdate) AddGroups(g ...*Group) *DeviceUpdate {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by ID.
-func (du *DeviceUpdate) SetDomainID(id int) *DeviceUpdate {
+func (du *DeviceUpdate) SetDomainID(id xid.ID) *DeviceUpdate {
 	du.mutation.SetDomainID(id)
 	return du
 }
 
 // SetNillableDomainID sets the "domain" edge to the Domain entity by ID if the given value is not nil.
-func (du *DeviceUpdate) SetNillableDomainID(id *int) *DeviceUpdate {
+func (du *DeviceUpdate) SetNillableDomainID(id *xid.ID) *DeviceUpdate {
 	if id != nil {
 		du = du.SetDomainID(*id)
 	}
@@ -203,14 +204,14 @@ func (du *DeviceUpdate) SetDomain(d *Domain) *DeviceUpdate {
 }
 
 // AddSubnetIDs adds the "subnets" edge to the Subnet entity by IDs.
-func (du *DeviceUpdate) AddSubnetIDs(ids ...int) *DeviceUpdate {
+func (du *DeviceUpdate) AddSubnetIDs(ids ...xid.ID) *DeviceUpdate {
 	du.mutation.AddSubnetIDs(ids...)
 	return du
 }
 
 // AddSubnets adds the "subnets" edges to the Subnet entity.
 func (du *DeviceUpdate) AddSubnets(s ...*Subnet) *DeviceUpdate {
-	ids := make([]int, len(s))
+	ids := make([]xid.ID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -244,14 +245,14 @@ func (du *DeviceUpdate) ClearUsers() *DeviceUpdate {
 }
 
 // RemoveUserIDs removes the "users" edge to User entities by IDs.
-func (du *DeviceUpdate) RemoveUserIDs(ids ...int) *DeviceUpdate {
+func (du *DeviceUpdate) RemoveUserIDs(ids ...xid.ID) *DeviceUpdate {
 	du.mutation.RemoveUserIDs(ids...)
 	return du
 }
 
 // RemoveUsers removes "users" edges to User entities.
 func (du *DeviceUpdate) RemoveUsers(u ...*User) *DeviceUpdate {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -265,14 +266,14 @@ func (du *DeviceUpdate) ClearRodents() *DeviceUpdate {
 }
 
 // RemoveRodentIDs removes the "rodents" edge to Rodent entities by IDs.
-func (du *DeviceUpdate) RemoveRodentIDs(ids ...int) *DeviceUpdate {
+func (du *DeviceUpdate) RemoveRodentIDs(ids ...xid.ID) *DeviceUpdate {
 	du.mutation.RemoveRodentIDs(ids...)
 	return du
 }
 
 // RemoveRodents removes "rodents" edges to Rodent entities.
 func (du *DeviceUpdate) RemoveRodents(r ...*Rodent) *DeviceUpdate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -286,14 +287,14 @@ func (du *DeviceUpdate) ClearGroups() *DeviceUpdate {
 }
 
 // RemoveGroupIDs removes the "groups" edge to Group entities by IDs.
-func (du *DeviceUpdate) RemoveGroupIDs(ids ...int) *DeviceUpdate {
+func (du *DeviceUpdate) RemoveGroupIDs(ids ...xid.ID) *DeviceUpdate {
 	du.mutation.RemoveGroupIDs(ids...)
 	return du
 }
 
 // RemoveGroups removes "groups" edges to Group entities.
 func (du *DeviceUpdate) RemoveGroups(g ...*Group) *DeviceUpdate {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -313,14 +314,14 @@ func (du *DeviceUpdate) ClearSubnets() *DeviceUpdate {
 }
 
 // RemoveSubnetIDs removes the "subnets" edge to Subnet entities by IDs.
-func (du *DeviceUpdate) RemoveSubnetIDs(ids ...int) *DeviceUpdate {
+func (du *DeviceUpdate) RemoveSubnetIDs(ids ...xid.ID) *DeviceUpdate {
 	du.mutation.RemoveSubnetIDs(ids...)
 	return du
 }
 
 // RemoveSubnets removes "subnets" edges to Subnet entities.
 func (du *DeviceUpdate) RemoveSubnets(s ...*Subnet) *DeviceUpdate {
-	ids := make([]int, len(s))
+	ids := make([]xid.ID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -376,7 +377,7 @@ func (du *DeviceUpdate) ExecX(ctx context.Context) {
 }
 
 func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeString))
 	if ps := du.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -433,7 +434,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -449,7 +450,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -468,7 +469,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -487,7 +488,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -503,7 +504,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -522,7 +523,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -541,7 +542,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -557,7 +558,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -576,7 +577,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -595,7 +596,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -611,7 +612,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -630,7 +631,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: subnet.FieldID,
 				},
 			},
@@ -646,7 +647,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: subnet.FieldID,
 				},
 			},
@@ -665,7 +666,7 @@ func (du *DeviceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: subnet.FieldID,
 				},
 			},
@@ -854,14 +855,14 @@ func (duo *DeviceUpdateOne) ClearCertificates() *DeviceUpdateOne {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by IDs.
-func (duo *DeviceUpdateOne) AddUserIDs(ids ...int) *DeviceUpdateOne {
+func (duo *DeviceUpdateOne) AddUserIDs(ids ...xid.ID) *DeviceUpdateOne {
 	duo.mutation.AddUserIDs(ids...)
 	return duo
 }
 
 // AddUsers adds the "users" edges to the User entity.
 func (duo *DeviceUpdateOne) AddUsers(u ...*User) *DeviceUpdateOne {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -869,14 +870,14 @@ func (duo *DeviceUpdateOne) AddUsers(u ...*User) *DeviceUpdateOne {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by IDs.
-func (duo *DeviceUpdateOne) AddRodentIDs(ids ...int) *DeviceUpdateOne {
+func (duo *DeviceUpdateOne) AddRodentIDs(ids ...xid.ID) *DeviceUpdateOne {
 	duo.mutation.AddRodentIDs(ids...)
 	return duo
 }
 
 // AddRodents adds the "rodents" edges to the Rodent entity.
 func (duo *DeviceUpdateOne) AddRodents(r ...*Rodent) *DeviceUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -884,14 +885,14 @@ func (duo *DeviceUpdateOne) AddRodents(r ...*Rodent) *DeviceUpdateOne {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
-func (duo *DeviceUpdateOne) AddGroupIDs(ids ...int) *DeviceUpdateOne {
+func (duo *DeviceUpdateOne) AddGroupIDs(ids ...xid.ID) *DeviceUpdateOne {
 	duo.mutation.AddGroupIDs(ids...)
 	return duo
 }
 
 // AddGroups adds the "groups" edges to the Group entity.
 func (duo *DeviceUpdateOne) AddGroups(g ...*Group) *DeviceUpdateOne {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -899,13 +900,13 @@ func (duo *DeviceUpdateOne) AddGroups(g ...*Group) *DeviceUpdateOne {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by ID.
-func (duo *DeviceUpdateOne) SetDomainID(id int) *DeviceUpdateOne {
+func (duo *DeviceUpdateOne) SetDomainID(id xid.ID) *DeviceUpdateOne {
 	duo.mutation.SetDomainID(id)
 	return duo
 }
 
 // SetNillableDomainID sets the "domain" edge to the Domain entity by ID if the given value is not nil.
-func (duo *DeviceUpdateOne) SetNillableDomainID(id *int) *DeviceUpdateOne {
+func (duo *DeviceUpdateOne) SetNillableDomainID(id *xid.ID) *DeviceUpdateOne {
 	if id != nil {
 		duo = duo.SetDomainID(*id)
 	}
@@ -918,14 +919,14 @@ func (duo *DeviceUpdateOne) SetDomain(d *Domain) *DeviceUpdateOne {
 }
 
 // AddSubnetIDs adds the "subnets" edge to the Subnet entity by IDs.
-func (duo *DeviceUpdateOne) AddSubnetIDs(ids ...int) *DeviceUpdateOne {
+func (duo *DeviceUpdateOne) AddSubnetIDs(ids ...xid.ID) *DeviceUpdateOne {
 	duo.mutation.AddSubnetIDs(ids...)
 	return duo
 }
 
 // AddSubnets adds the "subnets" edges to the Subnet entity.
 func (duo *DeviceUpdateOne) AddSubnets(s ...*Subnet) *DeviceUpdateOne {
-	ids := make([]int, len(s))
+	ids := make([]xid.ID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -959,14 +960,14 @@ func (duo *DeviceUpdateOne) ClearUsers() *DeviceUpdateOne {
 }
 
 // RemoveUserIDs removes the "users" edge to User entities by IDs.
-func (duo *DeviceUpdateOne) RemoveUserIDs(ids ...int) *DeviceUpdateOne {
+func (duo *DeviceUpdateOne) RemoveUserIDs(ids ...xid.ID) *DeviceUpdateOne {
 	duo.mutation.RemoveUserIDs(ids...)
 	return duo
 }
 
 // RemoveUsers removes "users" edges to User entities.
 func (duo *DeviceUpdateOne) RemoveUsers(u ...*User) *DeviceUpdateOne {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -980,14 +981,14 @@ func (duo *DeviceUpdateOne) ClearRodents() *DeviceUpdateOne {
 }
 
 // RemoveRodentIDs removes the "rodents" edge to Rodent entities by IDs.
-func (duo *DeviceUpdateOne) RemoveRodentIDs(ids ...int) *DeviceUpdateOne {
+func (duo *DeviceUpdateOne) RemoveRodentIDs(ids ...xid.ID) *DeviceUpdateOne {
 	duo.mutation.RemoveRodentIDs(ids...)
 	return duo
 }
 
 // RemoveRodents removes "rodents" edges to Rodent entities.
 func (duo *DeviceUpdateOne) RemoveRodents(r ...*Rodent) *DeviceUpdateOne {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -1001,14 +1002,14 @@ func (duo *DeviceUpdateOne) ClearGroups() *DeviceUpdateOne {
 }
 
 // RemoveGroupIDs removes the "groups" edge to Group entities by IDs.
-func (duo *DeviceUpdateOne) RemoveGroupIDs(ids ...int) *DeviceUpdateOne {
+func (duo *DeviceUpdateOne) RemoveGroupIDs(ids ...xid.ID) *DeviceUpdateOne {
 	duo.mutation.RemoveGroupIDs(ids...)
 	return duo
 }
 
 // RemoveGroups removes "groups" edges to Group entities.
 func (duo *DeviceUpdateOne) RemoveGroups(g ...*Group) *DeviceUpdateOne {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -1028,14 +1029,14 @@ func (duo *DeviceUpdateOne) ClearSubnets() *DeviceUpdateOne {
 }
 
 // RemoveSubnetIDs removes the "subnets" edge to Subnet entities by IDs.
-func (duo *DeviceUpdateOne) RemoveSubnetIDs(ids ...int) *DeviceUpdateOne {
+func (duo *DeviceUpdateOne) RemoveSubnetIDs(ids ...xid.ID) *DeviceUpdateOne {
 	duo.mutation.RemoveSubnetIDs(ids...)
 	return duo
 }
 
 // RemoveSubnets removes "subnets" edges to Subnet entities.
 func (duo *DeviceUpdateOne) RemoveSubnets(s ...*Subnet) *DeviceUpdateOne {
-	ids := make([]int, len(s))
+	ids := make([]xid.ID, len(s))
 	for i := range s {
 		ids[i] = s[i].ID
 	}
@@ -1104,7 +1105,7 @@ func (duo *DeviceUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err error) {
-	_spec := sqlgraph.NewUpdateSpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeString))
 	id, ok := duo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Device.id" for update`)}
@@ -1178,7 +1179,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -1194,7 +1195,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -1213,7 +1214,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -1232,7 +1233,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -1248,7 +1249,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -1267,7 +1268,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: rodent.FieldID,
 				},
 			},
@@ -1286,7 +1287,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -1302,7 +1303,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -1321,7 +1322,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -1340,7 +1341,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -1356,7 +1357,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -1375,7 +1376,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: subnet.FieldID,
 				},
 			},
@@ -1391,7 +1392,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: subnet.FieldID,
 				},
 			},
@@ -1410,7 +1411,7 @@ func (duo *DeviceUpdateOne) sqlSave(ctx context.Context) (_node *Device, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: subnet.FieldID,
 				},
 			},

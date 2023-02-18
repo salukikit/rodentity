@@ -40,7 +40,7 @@ func (sd *SubnetDelete) ExecX(ctx context.Context) int {
 }
 
 func (sd *SubnetDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(subnet.Table, sqlgraph.NewFieldSpec(subnet.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewDeleteSpec(subnet.Table, sqlgraph.NewFieldSpec(subnet.FieldID, field.TypeString))
 	if ps := sd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {

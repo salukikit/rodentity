@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
@@ -65,14 +66,14 @@ func (gu *GroupUpdate) SetNillablePermissions(s *string) *GroupUpdate {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (gu *GroupUpdate) AddDeviceIDs(ids ...int) *GroupUpdate {
+func (gu *GroupUpdate) AddDeviceIDs(ids ...xid.ID) *GroupUpdate {
 	gu.mutation.AddDeviceIDs(ids...)
 	return gu
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (gu *GroupUpdate) AddDevices(d ...*Device) *GroupUpdate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -80,14 +81,14 @@ func (gu *GroupUpdate) AddDevices(d ...*Device) *GroupUpdate {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by IDs.
-func (gu *GroupUpdate) AddUserIDs(ids ...int) *GroupUpdate {
+func (gu *GroupUpdate) AddUserIDs(ids ...xid.ID) *GroupUpdate {
 	gu.mutation.AddUserIDs(ids...)
 	return gu
 }
 
 // AddUsers adds the "users" edges to the User entity.
 func (gu *GroupUpdate) AddUsers(u ...*User) *GroupUpdate {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -95,13 +96,13 @@ func (gu *GroupUpdate) AddUsers(u ...*User) *GroupUpdate {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by ID.
-func (gu *GroupUpdate) SetDomainID(id int) *GroupUpdate {
+func (gu *GroupUpdate) SetDomainID(id xid.ID) *GroupUpdate {
 	gu.mutation.SetDomainID(id)
 	return gu
 }
 
 // SetNillableDomainID sets the "domain" edge to the Domain entity by ID if the given value is not nil.
-func (gu *GroupUpdate) SetNillableDomainID(id *int) *GroupUpdate {
+func (gu *GroupUpdate) SetNillableDomainID(id *xid.ID) *GroupUpdate {
 	if id != nil {
 		gu = gu.SetDomainID(*id)
 	}
@@ -125,14 +126,14 @@ func (gu *GroupUpdate) ClearDevices() *GroupUpdate {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to Device entities by IDs.
-func (gu *GroupUpdate) RemoveDeviceIDs(ids ...int) *GroupUpdate {
+func (gu *GroupUpdate) RemoveDeviceIDs(ids ...xid.ID) *GroupUpdate {
 	gu.mutation.RemoveDeviceIDs(ids...)
 	return gu
 }
 
 // RemoveDevices removes "devices" edges to Device entities.
 func (gu *GroupUpdate) RemoveDevices(d ...*Device) *GroupUpdate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -146,14 +147,14 @@ func (gu *GroupUpdate) ClearUsers() *GroupUpdate {
 }
 
 // RemoveUserIDs removes the "users" edge to User entities by IDs.
-func (gu *GroupUpdate) RemoveUserIDs(ids ...int) *GroupUpdate {
+func (gu *GroupUpdate) RemoveUserIDs(ids ...xid.ID) *GroupUpdate {
 	gu.mutation.RemoveUserIDs(ids...)
 	return gu
 }
 
 // RemoveUsers removes "users" edges to User entities.
 func (gu *GroupUpdate) RemoveUsers(u ...*User) *GroupUpdate {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -194,7 +195,7 @@ func (gu *GroupUpdate) ExecX(ctx context.Context) {
 }
 
 func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(group.Table, group.Columns, sqlgraph.NewFieldSpec(group.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(group.Table, group.Columns, sqlgraph.NewFieldSpec(group.FieldID, field.TypeString))
 	if ps := gu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -220,7 +221,7 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -236,7 +237,7 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -255,7 +256,7 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -274,7 +275,7 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -290,7 +291,7 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -309,7 +310,7 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -328,7 +329,7 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -344,7 +345,7 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -409,14 +410,14 @@ func (guo *GroupUpdateOne) SetNillablePermissions(s *string) *GroupUpdateOne {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (guo *GroupUpdateOne) AddDeviceIDs(ids ...int) *GroupUpdateOne {
+func (guo *GroupUpdateOne) AddDeviceIDs(ids ...xid.ID) *GroupUpdateOne {
 	guo.mutation.AddDeviceIDs(ids...)
 	return guo
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (guo *GroupUpdateOne) AddDevices(d ...*Device) *GroupUpdateOne {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -424,14 +425,14 @@ func (guo *GroupUpdateOne) AddDevices(d ...*Device) *GroupUpdateOne {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by IDs.
-func (guo *GroupUpdateOne) AddUserIDs(ids ...int) *GroupUpdateOne {
+func (guo *GroupUpdateOne) AddUserIDs(ids ...xid.ID) *GroupUpdateOne {
 	guo.mutation.AddUserIDs(ids...)
 	return guo
 }
 
 // AddUsers adds the "users" edges to the User entity.
 func (guo *GroupUpdateOne) AddUsers(u ...*User) *GroupUpdateOne {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -439,13 +440,13 @@ func (guo *GroupUpdateOne) AddUsers(u ...*User) *GroupUpdateOne {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by ID.
-func (guo *GroupUpdateOne) SetDomainID(id int) *GroupUpdateOne {
+func (guo *GroupUpdateOne) SetDomainID(id xid.ID) *GroupUpdateOne {
 	guo.mutation.SetDomainID(id)
 	return guo
 }
 
 // SetNillableDomainID sets the "domain" edge to the Domain entity by ID if the given value is not nil.
-func (guo *GroupUpdateOne) SetNillableDomainID(id *int) *GroupUpdateOne {
+func (guo *GroupUpdateOne) SetNillableDomainID(id *xid.ID) *GroupUpdateOne {
 	if id != nil {
 		guo = guo.SetDomainID(*id)
 	}
@@ -469,14 +470,14 @@ func (guo *GroupUpdateOne) ClearDevices() *GroupUpdateOne {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to Device entities by IDs.
-func (guo *GroupUpdateOne) RemoveDeviceIDs(ids ...int) *GroupUpdateOne {
+func (guo *GroupUpdateOne) RemoveDeviceIDs(ids ...xid.ID) *GroupUpdateOne {
 	guo.mutation.RemoveDeviceIDs(ids...)
 	return guo
 }
 
 // RemoveDevices removes "devices" edges to Device entities.
 func (guo *GroupUpdateOne) RemoveDevices(d ...*Device) *GroupUpdateOne {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -490,14 +491,14 @@ func (guo *GroupUpdateOne) ClearUsers() *GroupUpdateOne {
 }
 
 // RemoveUserIDs removes the "users" edge to User entities by IDs.
-func (guo *GroupUpdateOne) RemoveUserIDs(ids ...int) *GroupUpdateOne {
+func (guo *GroupUpdateOne) RemoveUserIDs(ids ...xid.ID) *GroupUpdateOne {
 	guo.mutation.RemoveUserIDs(ids...)
 	return guo
 }
 
 // RemoveUsers removes "users" edges to User entities.
 func (guo *GroupUpdateOne) RemoveUsers(u ...*User) *GroupUpdateOne {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -551,7 +552,7 @@ func (guo *GroupUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error) {
-	_spec := sqlgraph.NewUpdateSpec(group.Table, group.Columns, sqlgraph.NewFieldSpec(group.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(group.Table, group.Columns, sqlgraph.NewFieldSpec(group.FieldID, field.TypeString))
 	id, ok := guo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Group.id" for update`)}
@@ -594,7 +595,7 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -610,7 +611,7 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -629,7 +630,7 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -648,7 +649,7 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -664,7 +665,7 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -683,7 +684,7 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -702,7 +703,7 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -718,7 +719,7 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},

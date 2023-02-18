@@ -11,6 +11,13 @@ type Subnet struct {
 	ent.Schema
 }
 
+func (Subnet) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		// Embed the BaseMixin in the Project schema.
+		BaseMixin{},
+	}
+}
+
 // Fields of the Subnet.
 func (Subnet) Fields() []ent.Field {
 	return []ent.Field{

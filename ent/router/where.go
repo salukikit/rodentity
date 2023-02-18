@@ -5,51 +5,52 @@ package router
 import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.Router {
+func ID(id xid.ID) predicate.Router {
 	return predicate.Router(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.Router {
+func IDEQ(id xid.ID) predicate.Router {
 	return predicate.Router(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.Router {
+func IDNEQ(id xid.ID) predicate.Router {
 	return predicate.Router(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.Router {
+func IDIn(ids ...xid.ID) predicate.Router {
 	return predicate.Router(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.Router {
+func IDNotIn(ids ...xid.ID) predicate.Router {
 	return predicate.Router(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.Router {
+func IDGT(id xid.ID) predicate.Router {
 	return predicate.Router(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.Router {
+func IDGTE(id xid.ID) predicate.Router {
 	return predicate.Router(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.Router {
+func IDLT(id xid.ID) predicate.Router {
 	return predicate.Router(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.Router {
+func IDLTE(id xid.ID) predicate.Router {
 	return predicate.Router(sql.FieldLTE(FieldID, id))
 }
 

@@ -5,51 +5,52 @@ package operator
 import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.Operator {
+func ID(id xid.ID) predicate.Operator {
 	return predicate.Operator(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.Operator {
+func IDEQ(id xid.ID) predicate.Operator {
 	return predicate.Operator(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.Operator {
+func IDNEQ(id xid.ID) predicate.Operator {
 	return predicate.Operator(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.Operator {
+func IDIn(ids ...xid.ID) predicate.Operator {
 	return predicate.Operator(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.Operator {
+func IDNotIn(ids ...xid.ID) predicate.Operator {
 	return predicate.Operator(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.Operator {
+func IDGT(id xid.ID) predicate.Operator {
 	return predicate.Operator(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.Operator {
+func IDGTE(id xid.ID) predicate.Operator {
 	return predicate.Operator(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.Operator {
+func IDLT(id xid.ID) predicate.Operator {
 	return predicate.Operator(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.Operator {
+func IDLTE(id xid.ID) predicate.Operator {
 	return predicate.Operator(sql.FieldLTE(FieldID, id))
 }
 

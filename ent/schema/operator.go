@@ -20,6 +20,13 @@ func (Operator) Fields() []ent.Field {
 	}
 }
 
+func (Operator) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		// Embed the BaseMixin in the user schema.
+		BaseMixin{},
+	}
+}
+
 // Edges of the Operator.
 func (Operator) Edges() []ent.Edge {
 	return []ent.Edge{

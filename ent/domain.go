@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/domain"
 )
 
@@ -14,7 +15,7 @@ import (
 type Domain struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID xid.ID `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// AD holds the value of the "AD" field.
@@ -26,7 +27,7 @@ type Domain struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DomainQuery when eager-loading is set.
 	Edges               DomainEdges `json:"edges"`
-	domain_childdomains *int
+	domain_childdomains *xid.ID
 }
 
 // DomainEdges holds the relations/edges for other nodes in the graph.
@@ -102,12 +103,12 @@ func (*Domain) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case domain.FieldAD, domain.FieldOwned:
 			values[i] = new(sql.NullBool)
-		case domain.FieldID:
-			values[i] = new(sql.NullInt64)
 		case domain.FieldName, domain.FieldCloud:
 			values[i] = new(sql.NullString)
+		case domain.FieldID:
+			values[i] = new(xid.ID)
 		case domain.ForeignKeys[0]: // domain_childdomains
-			values[i] = new(sql.NullInt64)
+			values[i] = &sql.NullScanner{S: new(xid.ID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Domain", columns[i])
 		}
@@ -124,11 +125,11 @@ func (d *Domain) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case domain.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*xid.ID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				d.ID = *value
 			}
-			d.ID = int(value.Int64)
 		case domain.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
@@ -154,11 +155,11 @@ func (d *Domain) assignValues(columns []string, values []any) error {
 				d.Cloud = value.String
 			}
 		case domain.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field domain_childdomains", value)
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field domain_childdomains", values[i])
 			} else if value.Valid {
-				d.domain_childdomains = new(int)
-				*d.domain_childdomains = int(value.Int64)
+				d.domain_childdomains = new(xid.ID)
+				*d.domain_childdomains = *value.S.(*xid.ID)
 			}
 		}
 	}

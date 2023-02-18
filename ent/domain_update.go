@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
@@ -79,14 +80,14 @@ func (du *DomainUpdate) SetNillableCloud(s *string) *DomainUpdate {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (du *DomainUpdate) AddDeviceIDs(ids ...int) *DomainUpdate {
+func (du *DomainUpdate) AddDeviceIDs(ids ...xid.ID) *DomainUpdate {
 	du.mutation.AddDeviceIDs(ids...)
 	return du
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (du *DomainUpdate) AddDevices(d ...*Device) *DomainUpdate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -94,14 +95,14 @@ func (du *DomainUpdate) AddDevices(d ...*Device) *DomainUpdate {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by IDs.
-func (du *DomainUpdate) AddUserIDs(ids ...int) *DomainUpdate {
+func (du *DomainUpdate) AddUserIDs(ids ...xid.ID) *DomainUpdate {
 	du.mutation.AddUserIDs(ids...)
 	return du
 }
 
 // AddUsers adds the "users" edges to the User entity.
 func (du *DomainUpdate) AddUsers(u ...*User) *DomainUpdate {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -109,14 +110,14 @@ func (du *DomainUpdate) AddUsers(u ...*User) *DomainUpdate {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
-func (du *DomainUpdate) AddGroupIDs(ids ...int) *DomainUpdate {
+func (du *DomainUpdate) AddGroupIDs(ids ...xid.ID) *DomainUpdate {
 	du.mutation.AddGroupIDs(ids...)
 	return du
 }
 
 // AddGroups adds the "groups" edges to the Group entity.
 func (du *DomainUpdate) AddGroups(g ...*Group) *DomainUpdate {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -124,14 +125,14 @@ func (du *DomainUpdate) AddGroups(g ...*Group) *DomainUpdate {
 }
 
 // AddChilddomainIDs adds the "childdomains" edge to the Domain entity by IDs.
-func (du *DomainUpdate) AddChilddomainIDs(ids ...int) *DomainUpdate {
+func (du *DomainUpdate) AddChilddomainIDs(ids ...xid.ID) *DomainUpdate {
 	du.mutation.AddChilddomainIDs(ids...)
 	return du
 }
 
 // AddChilddomains adds the "childdomains" edges to the Domain entity.
 func (du *DomainUpdate) AddChilddomains(d ...*Domain) *DomainUpdate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -139,13 +140,13 @@ func (du *DomainUpdate) AddChilddomains(d ...*Domain) *DomainUpdate {
 }
 
 // SetParentdomainID sets the "parentdomain" edge to the Domain entity by ID.
-func (du *DomainUpdate) SetParentdomainID(id int) *DomainUpdate {
+func (du *DomainUpdate) SetParentdomainID(id xid.ID) *DomainUpdate {
 	du.mutation.SetParentdomainID(id)
 	return du
 }
 
 // SetNillableParentdomainID sets the "parentdomain" edge to the Domain entity by ID if the given value is not nil.
-func (du *DomainUpdate) SetNillableParentdomainID(id *int) *DomainUpdate {
+func (du *DomainUpdate) SetNillableParentdomainID(id *xid.ID) *DomainUpdate {
 	if id != nil {
 		du = du.SetParentdomainID(*id)
 	}
@@ -169,14 +170,14 @@ func (du *DomainUpdate) ClearDevices() *DomainUpdate {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to Device entities by IDs.
-func (du *DomainUpdate) RemoveDeviceIDs(ids ...int) *DomainUpdate {
+func (du *DomainUpdate) RemoveDeviceIDs(ids ...xid.ID) *DomainUpdate {
 	du.mutation.RemoveDeviceIDs(ids...)
 	return du
 }
 
 // RemoveDevices removes "devices" edges to Device entities.
 func (du *DomainUpdate) RemoveDevices(d ...*Device) *DomainUpdate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -190,14 +191,14 @@ func (du *DomainUpdate) ClearUsers() *DomainUpdate {
 }
 
 // RemoveUserIDs removes the "users" edge to User entities by IDs.
-func (du *DomainUpdate) RemoveUserIDs(ids ...int) *DomainUpdate {
+func (du *DomainUpdate) RemoveUserIDs(ids ...xid.ID) *DomainUpdate {
 	du.mutation.RemoveUserIDs(ids...)
 	return du
 }
 
 // RemoveUsers removes "users" edges to User entities.
 func (du *DomainUpdate) RemoveUsers(u ...*User) *DomainUpdate {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -211,14 +212,14 @@ func (du *DomainUpdate) ClearGroups() *DomainUpdate {
 }
 
 // RemoveGroupIDs removes the "groups" edge to Group entities by IDs.
-func (du *DomainUpdate) RemoveGroupIDs(ids ...int) *DomainUpdate {
+func (du *DomainUpdate) RemoveGroupIDs(ids ...xid.ID) *DomainUpdate {
 	du.mutation.RemoveGroupIDs(ids...)
 	return du
 }
 
 // RemoveGroups removes "groups" edges to Group entities.
 func (du *DomainUpdate) RemoveGroups(g ...*Group) *DomainUpdate {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -232,14 +233,14 @@ func (du *DomainUpdate) ClearChilddomains() *DomainUpdate {
 }
 
 // RemoveChilddomainIDs removes the "childdomains" edge to Domain entities by IDs.
-func (du *DomainUpdate) RemoveChilddomainIDs(ids ...int) *DomainUpdate {
+func (du *DomainUpdate) RemoveChilddomainIDs(ids ...xid.ID) *DomainUpdate {
 	du.mutation.RemoveChilddomainIDs(ids...)
 	return du
 }
 
 // RemoveChilddomains removes "childdomains" edges to Domain entities.
 func (du *DomainUpdate) RemoveChilddomains(d ...*Domain) *DomainUpdate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -280,7 +281,7 @@ func (du *DomainUpdate) ExecX(ctx context.Context) {
 }
 
 func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(domain.Table, domain.Columns, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(domain.Table, domain.Columns, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeString))
 	if ps := du.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -309,7 +310,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -325,7 +326,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -344,7 +345,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -363,7 +364,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -379,7 +380,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -398,7 +399,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -417,7 +418,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -433,7 +434,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -452,7 +453,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -471,7 +472,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -487,7 +488,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -506,7 +507,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -525,7 +526,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -541,7 +542,7 @@ func (du *DomainUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -620,14 +621,14 @@ func (duo *DomainUpdateOne) SetNillableCloud(s *string) *DomainUpdateOne {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (duo *DomainUpdateOne) AddDeviceIDs(ids ...int) *DomainUpdateOne {
+func (duo *DomainUpdateOne) AddDeviceIDs(ids ...xid.ID) *DomainUpdateOne {
 	duo.mutation.AddDeviceIDs(ids...)
 	return duo
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (duo *DomainUpdateOne) AddDevices(d ...*Device) *DomainUpdateOne {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -635,14 +636,14 @@ func (duo *DomainUpdateOne) AddDevices(d ...*Device) *DomainUpdateOne {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by IDs.
-func (duo *DomainUpdateOne) AddUserIDs(ids ...int) *DomainUpdateOne {
+func (duo *DomainUpdateOne) AddUserIDs(ids ...xid.ID) *DomainUpdateOne {
 	duo.mutation.AddUserIDs(ids...)
 	return duo
 }
 
 // AddUsers adds the "users" edges to the User entity.
 func (duo *DomainUpdateOne) AddUsers(u ...*User) *DomainUpdateOne {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -650,14 +651,14 @@ func (duo *DomainUpdateOne) AddUsers(u ...*User) *DomainUpdateOne {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by IDs.
-func (duo *DomainUpdateOne) AddGroupIDs(ids ...int) *DomainUpdateOne {
+func (duo *DomainUpdateOne) AddGroupIDs(ids ...xid.ID) *DomainUpdateOne {
 	duo.mutation.AddGroupIDs(ids...)
 	return duo
 }
 
 // AddGroups adds the "groups" edges to the Group entity.
 func (duo *DomainUpdateOne) AddGroups(g ...*Group) *DomainUpdateOne {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -665,14 +666,14 @@ func (duo *DomainUpdateOne) AddGroups(g ...*Group) *DomainUpdateOne {
 }
 
 // AddChilddomainIDs adds the "childdomains" edge to the Domain entity by IDs.
-func (duo *DomainUpdateOne) AddChilddomainIDs(ids ...int) *DomainUpdateOne {
+func (duo *DomainUpdateOne) AddChilddomainIDs(ids ...xid.ID) *DomainUpdateOne {
 	duo.mutation.AddChilddomainIDs(ids...)
 	return duo
 }
 
 // AddChilddomains adds the "childdomains" edges to the Domain entity.
 func (duo *DomainUpdateOne) AddChilddomains(d ...*Domain) *DomainUpdateOne {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -680,13 +681,13 @@ func (duo *DomainUpdateOne) AddChilddomains(d ...*Domain) *DomainUpdateOne {
 }
 
 // SetParentdomainID sets the "parentdomain" edge to the Domain entity by ID.
-func (duo *DomainUpdateOne) SetParentdomainID(id int) *DomainUpdateOne {
+func (duo *DomainUpdateOne) SetParentdomainID(id xid.ID) *DomainUpdateOne {
 	duo.mutation.SetParentdomainID(id)
 	return duo
 }
 
 // SetNillableParentdomainID sets the "parentdomain" edge to the Domain entity by ID if the given value is not nil.
-func (duo *DomainUpdateOne) SetNillableParentdomainID(id *int) *DomainUpdateOne {
+func (duo *DomainUpdateOne) SetNillableParentdomainID(id *xid.ID) *DomainUpdateOne {
 	if id != nil {
 		duo = duo.SetParentdomainID(*id)
 	}
@@ -710,14 +711,14 @@ func (duo *DomainUpdateOne) ClearDevices() *DomainUpdateOne {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to Device entities by IDs.
-func (duo *DomainUpdateOne) RemoveDeviceIDs(ids ...int) *DomainUpdateOne {
+func (duo *DomainUpdateOne) RemoveDeviceIDs(ids ...xid.ID) *DomainUpdateOne {
 	duo.mutation.RemoveDeviceIDs(ids...)
 	return duo
 }
 
 // RemoveDevices removes "devices" edges to Device entities.
 func (duo *DomainUpdateOne) RemoveDevices(d ...*Device) *DomainUpdateOne {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -731,14 +732,14 @@ func (duo *DomainUpdateOne) ClearUsers() *DomainUpdateOne {
 }
 
 // RemoveUserIDs removes the "users" edge to User entities by IDs.
-func (duo *DomainUpdateOne) RemoveUserIDs(ids ...int) *DomainUpdateOne {
+func (duo *DomainUpdateOne) RemoveUserIDs(ids ...xid.ID) *DomainUpdateOne {
 	duo.mutation.RemoveUserIDs(ids...)
 	return duo
 }
 
 // RemoveUsers removes "users" edges to User entities.
 func (duo *DomainUpdateOne) RemoveUsers(u ...*User) *DomainUpdateOne {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -752,14 +753,14 @@ func (duo *DomainUpdateOne) ClearGroups() *DomainUpdateOne {
 }
 
 // RemoveGroupIDs removes the "groups" edge to Group entities by IDs.
-func (duo *DomainUpdateOne) RemoveGroupIDs(ids ...int) *DomainUpdateOne {
+func (duo *DomainUpdateOne) RemoveGroupIDs(ids ...xid.ID) *DomainUpdateOne {
 	duo.mutation.RemoveGroupIDs(ids...)
 	return duo
 }
 
 // RemoveGroups removes "groups" edges to Group entities.
 func (duo *DomainUpdateOne) RemoveGroups(g ...*Group) *DomainUpdateOne {
-	ids := make([]int, len(g))
+	ids := make([]xid.ID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -773,14 +774,14 @@ func (duo *DomainUpdateOne) ClearChilddomains() *DomainUpdateOne {
 }
 
 // RemoveChilddomainIDs removes the "childdomains" edge to Domain entities by IDs.
-func (duo *DomainUpdateOne) RemoveChilddomainIDs(ids ...int) *DomainUpdateOne {
+func (duo *DomainUpdateOne) RemoveChilddomainIDs(ids ...xid.ID) *DomainUpdateOne {
 	duo.mutation.RemoveChilddomainIDs(ids...)
 	return duo
 }
 
 // RemoveChilddomains removes "childdomains" edges to Domain entities.
 func (duo *DomainUpdateOne) RemoveChilddomains(d ...*Domain) *DomainUpdateOne {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -834,7 +835,7 @@ func (duo *DomainUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err error) {
-	_spec := sqlgraph.NewUpdateSpec(domain.Table, domain.Columns, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(domain.Table, domain.Columns, sqlgraph.NewFieldSpec(domain.FieldID, field.TypeString))
 	id, ok := duo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Domain.id" for update`)}
@@ -880,7 +881,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -896,7 +897,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -915,7 +916,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -934,7 +935,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -950,7 +951,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -969,7 +970,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -988,7 +989,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -1004,7 +1005,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -1023,7 +1024,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: group.FieldID,
 				},
 			},
@@ -1042,7 +1043,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -1058,7 +1059,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -1077,7 +1078,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -1096,7 +1097,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -1112,7 +1113,7 @@ func (duo *DomainUpdateOne) sqlSave(ctx context.Context) (_node *Domain, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},

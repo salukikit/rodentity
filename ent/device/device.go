@@ -2,6 +2,10 @@
 
 package device
 
+import (
+	"github.com/rs/xid"
+)
+
 const (
 	// Label holds the string label denoting the device type in the database.
 	Label = "device"
@@ -126,4 +130,6 @@ var (
 	DefaultArch string
 	// DefaultVersion holds the default value on creation for the "version" field.
 	DefaultVersion string
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() xid.ID
 )

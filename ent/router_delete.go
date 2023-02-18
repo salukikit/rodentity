@@ -40,7 +40,7 @@ func (rd *RouterDelete) ExecX(ctx context.Context) int {
 }
 
 func (rd *RouterDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(router.Table, sqlgraph.NewFieldSpec(router.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewDeleteSpec(router.Table, sqlgraph.NewFieldSpec(router.FieldID, field.TypeString))
 	if ps := rd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {

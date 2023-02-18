@@ -11,6 +11,13 @@ type Router struct {
 	ent.Schema
 }
 
+func (Router) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		// Embed the BaseMixin in the Project schema.
+		BaseMixin{},
+	}
+}
+
 // Fields of the Router.
 func (Router) Fields() []ent.Field {
 	return []ent.Field{

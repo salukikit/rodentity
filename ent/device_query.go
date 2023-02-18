@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
@@ -227,8 +228,8 @@ func (dq *DeviceQuery) FirstX(ctx context.Context) *Device {
 
 // FirstID returns the first Device ID from the query.
 // Returns a *NotFoundError when no Device ID was found.
-func (dq *DeviceQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (dq *DeviceQuery) FirstID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = dq.Limit(1).IDs(setContextOp(ctx, dq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -240,7 +241,7 @@ func (dq *DeviceQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (dq *DeviceQuery) FirstIDX(ctx context.Context) int {
+func (dq *DeviceQuery) FirstIDX(ctx context.Context) xid.ID {
 	id, err := dq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -278,8 +279,8 @@ func (dq *DeviceQuery) OnlyX(ctx context.Context) *Device {
 // OnlyID is like Only, but returns the only Device ID in the query.
 // Returns a *NotSingularError when more than one Device ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (dq *DeviceQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (dq *DeviceQuery) OnlyID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = dq.Limit(2).IDs(setContextOp(ctx, dq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -295,7 +296,7 @@ func (dq *DeviceQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (dq *DeviceQuery) OnlyIDX(ctx context.Context) int {
+func (dq *DeviceQuery) OnlyIDX(ctx context.Context) xid.ID {
 	id, err := dq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -323,7 +324,7 @@ func (dq *DeviceQuery) AllX(ctx context.Context) []*Device {
 }
 
 // IDs executes the query and returns a list of Device IDs.
-func (dq *DeviceQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (dq *DeviceQuery) IDs(ctx context.Context) (ids []xid.ID, err error) {
 	if dq.ctx.Unique == nil && dq.path != nil {
 		dq.Unique(true)
 	}
@@ -335,7 +336,7 @@ func (dq *DeviceQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (dq *DeviceQuery) IDsX(ctx context.Context) []int {
+func (dq *DeviceQuery) IDsX(ctx context.Context) []xid.ID {
 	ids, err := dq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -631,8 +632,8 @@ func (dq *DeviceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Devic
 
 func (dq *DeviceQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []*Device, init func(*Device), assign func(*Device, *User)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Device)
-	nids := make(map[int]map[*Device]struct{})
+	byID := make(map[xid.ID]*Device)
+	nids := make(map[xid.ID]map[*Device]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -661,11 +662,11 @@ func (dq *DeviceQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
+				return append([]any{new(xid.ID)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
+				outValue := *values[0].(*xid.ID)
+				inValue := *values[1].(*xid.ID)
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Device]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -692,7 +693,7 @@ func (dq *DeviceQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []
 }
 func (dq *DeviceQuery) loadRodents(ctx context.Context, query *RodentQuery, nodes []*Device, init func(*Device), assign func(*Device, *Rodent)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Device)
+	nodeids := make(map[xid.ID]*Device)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -723,8 +724,8 @@ func (dq *DeviceQuery) loadRodents(ctx context.Context, query *RodentQuery, node
 }
 func (dq *DeviceQuery) loadGroups(ctx context.Context, query *GroupQuery, nodes []*Device, init func(*Device), assign func(*Device, *Group)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Device)
-	nids := make(map[int]map[*Device]struct{})
+	byID := make(map[xid.ID]*Device)
+	nids := make(map[xid.ID]map[*Device]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -753,11 +754,11 @@ func (dq *DeviceQuery) loadGroups(ctx context.Context, query *GroupQuery, nodes 
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
+				return append([]any{new(xid.ID)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
+				outValue := *values[0].(*xid.ID)
+				inValue := *values[1].(*xid.ID)
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Device]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -783,8 +784,8 @@ func (dq *DeviceQuery) loadGroups(ctx context.Context, query *GroupQuery, nodes 
 	return nil
 }
 func (dq *DeviceQuery) loadDomain(ctx context.Context, query *DomainQuery, nodes []*Device, init func(*Device), assign func(*Device, *Domain)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Device)
+	ids := make([]xid.ID, 0, len(nodes))
+	nodeids := make(map[xid.ID][]*Device)
 	for i := range nodes {
 		if nodes[i].domain_devices == nil {
 			continue
@@ -816,8 +817,8 @@ func (dq *DeviceQuery) loadDomain(ctx context.Context, query *DomainQuery, nodes
 }
 func (dq *DeviceQuery) loadSubnets(ctx context.Context, query *SubnetQuery, nodes []*Device, init func(*Device), assign func(*Device, *Subnet)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Device)
-	nids := make(map[int]map[*Device]struct{})
+	byID := make(map[xid.ID]*Device)
+	nids := make(map[xid.ID]map[*Device]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -846,11 +847,11 @@ func (dq *DeviceQuery) loadSubnets(ctx context.Context, query *SubnetQuery, node
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
+				return append([]any{new(xid.ID)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
+				outValue := *values[0].(*xid.ID)
+				inValue := *values[1].(*xid.ID)
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Device]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -877,7 +878,7 @@ func (dq *DeviceQuery) loadSubnets(ctx context.Context, query *SubnetQuery, node
 }
 func (dq *DeviceQuery) loadServices(ctx context.Context, query *ServicesQuery, nodes []*Device, init func(*Device), assign func(*Device, *Services)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Device)
+	byID := make(map[xid.ID]*Device)
 	nids := make(map[int]map[*Device]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
@@ -907,10 +908,10 @@ func (dq *DeviceQuery) loadServices(ctx context.Context, query *ServicesQuery, n
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
+				return append([]any{new(xid.ID)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
+				outValue := *values[0].(*xid.ID)
 				inValue := int(values[1].(*sql.NullInt64).Int64)
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Device]struct{}{byID[outValue]: {}}
@@ -947,7 +948,7 @@ func (dq *DeviceQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (dq *DeviceQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(device.Table, device.Columns, sqlgraph.NewFieldSpec(device.FieldID, field.TypeString))
 	_spec.From = dq.sql
 	if unique := dq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
@@ -55,7 +56,7 @@ type DeviceMutation struct {
 	config
 	op                   Op
 	typ                  string
-	id                   *int
+	id                   *xid.ID
 	hostname             *string
 	os                   *string
 	arch                 *string
@@ -66,19 +67,19 @@ type DeviceMutation struct {
 	certificates         *[]string
 	appendcertificates   []string
 	clearedFields        map[string]struct{}
-	users                map[int]struct{}
-	removedusers         map[int]struct{}
+	users                map[xid.ID]struct{}
+	removedusers         map[xid.ID]struct{}
 	clearedusers         bool
-	rodents              map[int]struct{}
-	removedrodents       map[int]struct{}
+	rodents              map[xid.ID]struct{}
+	removedrodents       map[xid.ID]struct{}
 	clearedrodents       bool
-	groups               map[int]struct{}
-	removedgroups        map[int]struct{}
+	groups               map[xid.ID]struct{}
+	removedgroups        map[xid.ID]struct{}
 	clearedgroups        bool
-	domain               *int
+	domain               *xid.ID
 	cleareddomain        bool
-	subnets              map[int]struct{}
-	removedsubnets       map[int]struct{}
+	subnets              map[xid.ID]struct{}
+	removedsubnets       map[xid.ID]struct{}
 	clearedsubnets       bool
 	services             map[int]struct{}
 	removedservices      map[int]struct{}
@@ -108,7 +109,7 @@ func newDeviceMutation(c config, op Op, opts ...deviceOption) *DeviceMutation {
 }
 
 // withDeviceID sets the ID field of the mutation.
-func withDeviceID(id int) deviceOption {
+func withDeviceID(id xid.ID) deviceOption {
 	return func(m *DeviceMutation) {
 		var (
 			err   error
@@ -158,9 +159,15 @@ func (m DeviceMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Device entities.
+func (m *DeviceMutation) SetID(id xid.ID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *DeviceMutation) ID() (id int, exists bool) {
+func (m *DeviceMutation) ID() (id xid.ID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -171,12 +178,12 @@ func (m *DeviceMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *DeviceMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *DeviceMutation) IDs(ctx context.Context) ([]xid.ID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []xid.ID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -510,9 +517,9 @@ func (m *DeviceMutation) ResetCertificates() {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by ids.
-func (m *DeviceMutation) AddUserIDs(ids ...int) {
+func (m *DeviceMutation) AddUserIDs(ids ...xid.ID) {
 	if m.users == nil {
-		m.users = make(map[int]struct{})
+		m.users = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.users[ids[i]] = struct{}{}
@@ -530,9 +537,9 @@ func (m *DeviceMutation) UsersCleared() bool {
 }
 
 // RemoveUserIDs removes the "users" edge to the User entity by IDs.
-func (m *DeviceMutation) RemoveUserIDs(ids ...int) {
+func (m *DeviceMutation) RemoveUserIDs(ids ...xid.ID) {
 	if m.removedusers == nil {
-		m.removedusers = make(map[int]struct{})
+		m.removedusers = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.users, ids[i])
@@ -541,7 +548,7 @@ func (m *DeviceMutation) RemoveUserIDs(ids ...int) {
 }
 
 // RemovedUsers returns the removed IDs of the "users" edge to the User entity.
-func (m *DeviceMutation) RemovedUsersIDs() (ids []int) {
+func (m *DeviceMutation) RemovedUsersIDs() (ids []xid.ID) {
 	for id := range m.removedusers {
 		ids = append(ids, id)
 	}
@@ -549,7 +556,7 @@ func (m *DeviceMutation) RemovedUsersIDs() (ids []int) {
 }
 
 // UsersIDs returns the "users" edge IDs in the mutation.
-func (m *DeviceMutation) UsersIDs() (ids []int) {
+func (m *DeviceMutation) UsersIDs() (ids []xid.ID) {
 	for id := range m.users {
 		ids = append(ids, id)
 	}
@@ -564,9 +571,9 @@ func (m *DeviceMutation) ResetUsers() {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by ids.
-func (m *DeviceMutation) AddRodentIDs(ids ...int) {
+func (m *DeviceMutation) AddRodentIDs(ids ...xid.ID) {
 	if m.rodents == nil {
-		m.rodents = make(map[int]struct{})
+		m.rodents = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.rodents[ids[i]] = struct{}{}
@@ -584,9 +591,9 @@ func (m *DeviceMutation) RodentsCleared() bool {
 }
 
 // RemoveRodentIDs removes the "rodents" edge to the Rodent entity by IDs.
-func (m *DeviceMutation) RemoveRodentIDs(ids ...int) {
+func (m *DeviceMutation) RemoveRodentIDs(ids ...xid.ID) {
 	if m.removedrodents == nil {
-		m.removedrodents = make(map[int]struct{})
+		m.removedrodents = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.rodents, ids[i])
@@ -595,7 +602,7 @@ func (m *DeviceMutation) RemoveRodentIDs(ids ...int) {
 }
 
 // RemovedRodents returns the removed IDs of the "rodents" edge to the Rodent entity.
-func (m *DeviceMutation) RemovedRodentsIDs() (ids []int) {
+func (m *DeviceMutation) RemovedRodentsIDs() (ids []xid.ID) {
 	for id := range m.removedrodents {
 		ids = append(ids, id)
 	}
@@ -603,7 +610,7 @@ func (m *DeviceMutation) RemovedRodentsIDs() (ids []int) {
 }
 
 // RodentsIDs returns the "rodents" edge IDs in the mutation.
-func (m *DeviceMutation) RodentsIDs() (ids []int) {
+func (m *DeviceMutation) RodentsIDs() (ids []xid.ID) {
 	for id := range m.rodents {
 		ids = append(ids, id)
 	}
@@ -618,9 +625,9 @@ func (m *DeviceMutation) ResetRodents() {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by ids.
-func (m *DeviceMutation) AddGroupIDs(ids ...int) {
+func (m *DeviceMutation) AddGroupIDs(ids ...xid.ID) {
 	if m.groups == nil {
-		m.groups = make(map[int]struct{})
+		m.groups = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.groups[ids[i]] = struct{}{}
@@ -638,9 +645,9 @@ func (m *DeviceMutation) GroupsCleared() bool {
 }
 
 // RemoveGroupIDs removes the "groups" edge to the Group entity by IDs.
-func (m *DeviceMutation) RemoveGroupIDs(ids ...int) {
+func (m *DeviceMutation) RemoveGroupIDs(ids ...xid.ID) {
 	if m.removedgroups == nil {
-		m.removedgroups = make(map[int]struct{})
+		m.removedgroups = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.groups, ids[i])
@@ -649,7 +656,7 @@ func (m *DeviceMutation) RemoveGroupIDs(ids ...int) {
 }
 
 // RemovedGroups returns the removed IDs of the "groups" edge to the Group entity.
-func (m *DeviceMutation) RemovedGroupsIDs() (ids []int) {
+func (m *DeviceMutation) RemovedGroupsIDs() (ids []xid.ID) {
 	for id := range m.removedgroups {
 		ids = append(ids, id)
 	}
@@ -657,7 +664,7 @@ func (m *DeviceMutation) RemovedGroupsIDs() (ids []int) {
 }
 
 // GroupsIDs returns the "groups" edge IDs in the mutation.
-func (m *DeviceMutation) GroupsIDs() (ids []int) {
+func (m *DeviceMutation) GroupsIDs() (ids []xid.ID) {
 	for id := range m.groups {
 		ids = append(ids, id)
 	}
@@ -672,7 +679,7 @@ func (m *DeviceMutation) ResetGroups() {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by id.
-func (m *DeviceMutation) SetDomainID(id int) {
+func (m *DeviceMutation) SetDomainID(id xid.ID) {
 	m.domain = &id
 }
 
@@ -687,7 +694,7 @@ func (m *DeviceMutation) DomainCleared() bool {
 }
 
 // DomainID returns the "domain" edge ID in the mutation.
-func (m *DeviceMutation) DomainID() (id int, exists bool) {
+func (m *DeviceMutation) DomainID() (id xid.ID, exists bool) {
 	if m.domain != nil {
 		return *m.domain, true
 	}
@@ -697,7 +704,7 @@ func (m *DeviceMutation) DomainID() (id int, exists bool) {
 // DomainIDs returns the "domain" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // DomainID instead. It exists only for internal usage by the builders.
-func (m *DeviceMutation) DomainIDs() (ids []int) {
+func (m *DeviceMutation) DomainIDs() (ids []xid.ID) {
 	if id := m.domain; id != nil {
 		ids = append(ids, *id)
 	}
@@ -711,9 +718,9 @@ func (m *DeviceMutation) ResetDomain() {
 }
 
 // AddSubnetIDs adds the "subnets" edge to the Subnet entity by ids.
-func (m *DeviceMutation) AddSubnetIDs(ids ...int) {
+func (m *DeviceMutation) AddSubnetIDs(ids ...xid.ID) {
 	if m.subnets == nil {
-		m.subnets = make(map[int]struct{})
+		m.subnets = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.subnets[ids[i]] = struct{}{}
@@ -731,9 +738,9 @@ func (m *DeviceMutation) SubnetsCleared() bool {
 }
 
 // RemoveSubnetIDs removes the "subnets" edge to the Subnet entity by IDs.
-func (m *DeviceMutation) RemoveSubnetIDs(ids ...int) {
+func (m *DeviceMutation) RemoveSubnetIDs(ids ...xid.ID) {
 	if m.removedsubnets == nil {
-		m.removedsubnets = make(map[int]struct{})
+		m.removedsubnets = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.subnets, ids[i])
@@ -742,7 +749,7 @@ func (m *DeviceMutation) RemoveSubnetIDs(ids ...int) {
 }
 
 // RemovedSubnets returns the removed IDs of the "subnets" edge to the Subnet entity.
-func (m *DeviceMutation) RemovedSubnetsIDs() (ids []int) {
+func (m *DeviceMutation) RemovedSubnetsIDs() (ids []xid.ID) {
 	for id := range m.removedsubnets {
 		ids = append(ids, id)
 	}
@@ -750,7 +757,7 @@ func (m *DeviceMutation) RemovedSubnetsIDs() (ids []int) {
 }
 
 // SubnetsIDs returns the "subnets" edge IDs in the mutation.
-func (m *DeviceMutation) SubnetsIDs() (ids []int) {
+func (m *DeviceMutation) SubnetsIDs() (ids []xid.ID) {
 	for id := range m.subnets {
 		ids = append(ids, id)
 	}
@@ -1283,25 +1290,25 @@ type DomainMutation struct {
 	config
 	op                  Op
 	typ                 string
-	id                  *int
+	id                  *xid.ID
 	name                *string
 	_AD                 *bool
 	owned               *bool
 	cloud               *string
 	clearedFields       map[string]struct{}
-	devices             map[int]struct{}
-	removeddevices      map[int]struct{}
+	devices             map[xid.ID]struct{}
+	removeddevices      map[xid.ID]struct{}
 	cleareddevices      bool
-	users               map[int]struct{}
-	removedusers        map[int]struct{}
+	users               map[xid.ID]struct{}
+	removedusers        map[xid.ID]struct{}
 	clearedusers        bool
-	groups              map[int]struct{}
-	removedgroups       map[int]struct{}
+	groups              map[xid.ID]struct{}
+	removedgroups       map[xid.ID]struct{}
 	clearedgroups       bool
-	childdomains        map[int]struct{}
-	removedchilddomains map[int]struct{}
+	childdomains        map[xid.ID]struct{}
+	removedchilddomains map[xid.ID]struct{}
 	clearedchilddomains bool
-	parentdomain        *int
+	parentdomain        *xid.ID
 	clearedparentdomain bool
 	done                bool
 	oldValue            func(context.Context) (*Domain, error)
@@ -1328,7 +1335,7 @@ func newDomainMutation(c config, op Op, opts ...domainOption) *DomainMutation {
 }
 
 // withDomainID sets the ID field of the mutation.
-func withDomainID(id int) domainOption {
+func withDomainID(id xid.ID) domainOption {
 	return func(m *DomainMutation) {
 		var (
 			err   error
@@ -1378,9 +1385,15 @@ func (m DomainMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Domain entities.
+func (m *DomainMutation) SetID(id xid.ID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *DomainMutation) ID() (id int, exists bool) {
+func (m *DomainMutation) ID() (id xid.ID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -1391,12 +1404,12 @@ func (m *DomainMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *DomainMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *DomainMutation) IDs(ctx context.Context) ([]xid.ID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []xid.ID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -1551,9 +1564,9 @@ func (m *DomainMutation) ResetCloud() {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by ids.
-func (m *DomainMutation) AddDeviceIDs(ids ...int) {
+func (m *DomainMutation) AddDeviceIDs(ids ...xid.ID) {
 	if m.devices == nil {
-		m.devices = make(map[int]struct{})
+		m.devices = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.devices[ids[i]] = struct{}{}
@@ -1571,9 +1584,9 @@ func (m *DomainMutation) DevicesCleared() bool {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to the Device entity by IDs.
-func (m *DomainMutation) RemoveDeviceIDs(ids ...int) {
+func (m *DomainMutation) RemoveDeviceIDs(ids ...xid.ID) {
 	if m.removeddevices == nil {
-		m.removeddevices = make(map[int]struct{})
+		m.removeddevices = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.devices, ids[i])
@@ -1582,7 +1595,7 @@ func (m *DomainMutation) RemoveDeviceIDs(ids ...int) {
 }
 
 // RemovedDevices returns the removed IDs of the "devices" edge to the Device entity.
-func (m *DomainMutation) RemovedDevicesIDs() (ids []int) {
+func (m *DomainMutation) RemovedDevicesIDs() (ids []xid.ID) {
 	for id := range m.removeddevices {
 		ids = append(ids, id)
 	}
@@ -1590,7 +1603,7 @@ func (m *DomainMutation) RemovedDevicesIDs() (ids []int) {
 }
 
 // DevicesIDs returns the "devices" edge IDs in the mutation.
-func (m *DomainMutation) DevicesIDs() (ids []int) {
+func (m *DomainMutation) DevicesIDs() (ids []xid.ID) {
 	for id := range m.devices {
 		ids = append(ids, id)
 	}
@@ -1605,9 +1618,9 @@ func (m *DomainMutation) ResetDevices() {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by ids.
-func (m *DomainMutation) AddUserIDs(ids ...int) {
+func (m *DomainMutation) AddUserIDs(ids ...xid.ID) {
 	if m.users == nil {
-		m.users = make(map[int]struct{})
+		m.users = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.users[ids[i]] = struct{}{}
@@ -1625,9 +1638,9 @@ func (m *DomainMutation) UsersCleared() bool {
 }
 
 // RemoveUserIDs removes the "users" edge to the User entity by IDs.
-func (m *DomainMutation) RemoveUserIDs(ids ...int) {
+func (m *DomainMutation) RemoveUserIDs(ids ...xid.ID) {
 	if m.removedusers == nil {
-		m.removedusers = make(map[int]struct{})
+		m.removedusers = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.users, ids[i])
@@ -1636,7 +1649,7 @@ func (m *DomainMutation) RemoveUserIDs(ids ...int) {
 }
 
 // RemovedUsers returns the removed IDs of the "users" edge to the User entity.
-func (m *DomainMutation) RemovedUsersIDs() (ids []int) {
+func (m *DomainMutation) RemovedUsersIDs() (ids []xid.ID) {
 	for id := range m.removedusers {
 		ids = append(ids, id)
 	}
@@ -1644,7 +1657,7 @@ func (m *DomainMutation) RemovedUsersIDs() (ids []int) {
 }
 
 // UsersIDs returns the "users" edge IDs in the mutation.
-func (m *DomainMutation) UsersIDs() (ids []int) {
+func (m *DomainMutation) UsersIDs() (ids []xid.ID) {
 	for id := range m.users {
 		ids = append(ids, id)
 	}
@@ -1659,9 +1672,9 @@ func (m *DomainMutation) ResetUsers() {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by ids.
-func (m *DomainMutation) AddGroupIDs(ids ...int) {
+func (m *DomainMutation) AddGroupIDs(ids ...xid.ID) {
 	if m.groups == nil {
-		m.groups = make(map[int]struct{})
+		m.groups = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.groups[ids[i]] = struct{}{}
@@ -1679,9 +1692,9 @@ func (m *DomainMutation) GroupsCleared() bool {
 }
 
 // RemoveGroupIDs removes the "groups" edge to the Group entity by IDs.
-func (m *DomainMutation) RemoveGroupIDs(ids ...int) {
+func (m *DomainMutation) RemoveGroupIDs(ids ...xid.ID) {
 	if m.removedgroups == nil {
-		m.removedgroups = make(map[int]struct{})
+		m.removedgroups = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.groups, ids[i])
@@ -1690,7 +1703,7 @@ func (m *DomainMutation) RemoveGroupIDs(ids ...int) {
 }
 
 // RemovedGroups returns the removed IDs of the "groups" edge to the Group entity.
-func (m *DomainMutation) RemovedGroupsIDs() (ids []int) {
+func (m *DomainMutation) RemovedGroupsIDs() (ids []xid.ID) {
 	for id := range m.removedgroups {
 		ids = append(ids, id)
 	}
@@ -1698,7 +1711,7 @@ func (m *DomainMutation) RemovedGroupsIDs() (ids []int) {
 }
 
 // GroupsIDs returns the "groups" edge IDs in the mutation.
-func (m *DomainMutation) GroupsIDs() (ids []int) {
+func (m *DomainMutation) GroupsIDs() (ids []xid.ID) {
 	for id := range m.groups {
 		ids = append(ids, id)
 	}
@@ -1713,9 +1726,9 @@ func (m *DomainMutation) ResetGroups() {
 }
 
 // AddChilddomainIDs adds the "childdomains" edge to the Domain entity by ids.
-func (m *DomainMutation) AddChilddomainIDs(ids ...int) {
+func (m *DomainMutation) AddChilddomainIDs(ids ...xid.ID) {
 	if m.childdomains == nil {
-		m.childdomains = make(map[int]struct{})
+		m.childdomains = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.childdomains[ids[i]] = struct{}{}
@@ -1733,9 +1746,9 @@ func (m *DomainMutation) ChilddomainsCleared() bool {
 }
 
 // RemoveChilddomainIDs removes the "childdomains" edge to the Domain entity by IDs.
-func (m *DomainMutation) RemoveChilddomainIDs(ids ...int) {
+func (m *DomainMutation) RemoveChilddomainIDs(ids ...xid.ID) {
 	if m.removedchilddomains == nil {
-		m.removedchilddomains = make(map[int]struct{})
+		m.removedchilddomains = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.childdomains, ids[i])
@@ -1744,7 +1757,7 @@ func (m *DomainMutation) RemoveChilddomainIDs(ids ...int) {
 }
 
 // RemovedChilddomains returns the removed IDs of the "childdomains" edge to the Domain entity.
-func (m *DomainMutation) RemovedChilddomainsIDs() (ids []int) {
+func (m *DomainMutation) RemovedChilddomainsIDs() (ids []xid.ID) {
 	for id := range m.removedchilddomains {
 		ids = append(ids, id)
 	}
@@ -1752,7 +1765,7 @@ func (m *DomainMutation) RemovedChilddomainsIDs() (ids []int) {
 }
 
 // ChilddomainsIDs returns the "childdomains" edge IDs in the mutation.
-func (m *DomainMutation) ChilddomainsIDs() (ids []int) {
+func (m *DomainMutation) ChilddomainsIDs() (ids []xid.ID) {
 	for id := range m.childdomains {
 		ids = append(ids, id)
 	}
@@ -1767,7 +1780,7 @@ func (m *DomainMutation) ResetChilddomains() {
 }
 
 // SetParentdomainID sets the "parentdomain" edge to the Domain entity by id.
-func (m *DomainMutation) SetParentdomainID(id int) {
+func (m *DomainMutation) SetParentdomainID(id xid.ID) {
 	m.parentdomain = &id
 }
 
@@ -1782,7 +1795,7 @@ func (m *DomainMutation) ParentdomainCleared() bool {
 }
 
 // ParentdomainID returns the "parentdomain" edge ID in the mutation.
-func (m *DomainMutation) ParentdomainID() (id int, exists bool) {
+func (m *DomainMutation) ParentdomainID() (id xid.ID, exists bool) {
 	if m.parentdomain != nil {
 		return *m.parentdomain, true
 	}
@@ -1792,7 +1805,7 @@ func (m *DomainMutation) ParentdomainID() (id int, exists bool) {
 // ParentdomainIDs returns the "parentdomain" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // ParentdomainID instead. It exists only for internal usage by the builders.
-func (m *DomainMutation) ParentdomainIDs() (ids []int) {
+func (m *DomainMutation) ParentdomainIDs() (ids []xid.ID) {
 	if id := m.parentdomain; id != nil {
 		ids = append(ids, *id)
 	}
@@ -2172,18 +2185,18 @@ type GroupMutation struct {
 	config
 	op             Op
 	typ            string
-	id             *int
+	id             *xid.ID
 	name           *string
 	description    *string
 	permissions    *string
 	clearedFields  map[string]struct{}
-	devices        map[int]struct{}
-	removeddevices map[int]struct{}
+	devices        map[xid.ID]struct{}
+	removeddevices map[xid.ID]struct{}
 	cleareddevices bool
-	users          map[int]struct{}
-	removedusers   map[int]struct{}
+	users          map[xid.ID]struct{}
+	removedusers   map[xid.ID]struct{}
 	clearedusers   bool
-	domain         *int
+	domain         *xid.ID
 	cleareddomain  bool
 	done           bool
 	oldValue       func(context.Context) (*Group, error)
@@ -2210,7 +2223,7 @@ func newGroupMutation(c config, op Op, opts ...groupOption) *GroupMutation {
 }
 
 // withGroupID sets the ID field of the mutation.
-func withGroupID(id int) groupOption {
+func withGroupID(id xid.ID) groupOption {
 	return func(m *GroupMutation) {
 		var (
 			err   error
@@ -2260,9 +2273,15 @@ func (m GroupMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Group entities.
+func (m *GroupMutation) SetID(id xid.ID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *GroupMutation) ID() (id int, exists bool) {
+func (m *GroupMutation) ID() (id xid.ID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -2273,12 +2292,12 @@ func (m *GroupMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *GroupMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *GroupMutation) IDs(ctx context.Context) ([]xid.ID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []xid.ID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -2397,9 +2416,9 @@ func (m *GroupMutation) ResetPermissions() {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by ids.
-func (m *GroupMutation) AddDeviceIDs(ids ...int) {
+func (m *GroupMutation) AddDeviceIDs(ids ...xid.ID) {
 	if m.devices == nil {
-		m.devices = make(map[int]struct{})
+		m.devices = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.devices[ids[i]] = struct{}{}
@@ -2417,9 +2436,9 @@ func (m *GroupMutation) DevicesCleared() bool {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to the Device entity by IDs.
-func (m *GroupMutation) RemoveDeviceIDs(ids ...int) {
+func (m *GroupMutation) RemoveDeviceIDs(ids ...xid.ID) {
 	if m.removeddevices == nil {
-		m.removeddevices = make(map[int]struct{})
+		m.removeddevices = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.devices, ids[i])
@@ -2428,7 +2447,7 @@ func (m *GroupMutation) RemoveDeviceIDs(ids ...int) {
 }
 
 // RemovedDevices returns the removed IDs of the "devices" edge to the Device entity.
-func (m *GroupMutation) RemovedDevicesIDs() (ids []int) {
+func (m *GroupMutation) RemovedDevicesIDs() (ids []xid.ID) {
 	for id := range m.removeddevices {
 		ids = append(ids, id)
 	}
@@ -2436,7 +2455,7 @@ func (m *GroupMutation) RemovedDevicesIDs() (ids []int) {
 }
 
 // DevicesIDs returns the "devices" edge IDs in the mutation.
-func (m *GroupMutation) DevicesIDs() (ids []int) {
+func (m *GroupMutation) DevicesIDs() (ids []xid.ID) {
 	for id := range m.devices {
 		ids = append(ids, id)
 	}
@@ -2451,9 +2470,9 @@ func (m *GroupMutation) ResetDevices() {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by ids.
-func (m *GroupMutation) AddUserIDs(ids ...int) {
+func (m *GroupMutation) AddUserIDs(ids ...xid.ID) {
 	if m.users == nil {
-		m.users = make(map[int]struct{})
+		m.users = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.users[ids[i]] = struct{}{}
@@ -2471,9 +2490,9 @@ func (m *GroupMutation) UsersCleared() bool {
 }
 
 // RemoveUserIDs removes the "users" edge to the User entity by IDs.
-func (m *GroupMutation) RemoveUserIDs(ids ...int) {
+func (m *GroupMutation) RemoveUserIDs(ids ...xid.ID) {
 	if m.removedusers == nil {
-		m.removedusers = make(map[int]struct{})
+		m.removedusers = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.users, ids[i])
@@ -2482,7 +2501,7 @@ func (m *GroupMutation) RemoveUserIDs(ids ...int) {
 }
 
 // RemovedUsers returns the removed IDs of the "users" edge to the User entity.
-func (m *GroupMutation) RemovedUsersIDs() (ids []int) {
+func (m *GroupMutation) RemovedUsersIDs() (ids []xid.ID) {
 	for id := range m.removedusers {
 		ids = append(ids, id)
 	}
@@ -2490,7 +2509,7 @@ func (m *GroupMutation) RemovedUsersIDs() (ids []int) {
 }
 
 // UsersIDs returns the "users" edge IDs in the mutation.
-func (m *GroupMutation) UsersIDs() (ids []int) {
+func (m *GroupMutation) UsersIDs() (ids []xid.ID) {
 	for id := range m.users {
 		ids = append(ids, id)
 	}
@@ -2505,7 +2524,7 @@ func (m *GroupMutation) ResetUsers() {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by id.
-func (m *GroupMutation) SetDomainID(id int) {
+func (m *GroupMutation) SetDomainID(id xid.ID) {
 	m.domain = &id
 }
 
@@ -2520,7 +2539,7 @@ func (m *GroupMutation) DomainCleared() bool {
 }
 
 // DomainID returns the "domain" edge ID in the mutation.
-func (m *GroupMutation) DomainID() (id int, exists bool) {
+func (m *GroupMutation) DomainID() (id xid.ID, exists bool) {
 	if m.domain != nil {
 		return *m.domain, true
 	}
@@ -2530,7 +2549,7 @@ func (m *GroupMutation) DomainID() (id int, exists bool) {
 // DomainIDs returns the "domain" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // DomainID instead. It exists only for internal usage by the builders.
-func (m *GroupMutation) DomainIDs() (ids []int) {
+func (m *GroupMutation) DomainIDs() (ids []xid.ID) {
 	if id := m.domain; id != nil {
 		ids = append(ids, *id)
 	}
@@ -2841,15 +2860,15 @@ type LootMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
+	id            *xid.ID
 	_type         *loot.Type
 	location      *string
 	data          *[]byte
 	collectedon   *time.Time
 	clearedFields map[string]struct{}
-	rodent        *int
+	rodent        *xid.ID
 	clearedrodent bool
-	task          *int
+	task          *xid.ID
 	clearedtask   bool
 	done          bool
 	oldValue      func(context.Context) (*Loot, error)
@@ -2876,7 +2895,7 @@ func newLootMutation(c config, op Op, opts ...lootOption) *LootMutation {
 }
 
 // withLootID sets the ID field of the mutation.
-func withLootID(id int) lootOption {
+func withLootID(id xid.ID) lootOption {
 	return func(m *LootMutation) {
 		var (
 			err   error
@@ -2926,9 +2945,15 @@ func (m LootMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Loot entities.
+func (m *LootMutation) SetID(id xid.ID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *LootMutation) ID() (id int, exists bool) {
+func (m *LootMutation) ID() (id xid.ID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -2939,12 +2964,12 @@ func (m *LootMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *LootMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *LootMutation) IDs(ctx context.Context) ([]xid.ID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []xid.ID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -3099,7 +3124,7 @@ func (m *LootMutation) ResetCollectedon() {
 }
 
 // SetRodentID sets the "rodent" edge to the Rodent entity by id.
-func (m *LootMutation) SetRodentID(id int) {
+func (m *LootMutation) SetRodentID(id xid.ID) {
 	m.rodent = &id
 }
 
@@ -3114,7 +3139,7 @@ func (m *LootMutation) RodentCleared() bool {
 }
 
 // RodentID returns the "rodent" edge ID in the mutation.
-func (m *LootMutation) RodentID() (id int, exists bool) {
+func (m *LootMutation) RodentID() (id xid.ID, exists bool) {
 	if m.rodent != nil {
 		return *m.rodent, true
 	}
@@ -3124,7 +3149,7 @@ func (m *LootMutation) RodentID() (id int, exists bool) {
 // RodentIDs returns the "rodent" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // RodentID instead. It exists only for internal usage by the builders.
-func (m *LootMutation) RodentIDs() (ids []int) {
+func (m *LootMutation) RodentIDs() (ids []xid.ID) {
 	if id := m.rodent; id != nil {
 		ids = append(ids, *id)
 	}
@@ -3138,7 +3163,7 @@ func (m *LootMutation) ResetRodent() {
 }
 
 // SetTaskID sets the "task" edge to the Task entity by id.
-func (m *LootMutation) SetTaskID(id int) {
+func (m *LootMutation) SetTaskID(id xid.ID) {
 	m.task = &id
 }
 
@@ -3153,7 +3178,7 @@ func (m *LootMutation) TaskCleared() bool {
 }
 
 // TaskID returns the "task" edge ID in the mutation.
-func (m *LootMutation) TaskID() (id int, exists bool) {
+func (m *LootMutation) TaskID() (id xid.ID, exists bool) {
 	if m.task != nil {
 		return *m.task, true
 	}
@@ -3163,7 +3188,7 @@ func (m *LootMutation) TaskID() (id int, exists bool) {
 // TaskIDs returns the "task" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // TaskID instead. It exists only for internal usage by the builders.
-func (m *LootMutation) TaskIDs() (ids []int) {
+func (m *LootMutation) TaskIDs() (ids []xid.ID) {
 	if id := m.task; id != nil {
 		ids = append(ids, *id)
 	}
@@ -3455,16 +3480,16 @@ type OperatorMutation struct {
 	config
 	op              Op
 	typ             string
-	id              *int
+	id              *xid.ID
 	username        *string
 	privkey         *[]byte
 	cert            *[]byte
 	clearedFields   map[string]struct{}
-	projects        map[int]struct{}
-	removedprojects map[int]struct{}
+	projects        map[xid.ID]struct{}
+	removedprojects map[xid.ID]struct{}
 	clearedprojects bool
-	tasks           map[int]struct{}
-	removedtasks    map[int]struct{}
+	tasks           map[xid.ID]struct{}
+	removedtasks    map[xid.ID]struct{}
 	clearedtasks    bool
 	done            bool
 	oldValue        func(context.Context) (*Operator, error)
@@ -3491,7 +3516,7 @@ func newOperatorMutation(c config, op Op, opts ...operatorOption) *OperatorMutat
 }
 
 // withOperatorID sets the ID field of the mutation.
-func withOperatorID(id int) operatorOption {
+func withOperatorID(id xid.ID) operatorOption {
 	return func(m *OperatorMutation) {
 		var (
 			err   error
@@ -3541,9 +3566,15 @@ func (m OperatorMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Operator entities.
+func (m *OperatorMutation) SetID(id xid.ID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *OperatorMutation) ID() (id int, exists bool) {
+func (m *OperatorMutation) ID() (id xid.ID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -3554,12 +3585,12 @@ func (m *OperatorMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *OperatorMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *OperatorMutation) IDs(ctx context.Context) ([]xid.ID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []xid.ID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -3704,9 +3735,9 @@ func (m *OperatorMutation) ResetCert() {
 }
 
 // AddProjectIDs adds the "projects" edge to the Project entity by ids.
-func (m *OperatorMutation) AddProjectIDs(ids ...int) {
+func (m *OperatorMutation) AddProjectIDs(ids ...xid.ID) {
 	if m.projects == nil {
-		m.projects = make(map[int]struct{})
+		m.projects = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.projects[ids[i]] = struct{}{}
@@ -3724,9 +3755,9 @@ func (m *OperatorMutation) ProjectsCleared() bool {
 }
 
 // RemoveProjectIDs removes the "projects" edge to the Project entity by IDs.
-func (m *OperatorMutation) RemoveProjectIDs(ids ...int) {
+func (m *OperatorMutation) RemoveProjectIDs(ids ...xid.ID) {
 	if m.removedprojects == nil {
-		m.removedprojects = make(map[int]struct{})
+		m.removedprojects = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.projects, ids[i])
@@ -3735,7 +3766,7 @@ func (m *OperatorMutation) RemoveProjectIDs(ids ...int) {
 }
 
 // RemovedProjects returns the removed IDs of the "projects" edge to the Project entity.
-func (m *OperatorMutation) RemovedProjectsIDs() (ids []int) {
+func (m *OperatorMutation) RemovedProjectsIDs() (ids []xid.ID) {
 	for id := range m.removedprojects {
 		ids = append(ids, id)
 	}
@@ -3743,7 +3774,7 @@ func (m *OperatorMutation) RemovedProjectsIDs() (ids []int) {
 }
 
 // ProjectsIDs returns the "projects" edge IDs in the mutation.
-func (m *OperatorMutation) ProjectsIDs() (ids []int) {
+func (m *OperatorMutation) ProjectsIDs() (ids []xid.ID) {
 	for id := range m.projects {
 		ids = append(ids, id)
 	}
@@ -3758,9 +3789,9 @@ func (m *OperatorMutation) ResetProjects() {
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by ids.
-func (m *OperatorMutation) AddTaskIDs(ids ...int) {
+func (m *OperatorMutation) AddTaskIDs(ids ...xid.ID) {
 	if m.tasks == nil {
-		m.tasks = make(map[int]struct{})
+		m.tasks = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.tasks[ids[i]] = struct{}{}
@@ -3778,9 +3809,9 @@ func (m *OperatorMutation) TasksCleared() bool {
 }
 
 // RemoveTaskIDs removes the "tasks" edge to the Task entity by IDs.
-func (m *OperatorMutation) RemoveTaskIDs(ids ...int) {
+func (m *OperatorMutation) RemoveTaskIDs(ids ...xid.ID) {
 	if m.removedtasks == nil {
-		m.removedtasks = make(map[int]struct{})
+		m.removedtasks = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.tasks, ids[i])
@@ -3789,7 +3820,7 @@ func (m *OperatorMutation) RemoveTaskIDs(ids ...int) {
 }
 
 // RemovedTasks returns the removed IDs of the "tasks" edge to the Task entity.
-func (m *OperatorMutation) RemovedTasksIDs() (ids []int) {
+func (m *OperatorMutation) RemovedTasksIDs() (ids []xid.ID) {
 	for id := range m.removedtasks {
 		ids = append(ids, id)
 	}
@@ -3797,7 +3828,7 @@ func (m *OperatorMutation) RemovedTasksIDs() (ids []int) {
 }
 
 // TasksIDs returns the "tasks" edge IDs in the mutation.
-func (m *OperatorMutation) TasksIDs() (ids []int) {
+func (m *OperatorMutation) TasksIDs() (ids []xid.ID) {
 	for id := range m.tasks {
 		ids = append(ids, id)
 	}
@@ -4106,20 +4137,20 @@ type ProjectMutation struct {
 	config
 	op               Op
 	typ              string
-	id               *int
+	id               *xid.ID
 	name             *string
 	objective        *string
 	end_date         *time.Time
 	start_date       *time.Time
 	clearedFields    map[string]struct{}
-	operators        map[int]struct{}
-	removedoperators map[int]struct{}
+	operators        map[xid.ID]struct{}
+	removedoperators map[xid.ID]struct{}
 	clearedoperators bool
-	rodents          map[int]struct{}
-	removedrodents   map[int]struct{}
+	rodents          map[xid.ID]struct{}
+	removedrodents   map[xid.ID]struct{}
 	clearedrodents   bool
-	routers          map[int]struct{}
-	removedrouters   map[int]struct{}
+	routers          map[xid.ID]struct{}
+	removedrouters   map[xid.ID]struct{}
 	clearedrouters   bool
 	done             bool
 	oldValue         func(context.Context) (*Project, error)
@@ -4146,7 +4177,7 @@ func newProjectMutation(c config, op Op, opts ...projectOption) *ProjectMutation
 }
 
 // withProjectID sets the ID field of the mutation.
-func withProjectID(id int) projectOption {
+func withProjectID(id xid.ID) projectOption {
 	return func(m *ProjectMutation) {
 		var (
 			err   error
@@ -4196,9 +4227,15 @@ func (m ProjectMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Project entities.
+func (m *ProjectMutation) SetID(id xid.ID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *ProjectMutation) ID() (id int, exists bool) {
+func (m *ProjectMutation) ID() (id xid.ID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -4209,12 +4246,12 @@ func (m *ProjectMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *ProjectMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *ProjectMutation) IDs(ctx context.Context) ([]xid.ID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []xid.ID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -4408,9 +4445,9 @@ func (m *ProjectMutation) ResetStartDate() {
 }
 
 // AddOperatorIDs adds the "operators" edge to the Operator entity by ids.
-func (m *ProjectMutation) AddOperatorIDs(ids ...int) {
+func (m *ProjectMutation) AddOperatorIDs(ids ...xid.ID) {
 	if m.operators == nil {
-		m.operators = make(map[int]struct{})
+		m.operators = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.operators[ids[i]] = struct{}{}
@@ -4428,9 +4465,9 @@ func (m *ProjectMutation) OperatorsCleared() bool {
 }
 
 // RemoveOperatorIDs removes the "operators" edge to the Operator entity by IDs.
-func (m *ProjectMutation) RemoveOperatorIDs(ids ...int) {
+func (m *ProjectMutation) RemoveOperatorIDs(ids ...xid.ID) {
 	if m.removedoperators == nil {
-		m.removedoperators = make(map[int]struct{})
+		m.removedoperators = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.operators, ids[i])
@@ -4439,7 +4476,7 @@ func (m *ProjectMutation) RemoveOperatorIDs(ids ...int) {
 }
 
 // RemovedOperators returns the removed IDs of the "operators" edge to the Operator entity.
-func (m *ProjectMutation) RemovedOperatorsIDs() (ids []int) {
+func (m *ProjectMutation) RemovedOperatorsIDs() (ids []xid.ID) {
 	for id := range m.removedoperators {
 		ids = append(ids, id)
 	}
@@ -4447,7 +4484,7 @@ func (m *ProjectMutation) RemovedOperatorsIDs() (ids []int) {
 }
 
 // OperatorsIDs returns the "operators" edge IDs in the mutation.
-func (m *ProjectMutation) OperatorsIDs() (ids []int) {
+func (m *ProjectMutation) OperatorsIDs() (ids []xid.ID) {
 	for id := range m.operators {
 		ids = append(ids, id)
 	}
@@ -4462,9 +4499,9 @@ func (m *ProjectMutation) ResetOperators() {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by ids.
-func (m *ProjectMutation) AddRodentIDs(ids ...int) {
+func (m *ProjectMutation) AddRodentIDs(ids ...xid.ID) {
 	if m.rodents == nil {
-		m.rodents = make(map[int]struct{})
+		m.rodents = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.rodents[ids[i]] = struct{}{}
@@ -4482,9 +4519,9 @@ func (m *ProjectMutation) RodentsCleared() bool {
 }
 
 // RemoveRodentIDs removes the "rodents" edge to the Rodent entity by IDs.
-func (m *ProjectMutation) RemoveRodentIDs(ids ...int) {
+func (m *ProjectMutation) RemoveRodentIDs(ids ...xid.ID) {
 	if m.removedrodents == nil {
-		m.removedrodents = make(map[int]struct{})
+		m.removedrodents = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.rodents, ids[i])
@@ -4493,7 +4530,7 @@ func (m *ProjectMutation) RemoveRodentIDs(ids ...int) {
 }
 
 // RemovedRodents returns the removed IDs of the "rodents" edge to the Rodent entity.
-func (m *ProjectMutation) RemovedRodentsIDs() (ids []int) {
+func (m *ProjectMutation) RemovedRodentsIDs() (ids []xid.ID) {
 	for id := range m.removedrodents {
 		ids = append(ids, id)
 	}
@@ -4501,7 +4538,7 @@ func (m *ProjectMutation) RemovedRodentsIDs() (ids []int) {
 }
 
 // RodentsIDs returns the "rodents" edge IDs in the mutation.
-func (m *ProjectMutation) RodentsIDs() (ids []int) {
+func (m *ProjectMutation) RodentsIDs() (ids []xid.ID) {
 	for id := range m.rodents {
 		ids = append(ids, id)
 	}
@@ -4516,9 +4553,9 @@ func (m *ProjectMutation) ResetRodents() {
 }
 
 // AddRouterIDs adds the "routers" edge to the Router entity by ids.
-func (m *ProjectMutation) AddRouterIDs(ids ...int) {
+func (m *ProjectMutation) AddRouterIDs(ids ...xid.ID) {
 	if m.routers == nil {
-		m.routers = make(map[int]struct{})
+		m.routers = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.routers[ids[i]] = struct{}{}
@@ -4536,9 +4573,9 @@ func (m *ProjectMutation) RoutersCleared() bool {
 }
 
 // RemoveRouterIDs removes the "routers" edge to the Router entity by IDs.
-func (m *ProjectMutation) RemoveRouterIDs(ids ...int) {
+func (m *ProjectMutation) RemoveRouterIDs(ids ...xid.ID) {
 	if m.removedrouters == nil {
-		m.removedrouters = make(map[int]struct{})
+		m.removedrouters = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.routers, ids[i])
@@ -4547,7 +4584,7 @@ func (m *ProjectMutation) RemoveRouterIDs(ids ...int) {
 }
 
 // RemovedRouters returns the removed IDs of the "routers" edge to the Router entity.
-func (m *ProjectMutation) RemovedRoutersIDs() (ids []int) {
+func (m *ProjectMutation) RemovedRoutersIDs() (ids []xid.ID) {
 	for id := range m.removedrouters {
 		ids = append(ids, id)
 	}
@@ -4555,7 +4592,7 @@ func (m *ProjectMutation) RemovedRoutersIDs() (ids []int) {
 }
 
 // RoutersIDs returns the "routers" edge IDs in the mutation.
-func (m *ProjectMutation) RoutersIDs() (ids []int) {
+func (m *ProjectMutation) RoutersIDs() (ids []xid.ID) {
 	for id := range m.routers {
 		ids = append(ids, id)
 	}
@@ -4913,7 +4950,7 @@ type RodentMutation struct {
 	config
 	op              Op
 	typ             string
-	id              *int
+	id              *xid.ID
 	name            *string
 	_type           *string
 	key             *string
@@ -4926,20 +4963,20 @@ type RodentMutation struct {
 	joined          *time.Time
 	lastseen        *time.Time
 	clearedFields   map[string]struct{}
-	device          *int
+	device          *xid.ID
 	cleareddevice   bool
-	user            *int
+	user            *xid.ID
 	cleareduser     bool
-	project         *int
+	project         *xid.ID
 	clearedproject  bool
-	router          map[int]struct{}
-	removedrouter   map[int]struct{}
+	router          map[xid.ID]struct{}
+	removedrouter   map[xid.ID]struct{}
 	clearedrouter   bool
-	tasks           map[int]struct{}
-	removedtasks    map[int]struct{}
+	tasks           map[xid.ID]struct{}
+	removedtasks    map[xid.ID]struct{}
 	clearedtasks    bool
-	loot            map[int]struct{}
-	removedloot     map[int]struct{}
+	loot            map[xid.ID]struct{}
+	removedloot     map[xid.ID]struct{}
 	clearedloot     bool
 	done            bool
 	oldValue        func(context.Context) (*Rodent, error)
@@ -4966,7 +5003,7 @@ func newRodentMutation(c config, op Op, opts ...rodentOption) *RodentMutation {
 }
 
 // withRodentID sets the ID field of the mutation.
-func withRodentID(id int) rodentOption {
+func withRodentID(id xid.ID) rodentOption {
 	return func(m *RodentMutation) {
 		var (
 			err   error
@@ -5016,9 +5053,15 @@ func (m RodentMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Rodent entities.
+func (m *RodentMutation) SetID(id xid.ID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *RodentMutation) ID() (id int, exists bool) {
+func (m *RodentMutation) ID() (id xid.ID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -5029,12 +5072,12 @@ func (m *RodentMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *RodentMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *RodentMutation) IDs(ctx context.Context) ([]xid.ID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []xid.ID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -5493,7 +5536,7 @@ func (m *RodentMutation) ResetLastseen() {
 }
 
 // SetDeviceID sets the "device" edge to the Device entity by id.
-func (m *RodentMutation) SetDeviceID(id int) {
+func (m *RodentMutation) SetDeviceID(id xid.ID) {
 	m.device = &id
 }
 
@@ -5508,7 +5551,7 @@ func (m *RodentMutation) DeviceCleared() bool {
 }
 
 // DeviceID returns the "device" edge ID in the mutation.
-func (m *RodentMutation) DeviceID() (id int, exists bool) {
+func (m *RodentMutation) DeviceID() (id xid.ID, exists bool) {
 	if m.device != nil {
 		return *m.device, true
 	}
@@ -5518,7 +5561,7 @@ func (m *RodentMutation) DeviceID() (id int, exists bool) {
 // DeviceIDs returns the "device" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // DeviceID instead. It exists only for internal usage by the builders.
-func (m *RodentMutation) DeviceIDs() (ids []int) {
+func (m *RodentMutation) DeviceIDs() (ids []xid.ID) {
 	if id := m.device; id != nil {
 		ids = append(ids, *id)
 	}
@@ -5532,7 +5575,7 @@ func (m *RodentMutation) ResetDevice() {
 }
 
 // SetUserID sets the "user" edge to the User entity by id.
-func (m *RodentMutation) SetUserID(id int) {
+func (m *RodentMutation) SetUserID(id xid.ID) {
 	m.user = &id
 }
 
@@ -5547,7 +5590,7 @@ func (m *RodentMutation) UserCleared() bool {
 }
 
 // UserID returns the "user" edge ID in the mutation.
-func (m *RodentMutation) UserID() (id int, exists bool) {
+func (m *RodentMutation) UserID() (id xid.ID, exists bool) {
 	if m.user != nil {
 		return *m.user, true
 	}
@@ -5557,7 +5600,7 @@ func (m *RodentMutation) UserID() (id int, exists bool) {
 // UserIDs returns the "user" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // UserID instead. It exists only for internal usage by the builders.
-func (m *RodentMutation) UserIDs() (ids []int) {
+func (m *RodentMutation) UserIDs() (ids []xid.ID) {
 	if id := m.user; id != nil {
 		ids = append(ids, *id)
 	}
@@ -5571,7 +5614,7 @@ func (m *RodentMutation) ResetUser() {
 }
 
 // SetProjectID sets the "project" edge to the Project entity by id.
-func (m *RodentMutation) SetProjectID(id int) {
+func (m *RodentMutation) SetProjectID(id xid.ID) {
 	m.project = &id
 }
 
@@ -5586,7 +5629,7 @@ func (m *RodentMutation) ProjectCleared() bool {
 }
 
 // ProjectID returns the "project" edge ID in the mutation.
-func (m *RodentMutation) ProjectID() (id int, exists bool) {
+func (m *RodentMutation) ProjectID() (id xid.ID, exists bool) {
 	if m.project != nil {
 		return *m.project, true
 	}
@@ -5596,7 +5639,7 @@ func (m *RodentMutation) ProjectID() (id int, exists bool) {
 // ProjectIDs returns the "project" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // ProjectID instead. It exists only for internal usage by the builders.
-func (m *RodentMutation) ProjectIDs() (ids []int) {
+func (m *RodentMutation) ProjectIDs() (ids []xid.ID) {
 	if id := m.project; id != nil {
 		ids = append(ids, *id)
 	}
@@ -5610,9 +5653,9 @@ func (m *RodentMutation) ResetProject() {
 }
 
 // AddRouterIDs adds the "router" edge to the Router entity by ids.
-func (m *RodentMutation) AddRouterIDs(ids ...int) {
+func (m *RodentMutation) AddRouterIDs(ids ...xid.ID) {
 	if m.router == nil {
-		m.router = make(map[int]struct{})
+		m.router = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.router[ids[i]] = struct{}{}
@@ -5630,9 +5673,9 @@ func (m *RodentMutation) RouterCleared() bool {
 }
 
 // RemoveRouterIDs removes the "router" edge to the Router entity by IDs.
-func (m *RodentMutation) RemoveRouterIDs(ids ...int) {
+func (m *RodentMutation) RemoveRouterIDs(ids ...xid.ID) {
 	if m.removedrouter == nil {
-		m.removedrouter = make(map[int]struct{})
+		m.removedrouter = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.router, ids[i])
@@ -5641,7 +5684,7 @@ func (m *RodentMutation) RemoveRouterIDs(ids ...int) {
 }
 
 // RemovedRouter returns the removed IDs of the "router" edge to the Router entity.
-func (m *RodentMutation) RemovedRouterIDs() (ids []int) {
+func (m *RodentMutation) RemovedRouterIDs() (ids []xid.ID) {
 	for id := range m.removedrouter {
 		ids = append(ids, id)
 	}
@@ -5649,7 +5692,7 @@ func (m *RodentMutation) RemovedRouterIDs() (ids []int) {
 }
 
 // RouterIDs returns the "router" edge IDs in the mutation.
-func (m *RodentMutation) RouterIDs() (ids []int) {
+func (m *RodentMutation) RouterIDs() (ids []xid.ID) {
 	for id := range m.router {
 		ids = append(ids, id)
 	}
@@ -5664,9 +5707,9 @@ func (m *RodentMutation) ResetRouter() {
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by ids.
-func (m *RodentMutation) AddTaskIDs(ids ...int) {
+func (m *RodentMutation) AddTaskIDs(ids ...xid.ID) {
 	if m.tasks == nil {
-		m.tasks = make(map[int]struct{})
+		m.tasks = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.tasks[ids[i]] = struct{}{}
@@ -5684,9 +5727,9 @@ func (m *RodentMutation) TasksCleared() bool {
 }
 
 // RemoveTaskIDs removes the "tasks" edge to the Task entity by IDs.
-func (m *RodentMutation) RemoveTaskIDs(ids ...int) {
+func (m *RodentMutation) RemoveTaskIDs(ids ...xid.ID) {
 	if m.removedtasks == nil {
-		m.removedtasks = make(map[int]struct{})
+		m.removedtasks = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.tasks, ids[i])
@@ -5695,7 +5738,7 @@ func (m *RodentMutation) RemoveTaskIDs(ids ...int) {
 }
 
 // RemovedTasks returns the removed IDs of the "tasks" edge to the Task entity.
-func (m *RodentMutation) RemovedTasksIDs() (ids []int) {
+func (m *RodentMutation) RemovedTasksIDs() (ids []xid.ID) {
 	for id := range m.removedtasks {
 		ids = append(ids, id)
 	}
@@ -5703,7 +5746,7 @@ func (m *RodentMutation) RemovedTasksIDs() (ids []int) {
 }
 
 // TasksIDs returns the "tasks" edge IDs in the mutation.
-func (m *RodentMutation) TasksIDs() (ids []int) {
+func (m *RodentMutation) TasksIDs() (ids []xid.ID) {
 	for id := range m.tasks {
 		ids = append(ids, id)
 	}
@@ -5718,9 +5761,9 @@ func (m *RodentMutation) ResetTasks() {
 }
 
 // AddLootIDs adds the "loot" edge to the Loot entity by ids.
-func (m *RodentMutation) AddLootIDs(ids ...int) {
+func (m *RodentMutation) AddLootIDs(ids ...xid.ID) {
 	if m.loot == nil {
-		m.loot = make(map[int]struct{})
+		m.loot = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.loot[ids[i]] = struct{}{}
@@ -5738,9 +5781,9 @@ func (m *RodentMutation) LootCleared() bool {
 }
 
 // RemoveLootIDs removes the "loot" edge to the Loot entity by IDs.
-func (m *RodentMutation) RemoveLootIDs(ids ...int) {
+func (m *RodentMutation) RemoveLootIDs(ids ...xid.ID) {
 	if m.removedloot == nil {
-		m.removedloot = make(map[int]struct{})
+		m.removedloot = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.loot, ids[i])
@@ -5749,7 +5792,7 @@ func (m *RodentMutation) RemoveLootIDs(ids ...int) {
 }
 
 // RemovedLoot returns the removed IDs of the "loot" edge to the Loot entity.
-func (m *RodentMutation) RemovedLootIDs() (ids []int) {
+func (m *RodentMutation) RemovedLootIDs() (ids []xid.ID) {
 	for id := range m.removedloot {
 		ids = append(ids, id)
 	}
@@ -5757,7 +5800,7 @@ func (m *RodentMutation) RemovedLootIDs() (ids []int) {
 }
 
 // LootIDs returns the "loot" edge IDs in the mutation.
-func (m *RodentMutation) LootIDs() (ids []int) {
+func (m *RodentMutation) LootIDs() (ids []xid.ID) {
 	for id := range m.loot {
 		ids = append(ids, id)
 	}
@@ -6294,7 +6337,7 @@ type RouterMutation struct {
 	config
 	op               Op
 	typ              string
-	id               *int
+	id               *xid.ID
 	rname            *string
 	privkey          *[]byte
 	cert             *[]byte
@@ -6303,10 +6346,10 @@ type RouterMutation struct {
 	interfaces       *[]string
 	appendinterfaces []string
 	clearedFields    map[string]struct{}
-	rodents          map[int]struct{}
-	removedrodents   map[int]struct{}
+	rodents          map[xid.ID]struct{}
+	removedrodents   map[xid.ID]struct{}
 	clearedrodents   bool
-	project          *int
+	project          *xid.ID
 	clearedproject   bool
 	done             bool
 	oldValue         func(context.Context) (*Router, error)
@@ -6333,7 +6376,7 @@ func newRouterMutation(c config, op Op, opts ...routerOption) *RouterMutation {
 }
 
 // withRouterID sets the ID field of the mutation.
-func withRouterID(id int) routerOption {
+func withRouterID(id xid.ID) routerOption {
 	return func(m *RouterMutation) {
 		var (
 			err   error
@@ -6383,9 +6426,15 @@ func (m RouterMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Router entities.
+func (m *RouterMutation) SetID(id xid.ID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *RouterMutation) ID() (id int, exists bool) {
+func (m *RouterMutation) ID() (id xid.ID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -6396,12 +6445,12 @@ func (m *RouterMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *RouterMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *RouterMutation) IDs(ctx context.Context) ([]xid.ID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []xid.ID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -6650,9 +6699,9 @@ func (m *RouterMutation) ResetInterfaces() {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by ids.
-func (m *RouterMutation) AddRodentIDs(ids ...int) {
+func (m *RouterMutation) AddRodentIDs(ids ...xid.ID) {
 	if m.rodents == nil {
-		m.rodents = make(map[int]struct{})
+		m.rodents = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.rodents[ids[i]] = struct{}{}
@@ -6670,9 +6719,9 @@ func (m *RouterMutation) RodentsCleared() bool {
 }
 
 // RemoveRodentIDs removes the "rodents" edge to the Rodent entity by IDs.
-func (m *RouterMutation) RemoveRodentIDs(ids ...int) {
+func (m *RouterMutation) RemoveRodentIDs(ids ...xid.ID) {
 	if m.removedrodents == nil {
-		m.removedrodents = make(map[int]struct{})
+		m.removedrodents = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.rodents, ids[i])
@@ -6681,7 +6730,7 @@ func (m *RouterMutation) RemoveRodentIDs(ids ...int) {
 }
 
 // RemovedRodents returns the removed IDs of the "rodents" edge to the Rodent entity.
-func (m *RouterMutation) RemovedRodentsIDs() (ids []int) {
+func (m *RouterMutation) RemovedRodentsIDs() (ids []xid.ID) {
 	for id := range m.removedrodents {
 		ids = append(ids, id)
 	}
@@ -6689,7 +6738,7 @@ func (m *RouterMutation) RemovedRodentsIDs() (ids []int) {
 }
 
 // RodentsIDs returns the "rodents" edge IDs in the mutation.
-func (m *RouterMutation) RodentsIDs() (ids []int) {
+func (m *RouterMutation) RodentsIDs() (ids []xid.ID) {
 	for id := range m.rodents {
 		ids = append(ids, id)
 	}
@@ -6704,7 +6753,7 @@ func (m *RouterMutation) ResetRodents() {
 }
 
 // SetProjectID sets the "project" edge to the Project entity by id.
-func (m *RouterMutation) SetProjectID(id int) {
+func (m *RouterMutation) SetProjectID(id xid.ID) {
 	m.project = &id
 }
 
@@ -6719,7 +6768,7 @@ func (m *RouterMutation) ProjectCleared() bool {
 }
 
 // ProjectID returns the "project" edge ID in the mutation.
-func (m *RouterMutation) ProjectID() (id int, exists bool) {
+func (m *RouterMutation) ProjectID() (id xid.ID, exists bool) {
 	if m.project != nil {
 		return *m.project, true
 	}
@@ -6729,7 +6778,7 @@ func (m *RouterMutation) ProjectID() (id int, exists bool) {
 // ProjectIDs returns the "project" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // ProjectID instead. It exists only for internal usage by the builders.
-func (m *RouterMutation) ProjectIDs() (ids []int) {
+func (m *RouterMutation) ProjectIDs() (ids []xid.ID) {
 	if id := m.project; id != nil {
 		ids = append(ids, *id)
 	}
@@ -7067,11 +7116,11 @@ type ServicesMutation struct {
 	service_name   *string
 	port           *string
 	clearedFields  map[string]struct{}
-	devices        map[int]struct{}
-	removeddevices map[int]struct{}
+	devices        map[xid.ID]struct{}
+	removeddevices map[xid.ID]struct{}
 	cleareddevices bool
-	subnet         map[int]struct{}
-	removedsubnet  map[int]struct{}
+	subnet         map[xid.ID]struct{}
+	removedsubnet  map[xid.ID]struct{}
 	clearedsubnet  bool
 	done           bool
 	oldValue       func(context.Context) (*Services, error)
@@ -7249,9 +7298,9 @@ func (m *ServicesMutation) ResetPort() {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by ids.
-func (m *ServicesMutation) AddDeviceIDs(ids ...int) {
+func (m *ServicesMutation) AddDeviceIDs(ids ...xid.ID) {
 	if m.devices == nil {
-		m.devices = make(map[int]struct{})
+		m.devices = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.devices[ids[i]] = struct{}{}
@@ -7269,9 +7318,9 @@ func (m *ServicesMutation) DevicesCleared() bool {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to the Device entity by IDs.
-func (m *ServicesMutation) RemoveDeviceIDs(ids ...int) {
+func (m *ServicesMutation) RemoveDeviceIDs(ids ...xid.ID) {
 	if m.removeddevices == nil {
-		m.removeddevices = make(map[int]struct{})
+		m.removeddevices = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.devices, ids[i])
@@ -7280,7 +7329,7 @@ func (m *ServicesMutation) RemoveDeviceIDs(ids ...int) {
 }
 
 // RemovedDevices returns the removed IDs of the "devices" edge to the Device entity.
-func (m *ServicesMutation) RemovedDevicesIDs() (ids []int) {
+func (m *ServicesMutation) RemovedDevicesIDs() (ids []xid.ID) {
 	for id := range m.removeddevices {
 		ids = append(ids, id)
 	}
@@ -7288,7 +7337,7 @@ func (m *ServicesMutation) RemovedDevicesIDs() (ids []int) {
 }
 
 // DevicesIDs returns the "devices" edge IDs in the mutation.
-func (m *ServicesMutation) DevicesIDs() (ids []int) {
+func (m *ServicesMutation) DevicesIDs() (ids []xid.ID) {
 	for id := range m.devices {
 		ids = append(ids, id)
 	}
@@ -7303,9 +7352,9 @@ func (m *ServicesMutation) ResetDevices() {
 }
 
 // AddSubnetIDs adds the "subnet" edge to the Subnet entity by ids.
-func (m *ServicesMutation) AddSubnetIDs(ids ...int) {
+func (m *ServicesMutation) AddSubnetIDs(ids ...xid.ID) {
 	if m.subnet == nil {
-		m.subnet = make(map[int]struct{})
+		m.subnet = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.subnet[ids[i]] = struct{}{}
@@ -7323,9 +7372,9 @@ func (m *ServicesMutation) SubnetCleared() bool {
 }
 
 // RemoveSubnetIDs removes the "subnet" edge to the Subnet entity by IDs.
-func (m *ServicesMutation) RemoveSubnetIDs(ids ...int) {
+func (m *ServicesMutation) RemoveSubnetIDs(ids ...xid.ID) {
 	if m.removedsubnet == nil {
-		m.removedsubnet = make(map[int]struct{})
+		m.removedsubnet = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.subnet, ids[i])
@@ -7334,7 +7383,7 @@ func (m *ServicesMutation) RemoveSubnetIDs(ids ...int) {
 }
 
 // RemovedSubnet returns the removed IDs of the "subnet" edge to the Subnet entity.
-func (m *ServicesMutation) RemovedSubnetIDs() (ids []int) {
+func (m *ServicesMutation) RemovedSubnetIDs() (ids []xid.ID) {
 	for id := range m.removedsubnet {
 		ids = append(ids, id)
 	}
@@ -7342,7 +7391,7 @@ func (m *ServicesMutation) RemovedSubnetIDs() (ids []int) {
 }
 
 // SubnetIDs returns the "subnet" edge IDs in the mutation.
-func (m *ServicesMutation) SubnetIDs() (ids []int) {
+func (m *ServicesMutation) SubnetIDs() (ids []xid.ID) {
 	for id := range m.subnet {
 		ids = append(ids, id)
 	}
@@ -7619,7 +7668,7 @@ type SubnetMutation struct {
 	config
 	op                      Op
 	typ                     string
-	id                      *int
+	id                      *xid.ID
 	cidr                    *string
 	mask                    *[]byte
 	outbound_tcpports       *[]string
@@ -7628,8 +7677,8 @@ type SubnetMutation struct {
 	appendoutbound_udpports []string
 	proxy                   *bool
 	clearedFields           map[string]struct{}
-	hosts                   map[int]struct{}
-	removedhosts            map[int]struct{}
+	hosts                   map[xid.ID]struct{}
+	removedhosts            map[xid.ID]struct{}
 	clearedhosts            bool
 	done                    bool
 	oldValue                func(context.Context) (*Subnet, error)
@@ -7656,7 +7705,7 @@ func newSubnetMutation(c config, op Op, opts ...subnetOption) *SubnetMutation {
 }
 
 // withSubnetID sets the ID field of the mutation.
-func withSubnetID(id int) subnetOption {
+func withSubnetID(id xid.ID) subnetOption {
 	return func(m *SubnetMutation) {
 		var (
 			err   error
@@ -7706,9 +7755,15 @@ func (m SubnetMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Subnet entities.
+func (m *SubnetMutation) SetID(id xid.ID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *SubnetMutation) ID() (id int, exists bool) {
+func (m *SubnetMutation) ID() (id xid.ID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -7719,12 +7774,12 @@ func (m *SubnetMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *SubnetMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *SubnetMutation) IDs(ctx context.Context) ([]xid.ID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []xid.ID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -7999,9 +8054,9 @@ func (m *SubnetMutation) ResetProxy() {
 }
 
 // AddHostIDs adds the "hosts" edge to the Device entity by ids.
-func (m *SubnetMutation) AddHostIDs(ids ...int) {
+func (m *SubnetMutation) AddHostIDs(ids ...xid.ID) {
 	if m.hosts == nil {
-		m.hosts = make(map[int]struct{})
+		m.hosts = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.hosts[ids[i]] = struct{}{}
@@ -8019,9 +8074,9 @@ func (m *SubnetMutation) HostsCleared() bool {
 }
 
 // RemoveHostIDs removes the "hosts" edge to the Device entity by IDs.
-func (m *SubnetMutation) RemoveHostIDs(ids ...int) {
+func (m *SubnetMutation) RemoveHostIDs(ids ...xid.ID) {
 	if m.removedhosts == nil {
-		m.removedhosts = make(map[int]struct{})
+		m.removedhosts = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.hosts, ids[i])
@@ -8030,7 +8085,7 @@ func (m *SubnetMutation) RemoveHostIDs(ids ...int) {
 }
 
 // RemovedHosts returns the removed IDs of the "hosts" edge to the Device entity.
-func (m *SubnetMutation) RemovedHostsIDs() (ids []int) {
+func (m *SubnetMutation) RemovedHostsIDs() (ids []xid.ID) {
 	for id := range m.removedhosts {
 		ids = append(ids, id)
 	}
@@ -8038,7 +8093,7 @@ func (m *SubnetMutation) RemovedHostsIDs() (ids []int) {
 }
 
 // HostsIDs returns the "hosts" edge IDs in the mutation.
-func (m *SubnetMutation) HostsIDs() (ids []int) {
+func (m *SubnetMutation) HostsIDs() (ids []xid.ID) {
 	for id := range m.hosts {
 		ids = append(ids, id)
 	}
@@ -8367,7 +8422,7 @@ type TaskMutation struct {
 	config
 	op              Op
 	typ             string
-	id              *int
+	id              *xid.ID
 	_type           *string
 	args            *[]string
 	appendargs      []string
@@ -8380,12 +8435,12 @@ type TaskMutation struct {
 	_TTPs           *[]string
 	append_TTPs     []string
 	clearedFields   map[string]struct{}
-	rodent          *int
+	rodent          *xid.ID
 	clearedrodent   bool
-	operator        *int
+	operator        *xid.ID
 	clearedoperator bool
-	loot            map[int]struct{}
-	removedloot     map[int]struct{}
+	loot            map[xid.ID]struct{}
+	removedloot     map[xid.ID]struct{}
 	clearedloot     bool
 	done            bool
 	oldValue        func(context.Context) (*Task, error)
@@ -8412,7 +8467,7 @@ func newTaskMutation(c config, op Op, opts ...taskOption) *TaskMutation {
 }
 
 // withTaskID sets the ID field of the mutation.
-func withTaskID(id int) taskOption {
+func withTaskID(id xid.ID) taskOption {
 	return func(m *TaskMutation) {
 		var (
 			err   error
@@ -8462,9 +8517,15 @@ func (m TaskMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Task entities.
+func (m *TaskMutation) SetID(id xid.ID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *TaskMutation) ID() (id int, exists bool) {
+func (m *TaskMutation) ID() (id xid.ID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -8475,12 +8536,12 @@ func (m *TaskMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *TaskMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *TaskMutation) IDs(ctx context.Context) ([]xid.ID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []xid.ID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -8912,7 +8973,7 @@ func (m *TaskMutation) ResetTTPs() {
 }
 
 // SetRodentID sets the "rodent" edge to the Rodent entity by id.
-func (m *TaskMutation) SetRodentID(id int) {
+func (m *TaskMutation) SetRodentID(id xid.ID) {
 	m.rodent = &id
 }
 
@@ -8927,7 +8988,7 @@ func (m *TaskMutation) RodentCleared() bool {
 }
 
 // RodentID returns the "rodent" edge ID in the mutation.
-func (m *TaskMutation) RodentID() (id int, exists bool) {
+func (m *TaskMutation) RodentID() (id xid.ID, exists bool) {
 	if m.rodent != nil {
 		return *m.rodent, true
 	}
@@ -8937,7 +8998,7 @@ func (m *TaskMutation) RodentID() (id int, exists bool) {
 // RodentIDs returns the "rodent" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // RodentID instead. It exists only for internal usage by the builders.
-func (m *TaskMutation) RodentIDs() (ids []int) {
+func (m *TaskMutation) RodentIDs() (ids []xid.ID) {
 	if id := m.rodent; id != nil {
 		ids = append(ids, *id)
 	}
@@ -8951,7 +9012,7 @@ func (m *TaskMutation) ResetRodent() {
 }
 
 // SetOperatorID sets the "operator" edge to the Operator entity by id.
-func (m *TaskMutation) SetOperatorID(id int) {
+func (m *TaskMutation) SetOperatorID(id xid.ID) {
 	m.operator = &id
 }
 
@@ -8966,7 +9027,7 @@ func (m *TaskMutation) OperatorCleared() bool {
 }
 
 // OperatorID returns the "operator" edge ID in the mutation.
-func (m *TaskMutation) OperatorID() (id int, exists bool) {
+func (m *TaskMutation) OperatorID() (id xid.ID, exists bool) {
 	if m.operator != nil {
 		return *m.operator, true
 	}
@@ -8976,7 +9037,7 @@ func (m *TaskMutation) OperatorID() (id int, exists bool) {
 // OperatorIDs returns the "operator" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // OperatorID instead. It exists only for internal usage by the builders.
-func (m *TaskMutation) OperatorIDs() (ids []int) {
+func (m *TaskMutation) OperatorIDs() (ids []xid.ID) {
 	if id := m.operator; id != nil {
 		ids = append(ids, *id)
 	}
@@ -8990,9 +9051,9 @@ func (m *TaskMutation) ResetOperator() {
 }
 
 // AddLootIDs adds the "loot" edge to the Loot entity by ids.
-func (m *TaskMutation) AddLootIDs(ids ...int) {
+func (m *TaskMutation) AddLootIDs(ids ...xid.ID) {
 	if m.loot == nil {
-		m.loot = make(map[int]struct{})
+		m.loot = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.loot[ids[i]] = struct{}{}
@@ -9010,9 +9071,9 @@ func (m *TaskMutation) LootCleared() bool {
 }
 
 // RemoveLootIDs removes the "loot" edge to the Loot entity by IDs.
-func (m *TaskMutation) RemoveLootIDs(ids ...int) {
+func (m *TaskMutation) RemoveLootIDs(ids ...xid.ID) {
 	if m.removedloot == nil {
-		m.removedloot = make(map[int]struct{})
+		m.removedloot = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.loot, ids[i])
@@ -9021,7 +9082,7 @@ func (m *TaskMutation) RemoveLootIDs(ids ...int) {
 }
 
 // RemovedLoot returns the removed IDs of the "loot" edge to the Loot entity.
-func (m *TaskMutation) RemovedLootIDs() (ids []int) {
+func (m *TaskMutation) RemovedLootIDs() (ids []xid.ID) {
 	for id := range m.removedloot {
 		ids = append(ids, id)
 	}
@@ -9029,7 +9090,7 @@ func (m *TaskMutation) RemovedLootIDs() (ids []int) {
 }
 
 // LootIDs returns the "loot" edge IDs in the mutation.
-func (m *TaskMutation) LootIDs() (ids []int) {
+func (m *TaskMutation) LootIDs() (ids []xid.ID) {
 	for id := range m.loot {
 		ids = append(ids, id)
 	}
@@ -9468,7 +9529,7 @@ type UserMutation struct {
 	config
 	op             Op
 	typ            string
-	id             *int
+	id             *xid.ID
 	username       *string
 	givenname      *string
 	email          *string
@@ -9477,16 +9538,16 @@ type UserMutation struct {
 	homedir        *string
 	enabled        *bool
 	clearedFields  map[string]struct{}
-	devices        map[int]struct{}
-	removeddevices map[int]struct{}
+	devices        map[xid.ID]struct{}
+	removeddevices map[xid.ID]struct{}
 	cleareddevices bool
-	rodents        map[int]struct{}
-	removedrodents map[int]struct{}
+	rodents        map[xid.ID]struct{}
+	removedrodents map[xid.ID]struct{}
 	clearedrodents bool
-	groups         map[int]struct{}
-	removedgroups  map[int]struct{}
+	groups         map[xid.ID]struct{}
+	removedgroups  map[xid.ID]struct{}
 	clearedgroups  bool
-	domain         *int
+	domain         *xid.ID
 	cleareddomain  bool
 	done           bool
 	oldValue       func(context.Context) (*User, error)
@@ -9513,7 +9574,7 @@ func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
 }
 
 // withUserID sets the ID field of the mutation.
-func withUserID(id int) userOption {
+func withUserID(id xid.ID) userOption {
 	return func(m *UserMutation) {
 		var (
 			err   error
@@ -9563,9 +9624,15 @@ func (m UserMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of User entities.
+func (m *UserMutation) SetID(id xid.ID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *UserMutation) ID() (id int, exists bool) {
+func (m *UserMutation) ID() (id xid.ID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -9576,12 +9643,12 @@ func (m *UserMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *UserMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *UserMutation) IDs(ctx context.Context) ([]xid.ID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []xid.ID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -9857,9 +9924,9 @@ func (m *UserMutation) ResetEnabled() {
 }
 
 // AddDeviceIDs adds the "devices" edge to the Device entity by ids.
-func (m *UserMutation) AddDeviceIDs(ids ...int) {
+func (m *UserMutation) AddDeviceIDs(ids ...xid.ID) {
 	if m.devices == nil {
-		m.devices = make(map[int]struct{})
+		m.devices = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.devices[ids[i]] = struct{}{}
@@ -9877,9 +9944,9 @@ func (m *UserMutation) DevicesCleared() bool {
 }
 
 // RemoveDeviceIDs removes the "devices" edge to the Device entity by IDs.
-func (m *UserMutation) RemoveDeviceIDs(ids ...int) {
+func (m *UserMutation) RemoveDeviceIDs(ids ...xid.ID) {
 	if m.removeddevices == nil {
-		m.removeddevices = make(map[int]struct{})
+		m.removeddevices = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.devices, ids[i])
@@ -9888,7 +9955,7 @@ func (m *UserMutation) RemoveDeviceIDs(ids ...int) {
 }
 
 // RemovedDevices returns the removed IDs of the "devices" edge to the Device entity.
-func (m *UserMutation) RemovedDevicesIDs() (ids []int) {
+func (m *UserMutation) RemovedDevicesIDs() (ids []xid.ID) {
 	for id := range m.removeddevices {
 		ids = append(ids, id)
 	}
@@ -9896,7 +9963,7 @@ func (m *UserMutation) RemovedDevicesIDs() (ids []int) {
 }
 
 // DevicesIDs returns the "devices" edge IDs in the mutation.
-func (m *UserMutation) DevicesIDs() (ids []int) {
+func (m *UserMutation) DevicesIDs() (ids []xid.ID) {
 	for id := range m.devices {
 		ids = append(ids, id)
 	}
@@ -9911,9 +9978,9 @@ func (m *UserMutation) ResetDevices() {
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by ids.
-func (m *UserMutation) AddRodentIDs(ids ...int) {
+func (m *UserMutation) AddRodentIDs(ids ...xid.ID) {
 	if m.rodents == nil {
-		m.rodents = make(map[int]struct{})
+		m.rodents = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.rodents[ids[i]] = struct{}{}
@@ -9931,9 +9998,9 @@ func (m *UserMutation) RodentsCleared() bool {
 }
 
 // RemoveRodentIDs removes the "rodents" edge to the Rodent entity by IDs.
-func (m *UserMutation) RemoveRodentIDs(ids ...int) {
+func (m *UserMutation) RemoveRodentIDs(ids ...xid.ID) {
 	if m.removedrodents == nil {
-		m.removedrodents = make(map[int]struct{})
+		m.removedrodents = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.rodents, ids[i])
@@ -9942,7 +10009,7 @@ func (m *UserMutation) RemoveRodentIDs(ids ...int) {
 }
 
 // RemovedRodents returns the removed IDs of the "rodents" edge to the Rodent entity.
-func (m *UserMutation) RemovedRodentsIDs() (ids []int) {
+func (m *UserMutation) RemovedRodentsIDs() (ids []xid.ID) {
 	for id := range m.removedrodents {
 		ids = append(ids, id)
 	}
@@ -9950,7 +10017,7 @@ func (m *UserMutation) RemovedRodentsIDs() (ids []int) {
 }
 
 // RodentsIDs returns the "rodents" edge IDs in the mutation.
-func (m *UserMutation) RodentsIDs() (ids []int) {
+func (m *UserMutation) RodentsIDs() (ids []xid.ID) {
 	for id := range m.rodents {
 		ids = append(ids, id)
 	}
@@ -9965,9 +10032,9 @@ func (m *UserMutation) ResetRodents() {
 }
 
 // AddGroupIDs adds the "groups" edge to the Group entity by ids.
-func (m *UserMutation) AddGroupIDs(ids ...int) {
+func (m *UserMutation) AddGroupIDs(ids ...xid.ID) {
 	if m.groups == nil {
-		m.groups = make(map[int]struct{})
+		m.groups = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		m.groups[ids[i]] = struct{}{}
@@ -9985,9 +10052,9 @@ func (m *UserMutation) GroupsCleared() bool {
 }
 
 // RemoveGroupIDs removes the "groups" edge to the Group entity by IDs.
-func (m *UserMutation) RemoveGroupIDs(ids ...int) {
+func (m *UserMutation) RemoveGroupIDs(ids ...xid.ID) {
 	if m.removedgroups == nil {
-		m.removedgroups = make(map[int]struct{})
+		m.removedgroups = make(map[xid.ID]struct{})
 	}
 	for i := range ids {
 		delete(m.groups, ids[i])
@@ -9996,7 +10063,7 @@ func (m *UserMutation) RemoveGroupIDs(ids ...int) {
 }
 
 // RemovedGroups returns the removed IDs of the "groups" edge to the Group entity.
-func (m *UserMutation) RemovedGroupsIDs() (ids []int) {
+func (m *UserMutation) RemovedGroupsIDs() (ids []xid.ID) {
 	for id := range m.removedgroups {
 		ids = append(ids, id)
 	}
@@ -10004,7 +10071,7 @@ func (m *UserMutation) RemovedGroupsIDs() (ids []int) {
 }
 
 // GroupsIDs returns the "groups" edge IDs in the mutation.
-func (m *UserMutation) GroupsIDs() (ids []int) {
+func (m *UserMutation) GroupsIDs() (ids []xid.ID) {
 	for id := range m.groups {
 		ids = append(ids, id)
 	}
@@ -10019,7 +10086,7 @@ func (m *UserMutation) ResetGroups() {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by id.
-func (m *UserMutation) SetDomainID(id int) {
+func (m *UserMutation) SetDomainID(id xid.ID) {
 	m.domain = &id
 }
 
@@ -10034,7 +10101,7 @@ func (m *UserMutation) DomainCleared() bool {
 }
 
 // DomainID returns the "domain" edge ID in the mutation.
-func (m *UserMutation) DomainID() (id int, exists bool) {
+func (m *UserMutation) DomainID() (id xid.ID, exists bool) {
 	if m.domain != nil {
 		return *m.domain, true
 	}
@@ -10044,7 +10111,7 @@ func (m *UserMutation) DomainID() (id int, exists bool) {
 // DomainIDs returns the "domain" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // DomainID instead. It exists only for internal usage by the builders.
-func (m *UserMutation) DomainIDs() (ids []int) {
+func (m *UserMutation) DomainIDs() (ids []xid.ID) {
 	if id := m.domain; id != nil {
 		ids = append(ids, *id)
 	}

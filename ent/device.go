@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 )
@@ -16,7 +17,7 @@ import (
 type Device struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID xid.ID `json:"id,omitempty"`
 	// Hostname holds the value of the "hostname" field.
 	Hostname string `json:"hostname,omitempty"`
 	// Os holds the value of the "os" field.
@@ -34,7 +35,7 @@ type Device struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the DeviceQuery when eager-loading is set.
 	Edges          DeviceEdges `json:"edges"`
-	domain_devices *int
+	domain_devices *xid.ID
 }
 
 // DeviceEdges holds the relations/edges for other nodes in the graph.
@@ -121,12 +122,12 @@ func (*Device) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case device.FieldNetInterfaces, device.FieldCertificates:
 			values[i] = new([]byte)
-		case device.FieldID:
-			values[i] = new(sql.NullInt64)
 		case device.FieldHostname, device.FieldOs, device.FieldArch, device.FieldVersion, device.FieldMachinepass:
 			values[i] = new(sql.NullString)
+		case device.FieldID:
+			values[i] = new(xid.ID)
 		case device.ForeignKeys[0]: // domain_devices
-			values[i] = new(sql.NullInt64)
+			values[i] = &sql.NullScanner{S: new(xid.ID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Device", columns[i])
 		}
@@ -143,11 +144,11 @@ func (d *Device) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case device.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*xid.ID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				d.ID = *value
 			}
-			d.ID = int(value.Int64)
 		case device.FieldHostname:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field hostname", values[i])
@@ -195,11 +196,11 @@ func (d *Device) assignValues(columns []string, values []any) error {
 				}
 			}
 		case device.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field domain_devices", value)
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field domain_devices", values[i])
 			} else if value.Valid {
-				d.domain_devices = new(int)
-				*d.domain_devices = int(value.Int64)
+				d.domain_devices = new(xid.ID)
+				*d.domain_devices = *value.S.(*xid.ID)
 			}
 		}
 	}

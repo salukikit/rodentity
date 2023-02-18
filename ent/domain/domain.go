@@ -2,6 +2,10 @@
 
 package domain
 
+import (
+	"github.com/rs/xid"
+)
+
 const (
 	// Label holds the string label denoting the domain type in the database.
 	Label = "domain"
@@ -95,4 +99,6 @@ var (
 	DefaultOwned bool
 	// DefaultCloud holds the default value on creation for the "cloud" field.
 	DefaultCloud string
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() xid.ID
 )

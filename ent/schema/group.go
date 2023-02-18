@@ -20,6 +20,13 @@ func (Group) Fields() []ent.Field {
 	}
 }
 
+func (Group) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		// Embed the BaseMixin in the user schema.
+		BaseMixin{},
+	}
+}
+
 // Edges of the Group.
 func (Group) Edges() []ent.Edge {
 	return []ent.Edge{

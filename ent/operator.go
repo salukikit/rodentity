@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/operator"
 )
 
@@ -14,7 +15,7 @@ import (
 type Operator struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID xid.ID `json:"id,omitempty"`
 	// Username holds the value of the "username" field.
 	Username string `json:"username,omitempty"`
 	// Privkey holds the value of the "privkey" field.
@@ -62,10 +63,10 @@ func (*Operator) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case operator.FieldPrivkey, operator.FieldCert:
 			values[i] = new([]byte)
-		case operator.FieldID:
-			values[i] = new(sql.NullInt64)
 		case operator.FieldUsername:
 			values[i] = new(sql.NullString)
+		case operator.FieldID:
+			values[i] = new(xid.ID)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Operator", columns[i])
 		}
@@ -82,11 +83,11 @@ func (o *Operator) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case operator.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
+			if value, ok := values[i].(*xid.ID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				o.ID = *value
 			}
-			o.ID = int(value.Int64)
 		case operator.FieldUsername:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field username", values[i])

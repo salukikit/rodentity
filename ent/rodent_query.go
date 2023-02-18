@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/predicate"
@@ -227,8 +228,8 @@ func (rq *RodentQuery) FirstX(ctx context.Context) *Rodent {
 
 // FirstID returns the first Rodent ID from the query.
 // Returns a *NotFoundError when no Rodent ID was found.
-func (rq *RodentQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (rq *RodentQuery) FirstID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = rq.Limit(1).IDs(setContextOp(ctx, rq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -240,7 +241,7 @@ func (rq *RodentQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (rq *RodentQuery) FirstIDX(ctx context.Context) int {
+func (rq *RodentQuery) FirstIDX(ctx context.Context) xid.ID {
 	id, err := rq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -278,8 +279,8 @@ func (rq *RodentQuery) OnlyX(ctx context.Context) *Rodent {
 // OnlyID is like Only, but returns the only Rodent ID in the query.
 // Returns a *NotSingularError when more than one Rodent ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (rq *RodentQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (rq *RodentQuery) OnlyID(ctx context.Context) (id xid.ID, err error) {
+	var ids []xid.ID
 	if ids, err = rq.Limit(2).IDs(setContextOp(ctx, rq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -295,7 +296,7 @@ func (rq *RodentQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (rq *RodentQuery) OnlyIDX(ctx context.Context) int {
+func (rq *RodentQuery) OnlyIDX(ctx context.Context) xid.ID {
 	id, err := rq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -323,7 +324,7 @@ func (rq *RodentQuery) AllX(ctx context.Context) []*Rodent {
 }
 
 // IDs executes the query and returns a list of Rodent IDs.
-func (rq *RodentQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (rq *RodentQuery) IDs(ctx context.Context) (ids []xid.ID, err error) {
 	if rq.ctx.Unique == nil && rq.path != nil {
 		rq.Unique(true)
 	}
@@ -335,7 +336,7 @@ func (rq *RodentQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (rq *RodentQuery) IDsX(ctx context.Context) []int {
+func (rq *RodentQuery) IDsX(ctx context.Context) []xid.ID {
 	ids, err := rq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -628,8 +629,8 @@ func (rq *RodentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Roden
 }
 
 func (rq *RodentQuery) loadDevice(ctx context.Context, query *DeviceQuery, nodes []*Rodent, init func(*Rodent), assign func(*Rodent, *Device)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Rodent)
+	ids := make([]xid.ID, 0, len(nodes))
+	nodeids := make(map[xid.ID][]*Rodent)
 	for i := range nodes {
 		if nodes[i].device_rodents == nil {
 			continue
@@ -660,8 +661,8 @@ func (rq *RodentQuery) loadDevice(ctx context.Context, query *DeviceQuery, nodes
 	return nil
 }
 func (rq *RodentQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Rodent, init func(*Rodent), assign func(*Rodent, *User)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Rodent)
+	ids := make([]xid.ID, 0, len(nodes))
+	nodeids := make(map[xid.ID][]*Rodent)
 	for i := range nodes {
 		if nodes[i].user_rodents == nil {
 			continue
@@ -692,8 +693,8 @@ func (rq *RodentQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*
 	return nil
 }
 func (rq *RodentQuery) loadProject(ctx context.Context, query *ProjectQuery, nodes []*Rodent, init func(*Rodent), assign func(*Rodent, *Project)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Rodent)
+	ids := make([]xid.ID, 0, len(nodes))
+	nodeids := make(map[xid.ID][]*Rodent)
 	for i := range nodes {
 		if nodes[i].project_rodents == nil {
 			continue
@@ -725,8 +726,8 @@ func (rq *RodentQuery) loadProject(ctx context.Context, query *ProjectQuery, nod
 }
 func (rq *RodentQuery) loadRouter(ctx context.Context, query *RouterQuery, nodes []*Rodent, init func(*Rodent), assign func(*Rodent, *Router)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Rodent)
-	nids := make(map[int]map[*Rodent]struct{})
+	byID := make(map[xid.ID]*Rodent)
+	nids := make(map[xid.ID]map[*Rodent]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -755,11 +756,11 @@ func (rq *RodentQuery) loadRouter(ctx context.Context, query *RouterQuery, nodes
 				if err != nil {
 					return nil, err
 				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
+				return append([]any{new(xid.ID)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
+				outValue := *values[0].(*xid.ID)
+				inValue := *values[1].(*xid.ID)
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Rodent]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -786,7 +787,7 @@ func (rq *RodentQuery) loadRouter(ctx context.Context, query *RouterQuery, nodes
 }
 func (rq *RodentQuery) loadTasks(ctx context.Context, query *TaskQuery, nodes []*Rodent, init func(*Rodent), assign func(*Rodent, *Task)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Rodent)
+	nodeids := make(map[xid.ID]*Rodent)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -817,7 +818,7 @@ func (rq *RodentQuery) loadTasks(ctx context.Context, query *TaskQuery, nodes []
 }
 func (rq *RodentQuery) loadLoot(ctx context.Context, query *LootQuery, nodes []*Rodent, init func(*Rodent), assign func(*Rodent, *Loot)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Rodent)
+	nodeids := make(map[xid.ID]*Rodent)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -857,7 +858,7 @@ func (rq *RodentQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (rq *RodentQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(rodent.Table, rodent.Columns, sqlgraph.NewFieldSpec(rodent.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(rodent.Table, rodent.Columns, sqlgraph.NewFieldSpec(rodent.FieldID, field.TypeString))
 	_spec.From = rq.sql
 	if unique := rq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/loot"
 	"github.com/salukikit/rodentity/ent/project"
@@ -148,14 +149,28 @@ func (rc *RodentCreate) SetLastseen(t time.Time) *RodentCreate {
 	return rc
 }
 
+// SetID sets the "id" field.
+func (rc *RodentCreate) SetID(x xid.ID) *RodentCreate {
+	rc.mutation.SetID(x)
+	return rc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (rc *RodentCreate) SetNillableID(x *xid.ID) *RodentCreate {
+	if x != nil {
+		rc.SetID(*x)
+	}
+	return rc
+}
+
 // SetDeviceID sets the "device" edge to the Device entity by ID.
-func (rc *RodentCreate) SetDeviceID(id int) *RodentCreate {
+func (rc *RodentCreate) SetDeviceID(id xid.ID) *RodentCreate {
 	rc.mutation.SetDeviceID(id)
 	return rc
 }
 
 // SetNillableDeviceID sets the "device" edge to the Device entity by ID if the given value is not nil.
-func (rc *RodentCreate) SetNillableDeviceID(id *int) *RodentCreate {
+func (rc *RodentCreate) SetNillableDeviceID(id *xid.ID) *RodentCreate {
 	if id != nil {
 		rc = rc.SetDeviceID(*id)
 	}
@@ -168,13 +183,13 @@ func (rc *RodentCreate) SetDevice(d *Device) *RodentCreate {
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (rc *RodentCreate) SetUserID(id int) *RodentCreate {
+func (rc *RodentCreate) SetUserID(id xid.ID) *RodentCreate {
 	rc.mutation.SetUserID(id)
 	return rc
 }
 
 // SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (rc *RodentCreate) SetNillableUserID(id *int) *RodentCreate {
+func (rc *RodentCreate) SetNillableUserID(id *xid.ID) *RodentCreate {
 	if id != nil {
 		rc = rc.SetUserID(*id)
 	}
@@ -187,13 +202,13 @@ func (rc *RodentCreate) SetUser(u *User) *RodentCreate {
 }
 
 // SetProjectID sets the "project" edge to the Project entity by ID.
-func (rc *RodentCreate) SetProjectID(id int) *RodentCreate {
+func (rc *RodentCreate) SetProjectID(id xid.ID) *RodentCreate {
 	rc.mutation.SetProjectID(id)
 	return rc
 }
 
 // SetNillableProjectID sets the "project" edge to the Project entity by ID if the given value is not nil.
-func (rc *RodentCreate) SetNillableProjectID(id *int) *RodentCreate {
+func (rc *RodentCreate) SetNillableProjectID(id *xid.ID) *RodentCreate {
 	if id != nil {
 		rc = rc.SetProjectID(*id)
 	}
@@ -206,14 +221,14 @@ func (rc *RodentCreate) SetProject(p *Project) *RodentCreate {
 }
 
 // AddRouterIDs adds the "router" edge to the Router entity by IDs.
-func (rc *RodentCreate) AddRouterIDs(ids ...int) *RodentCreate {
+func (rc *RodentCreate) AddRouterIDs(ids ...xid.ID) *RodentCreate {
 	rc.mutation.AddRouterIDs(ids...)
 	return rc
 }
 
 // AddRouter adds the "router" edges to the Router entity.
 func (rc *RodentCreate) AddRouter(r ...*Router) *RodentCreate {
-	ids := make([]int, len(r))
+	ids := make([]xid.ID, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -221,14 +236,14 @@ func (rc *RodentCreate) AddRouter(r ...*Router) *RodentCreate {
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
-func (rc *RodentCreate) AddTaskIDs(ids ...int) *RodentCreate {
+func (rc *RodentCreate) AddTaskIDs(ids ...xid.ID) *RodentCreate {
 	rc.mutation.AddTaskIDs(ids...)
 	return rc
 }
 
 // AddTasks adds the "tasks" edges to the Task entity.
 func (rc *RodentCreate) AddTasks(t ...*Task) *RodentCreate {
-	ids := make([]int, len(t))
+	ids := make([]xid.ID, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -236,14 +251,14 @@ func (rc *RodentCreate) AddTasks(t ...*Task) *RodentCreate {
 }
 
 // AddLootIDs adds the "loot" edge to the Loot entity by IDs.
-func (rc *RodentCreate) AddLootIDs(ids ...int) *RodentCreate {
+func (rc *RodentCreate) AddLootIDs(ids ...xid.ID) *RodentCreate {
 	rc.mutation.AddLootIDs(ids...)
 	return rc
 }
 
 // AddLoot adds the "loot" edges to the Loot entity.
 func (rc *RodentCreate) AddLoot(l ...*Loot) *RodentCreate {
-	ids := make([]int, len(l))
+	ids := make([]xid.ID, len(l))
 	for i := range l {
 		ids[i] = l[i].ID
 	}
@@ -297,6 +312,10 @@ func (rc *RodentCreate) defaults() {
 		v := rodent.DefaultAlive
 		rc.mutation.SetAlive(v)
 	}
+	if _, ok := rc.mutation.ID(); !ok {
+		v := rodent.DefaultID()
+		rc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -336,8 +355,13 @@ func (rc *RodentCreate) sqlSave(ctx context.Context) (*Rodent, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*xid.ID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	rc.mutation.id = &_node.ID
 	rc.mutation.done = true
 	return _node, nil
@@ -346,8 +370,12 @@ func (rc *RodentCreate) sqlSave(ctx context.Context) (*Rodent, error) {
 func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Rodent{config: rc.config}
-		_spec = sqlgraph.NewCreateSpec(rodent.Table, sqlgraph.NewFieldSpec(rodent.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(rodent.Table, sqlgraph.NewFieldSpec(rodent.FieldID, field.TypeString))
 	)
+	if id, ok := rc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := rc.mutation.Name(); ok {
 		_spec.SetField(rodent.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -401,7 +429,7 @@ func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -421,7 +449,7 @@ func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -441,7 +469,7 @@ func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: project.FieldID,
 				},
 			},
@@ -461,7 +489,7 @@ func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: router.FieldID,
 				},
 			},
@@ -480,7 +508,7 @@ func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: task.FieldID,
 				},
 			},
@@ -499,7 +527,7 @@ func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: loot.FieldID,
 				},
 			},
@@ -553,10 +581,6 @@ func (rcb *RodentCreateBulk) Save(ctx context.Context) ([]*Rodent, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rs/xid"
 	"github.com/salukikit/rodentity/ent/device"
 	"github.com/salukikit/rodentity/ent/domain"
 	"github.com/salukikit/rodentity/ent/group"
@@ -56,15 +57,29 @@ func (gc *GroupCreate) SetNillablePermissions(s *string) *GroupCreate {
 	return gc
 }
 
+// SetID sets the "id" field.
+func (gc *GroupCreate) SetID(x xid.ID) *GroupCreate {
+	gc.mutation.SetID(x)
+	return gc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (gc *GroupCreate) SetNillableID(x *xid.ID) *GroupCreate {
+	if x != nil {
+		gc.SetID(*x)
+	}
+	return gc
+}
+
 // AddDeviceIDs adds the "devices" edge to the Device entity by IDs.
-func (gc *GroupCreate) AddDeviceIDs(ids ...int) *GroupCreate {
+func (gc *GroupCreate) AddDeviceIDs(ids ...xid.ID) *GroupCreate {
 	gc.mutation.AddDeviceIDs(ids...)
 	return gc
 }
 
 // AddDevices adds the "devices" edges to the Device entity.
 func (gc *GroupCreate) AddDevices(d ...*Device) *GroupCreate {
-	ids := make([]int, len(d))
+	ids := make([]xid.ID, len(d))
 	for i := range d {
 		ids[i] = d[i].ID
 	}
@@ -72,14 +87,14 @@ func (gc *GroupCreate) AddDevices(d ...*Device) *GroupCreate {
 }
 
 // AddUserIDs adds the "users" edge to the User entity by IDs.
-func (gc *GroupCreate) AddUserIDs(ids ...int) *GroupCreate {
+func (gc *GroupCreate) AddUserIDs(ids ...xid.ID) *GroupCreate {
 	gc.mutation.AddUserIDs(ids...)
 	return gc
 }
 
 // AddUsers adds the "users" edges to the User entity.
 func (gc *GroupCreate) AddUsers(u ...*User) *GroupCreate {
-	ids := make([]int, len(u))
+	ids := make([]xid.ID, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -87,13 +102,13 @@ func (gc *GroupCreate) AddUsers(u ...*User) *GroupCreate {
 }
 
 // SetDomainID sets the "domain" edge to the Domain entity by ID.
-func (gc *GroupCreate) SetDomainID(id int) *GroupCreate {
+func (gc *GroupCreate) SetDomainID(id xid.ID) *GroupCreate {
 	gc.mutation.SetDomainID(id)
 	return gc
 }
 
 // SetNillableDomainID sets the "domain" edge to the Domain entity by ID if the given value is not nil.
-func (gc *GroupCreate) SetNillableDomainID(id *int) *GroupCreate {
+func (gc *GroupCreate) SetNillableDomainID(id *xid.ID) *GroupCreate {
 	if id != nil {
 		gc = gc.SetDomainID(*id)
 	}
@@ -148,6 +163,10 @@ func (gc *GroupCreate) defaults() {
 		v := group.DefaultPermissions
 		gc.mutation.SetPermissions(v)
 	}
+	if _, ok := gc.mutation.ID(); !ok {
+		v := group.DefaultID()
+		gc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -175,8 +194,13 @@ func (gc *GroupCreate) sqlSave(ctx context.Context) (*Group, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*xid.ID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	gc.mutation.id = &_node.ID
 	gc.mutation.done = true
 	return _node, nil
@@ -185,8 +209,12 @@ func (gc *GroupCreate) sqlSave(ctx context.Context) (*Group, error) {
 func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Group{config: gc.config}
-		_spec = sqlgraph.NewCreateSpec(group.Table, sqlgraph.NewFieldSpec(group.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(group.Table, sqlgraph.NewFieldSpec(group.FieldID, field.TypeString))
 	)
+	if id, ok := gc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
+	}
 	if value, ok := gc.mutation.Name(); ok {
 		_spec.SetField(group.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -208,7 +236,7 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: device.FieldID,
 				},
 			},
@@ -227,7 +255,7 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -246,7 +274,7 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: domain.FieldID,
 				},
 			},
@@ -301,10 +329,6 @@ func (gcb *GroupCreateBulk) Save(ctx context.Context) ([]*Group, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

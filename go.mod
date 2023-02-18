@@ -5,6 +5,7 @@ go 1.19
 require (
 	entgo.io/ent v0.11.8
 	github.com/mattn/go-sqlite3 v1.14.16
+	github.com/rs/xid v1.4.0
 )
 
 require (

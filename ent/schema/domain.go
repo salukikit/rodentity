@@ -11,6 +11,13 @@ type Domain struct {
 	ent.Schema
 }
 
+func (Domain) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		// Embed the BaseMixin in the user schema.
+		BaseMixin{},
+	}
+}
+
 // Fields of the Domain.
 func (Domain) Fields() []ent.Field {
 	return []ent.Field{

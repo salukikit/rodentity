@@ -2,6 +2,10 @@
 
 package group
 
+import (
+	"github.com/rs/xid"
+)
+
 const (
 	// Label holds the string label denoting the group type in the database.
 	Label = "group"
@@ -83,4 +87,6 @@ var (
 	DefaultDescription string
 	// DefaultPermissions holds the default value on creation for the "permissions" field.
 	DefaultPermissions string
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() xid.ID
 )
