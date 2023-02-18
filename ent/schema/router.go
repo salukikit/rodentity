@@ -14,10 +14,11 @@ type Router struct {
 // Fields of the Router.
 func (Router) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("username"),
-		field.Bytes("privkey").Optional(),
-		field.Bytes("cert").Optional(),
+		field.String("rname"),
+		field.Bytes("privkey"),
+		field.Bytes("cert"),
 		field.Strings("commands").Optional(),
+		field.Strings("interfaces").Optional(),
 	}
 }
 

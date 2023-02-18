@@ -16,7 +16,6 @@ func (Rodent) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("xid"),
 		field.String("type").Default("FancyRat"),
-		field.String("codename"),
 		field.String("key"),
 		field.String("usercontext").Optional(),
 		field.String("comms").Optional(),

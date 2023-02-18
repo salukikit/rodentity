@@ -21,9 +21,9 @@ type RouterCreate struct {
 	hooks    []Hook
 }
 
-// SetUsername sets the "username" field.
-func (rc *RouterCreate) SetUsername(s string) *RouterCreate {
-	rc.mutation.SetUsername(s)
+// SetRname sets the "rname" field.
+func (rc *RouterCreate) SetRname(s string) *RouterCreate {
+	rc.mutation.SetRname(s)
 	return rc
 }
 
@@ -42,6 +42,12 @@ func (rc *RouterCreate) SetCert(b []byte) *RouterCreate {
 // SetCommands sets the "commands" field.
 func (rc *RouterCreate) SetCommands(s []string) *RouterCreate {
 	rc.mutation.SetCommands(s)
+	return rc
+}
+
+// SetInterfaces sets the "interfaces" field.
+func (rc *RouterCreate) SetInterfaces(s []string) *RouterCreate {
+	rc.mutation.SetInterfaces(s)
 	return rc
 }
 
@@ -113,8 +119,14 @@ func (rc *RouterCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (rc *RouterCreate) check() error {
-	if _, ok := rc.mutation.Username(); !ok {
-		return &ValidationError{Name: "username", err: errors.New(`ent: missing required field "Router.username"`)}
+	if _, ok := rc.mutation.Rname(); !ok {
+		return &ValidationError{Name: "rname", err: errors.New(`ent: missing required field "Router.rname"`)}
+	}
+	if _, ok := rc.mutation.Privkey(); !ok {
+		return &ValidationError{Name: "privkey", err: errors.New(`ent: missing required field "Router.privkey"`)}
+	}
+	if _, ok := rc.mutation.Cert(); !ok {
+		return &ValidationError{Name: "cert", err: errors.New(`ent: missing required field "Router.cert"`)}
 	}
 	return nil
 }
@@ -142,9 +154,9 @@ func (rc *RouterCreate) createSpec() (*Router, *sqlgraph.CreateSpec) {
 		_node = &Router{config: rc.config}
 		_spec = sqlgraph.NewCreateSpec(router.Table, sqlgraph.NewFieldSpec(router.FieldID, field.TypeInt))
 	)
-	if value, ok := rc.mutation.Username(); ok {
-		_spec.SetField(router.FieldUsername, field.TypeString, value)
-		_node.Username = value
+	if value, ok := rc.mutation.Rname(); ok {
+		_spec.SetField(router.FieldRname, field.TypeString, value)
+		_node.Rname = value
 	}
 	if value, ok := rc.mutation.Privkey(); ok {
 		_spec.SetField(router.FieldPrivkey, field.TypeBytes, value)
@@ -157,6 +169,10 @@ func (rc *RouterCreate) createSpec() (*Router, *sqlgraph.CreateSpec) {
 	if value, ok := rc.mutation.Commands(); ok {
 		_spec.SetField(router.FieldCommands, field.TypeJSON, value)
 		_node.Commands = value
+	}
+	if value, ok := rc.mutation.Interfaces(); ok {
+		_spec.SetField(router.FieldInterfaces, field.TypeJSON, value)
+		_node.Interfaces = value
 	}
 	if nodes := rc.mutation.RodentsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -30,9 +30,9 @@ func (ru *RouterUpdate) Where(ps ...predicate.Router) *RouterUpdate {
 	return ru
 }
 
-// SetUsername sets the "username" field.
-func (ru *RouterUpdate) SetUsername(s string) *RouterUpdate {
-	ru.mutation.SetUsername(s)
+// SetRname sets the "rname" field.
+func (ru *RouterUpdate) SetRname(s string) *RouterUpdate {
+	ru.mutation.SetRname(s)
 	return ru
 }
 
@@ -42,21 +42,9 @@ func (ru *RouterUpdate) SetPrivkey(b []byte) *RouterUpdate {
 	return ru
 }
 
-// ClearPrivkey clears the value of the "privkey" field.
-func (ru *RouterUpdate) ClearPrivkey() *RouterUpdate {
-	ru.mutation.ClearPrivkey()
-	return ru
-}
-
 // SetCert sets the "cert" field.
 func (ru *RouterUpdate) SetCert(b []byte) *RouterUpdate {
 	ru.mutation.SetCert(b)
-	return ru
-}
-
-// ClearCert clears the value of the "cert" field.
-func (ru *RouterUpdate) ClearCert() *RouterUpdate {
-	ru.mutation.ClearCert()
 	return ru
 }
 
@@ -75,6 +63,24 @@ func (ru *RouterUpdate) AppendCommands(s []string) *RouterUpdate {
 // ClearCommands clears the value of the "commands" field.
 func (ru *RouterUpdate) ClearCommands() *RouterUpdate {
 	ru.mutation.ClearCommands()
+	return ru
+}
+
+// SetInterfaces sets the "interfaces" field.
+func (ru *RouterUpdate) SetInterfaces(s []string) *RouterUpdate {
+	ru.mutation.SetInterfaces(s)
+	return ru
+}
+
+// AppendInterfaces appends s to the "interfaces" field.
+func (ru *RouterUpdate) AppendInterfaces(s []string) *RouterUpdate {
+	ru.mutation.AppendInterfaces(s)
+	return ru
+}
+
+// ClearInterfaces clears the value of the "interfaces" field.
+func (ru *RouterUpdate) ClearInterfaces() *RouterUpdate {
+	ru.mutation.ClearInterfaces()
 	return ru
 }
 
@@ -180,20 +186,14 @@ func (ru *RouterUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := ru.mutation.Username(); ok {
-		_spec.SetField(router.FieldUsername, field.TypeString, value)
+	if value, ok := ru.mutation.Rname(); ok {
+		_spec.SetField(router.FieldRname, field.TypeString, value)
 	}
 	if value, ok := ru.mutation.Privkey(); ok {
 		_spec.SetField(router.FieldPrivkey, field.TypeBytes, value)
 	}
-	if ru.mutation.PrivkeyCleared() {
-		_spec.ClearField(router.FieldPrivkey, field.TypeBytes)
-	}
 	if value, ok := ru.mutation.Cert(); ok {
 		_spec.SetField(router.FieldCert, field.TypeBytes, value)
-	}
-	if ru.mutation.CertCleared() {
-		_spec.ClearField(router.FieldCert, field.TypeBytes)
 	}
 	if value, ok := ru.mutation.Commands(); ok {
 		_spec.SetField(router.FieldCommands, field.TypeJSON, value)
@@ -205,6 +205,17 @@ func (ru *RouterUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if ru.mutation.CommandsCleared() {
 		_spec.ClearField(router.FieldCommands, field.TypeJSON)
+	}
+	if value, ok := ru.mutation.Interfaces(); ok {
+		_spec.SetField(router.FieldInterfaces, field.TypeJSON, value)
+	}
+	if value, ok := ru.mutation.AppendedInterfaces(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, router.FieldInterfaces, value)
+		})
+	}
+	if ru.mutation.InterfacesCleared() {
+		_spec.ClearField(router.FieldInterfaces, field.TypeJSON)
 	}
 	if ru.mutation.RodentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -315,9 +326,9 @@ type RouterUpdateOne struct {
 	mutation *RouterMutation
 }
 
-// SetUsername sets the "username" field.
-func (ruo *RouterUpdateOne) SetUsername(s string) *RouterUpdateOne {
-	ruo.mutation.SetUsername(s)
+// SetRname sets the "rname" field.
+func (ruo *RouterUpdateOne) SetRname(s string) *RouterUpdateOne {
+	ruo.mutation.SetRname(s)
 	return ruo
 }
 
@@ -327,21 +338,9 @@ func (ruo *RouterUpdateOne) SetPrivkey(b []byte) *RouterUpdateOne {
 	return ruo
 }
 
-// ClearPrivkey clears the value of the "privkey" field.
-func (ruo *RouterUpdateOne) ClearPrivkey() *RouterUpdateOne {
-	ruo.mutation.ClearPrivkey()
-	return ruo
-}
-
 // SetCert sets the "cert" field.
 func (ruo *RouterUpdateOne) SetCert(b []byte) *RouterUpdateOne {
 	ruo.mutation.SetCert(b)
-	return ruo
-}
-
-// ClearCert clears the value of the "cert" field.
-func (ruo *RouterUpdateOne) ClearCert() *RouterUpdateOne {
-	ruo.mutation.ClearCert()
 	return ruo
 }
 
@@ -360,6 +359,24 @@ func (ruo *RouterUpdateOne) AppendCommands(s []string) *RouterUpdateOne {
 // ClearCommands clears the value of the "commands" field.
 func (ruo *RouterUpdateOne) ClearCommands() *RouterUpdateOne {
 	ruo.mutation.ClearCommands()
+	return ruo
+}
+
+// SetInterfaces sets the "interfaces" field.
+func (ruo *RouterUpdateOne) SetInterfaces(s []string) *RouterUpdateOne {
+	ruo.mutation.SetInterfaces(s)
+	return ruo
+}
+
+// AppendInterfaces appends s to the "interfaces" field.
+func (ruo *RouterUpdateOne) AppendInterfaces(s []string) *RouterUpdateOne {
+	ruo.mutation.AppendInterfaces(s)
+	return ruo
+}
+
+// ClearInterfaces clears the value of the "interfaces" field.
+func (ruo *RouterUpdateOne) ClearInterfaces() *RouterUpdateOne {
+	ruo.mutation.ClearInterfaces()
 	return ruo
 }
 
@@ -495,20 +512,14 @@ func (ruo *RouterUpdateOne) sqlSave(ctx context.Context) (_node *Router, err err
 			}
 		}
 	}
-	if value, ok := ruo.mutation.Username(); ok {
-		_spec.SetField(router.FieldUsername, field.TypeString, value)
+	if value, ok := ruo.mutation.Rname(); ok {
+		_spec.SetField(router.FieldRname, field.TypeString, value)
 	}
 	if value, ok := ruo.mutation.Privkey(); ok {
 		_spec.SetField(router.FieldPrivkey, field.TypeBytes, value)
 	}
-	if ruo.mutation.PrivkeyCleared() {
-		_spec.ClearField(router.FieldPrivkey, field.TypeBytes)
-	}
 	if value, ok := ruo.mutation.Cert(); ok {
 		_spec.SetField(router.FieldCert, field.TypeBytes, value)
-	}
-	if ruo.mutation.CertCleared() {
-		_spec.ClearField(router.FieldCert, field.TypeBytes)
 	}
 	if value, ok := ruo.mutation.Commands(); ok {
 		_spec.SetField(router.FieldCommands, field.TypeJSON, value)
@@ -520,6 +531,17 @@ func (ruo *RouterUpdateOne) sqlSave(ctx context.Context) (_node *Router, err err
 	}
 	if ruo.mutation.CommandsCleared() {
 		_spec.ClearField(router.FieldCommands, field.TypeJSON)
+	}
+	if value, ok := ruo.mutation.Interfaces(); ok {
+		_spec.SetField(router.FieldInterfaces, field.TypeJSON, value)
+	}
+	if value, ok := ruo.mutation.AppendedInterfaces(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, router.FieldInterfaces, value)
+		})
+	}
+	if ruo.mutation.InterfacesCleared() {
+		_spec.ClearField(router.FieldInterfaces, field.TypeJSON)
 	}
 	if ruo.mutation.RodentsCleared() {
 		edge := &sqlgraph.EdgeSpec{

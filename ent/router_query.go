@@ -335,12 +335,12 @@ func (rq *RouterQuery) WithProject(opts ...func(*ProjectQuery)) *RouterQuery {
 // Example:
 //
 //	var v []struct {
-//		Username string `json:"username,omitempty"`
+//		Rname string `json:"rname,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Router.Query().
-//		GroupBy(router.FieldUsername).
+//		GroupBy(router.FieldRname).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (rq *RouterQuery) GroupBy(field string, fields ...string) *RouterGroupBy {
@@ -358,11 +358,11 @@ func (rq *RouterQuery) GroupBy(field string, fields ...string) *RouterGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Username string `json:"username,omitempty"`
+//		Rname string `json:"rname,omitempty"`
 //	}
 //
 //	client.Router.Query().
-//		Select(router.FieldUsername).
+//		Select(router.FieldRname).
 //		Scan(ctx, &v)
 func (rq *RouterQuery) Select(fields ...string) *RouterSelect {
 	rq.ctx.Fields = append(rq.ctx.Fields, fields...)

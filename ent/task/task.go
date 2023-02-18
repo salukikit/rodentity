@@ -7,8 +7,6 @@ const (
 	Label = "task"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldXid holds the string denoting the xid field in the database.
-	FieldXid = "xid"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
 	// FieldArgs holds the string denoting the args field in the database.
@@ -61,7 +59,6 @@ const (
 // Columns holds all SQL columns for task fields.
 var Columns = []string{
 	FieldID,
-	FieldXid,
 	FieldType,
 	FieldArgs,
 	FieldData,

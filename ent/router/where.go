@@ -53,9 +53,9 @@ func IDLTE(id int) predicate.Router {
 	return predicate.Router(sql.FieldLTE(FieldID, id))
 }
 
-// Username applies equality check predicate on the "username" field. It's identical to UsernameEQ.
-func Username(v string) predicate.Router {
-	return predicate.Router(sql.FieldEQ(FieldUsername, v))
+// Rname applies equality check predicate on the "rname" field. It's identical to RnameEQ.
+func Rname(v string) predicate.Router {
+	return predicate.Router(sql.FieldEQ(FieldRname, v))
 }
 
 // Privkey applies equality check predicate on the "privkey" field. It's identical to PrivkeyEQ.
@@ -68,69 +68,69 @@ func Cert(v []byte) predicate.Router {
 	return predicate.Router(sql.FieldEQ(FieldCert, v))
 }
 
-// UsernameEQ applies the EQ predicate on the "username" field.
-func UsernameEQ(v string) predicate.Router {
-	return predicate.Router(sql.FieldEQ(FieldUsername, v))
+// RnameEQ applies the EQ predicate on the "rname" field.
+func RnameEQ(v string) predicate.Router {
+	return predicate.Router(sql.FieldEQ(FieldRname, v))
 }
 
-// UsernameNEQ applies the NEQ predicate on the "username" field.
-func UsernameNEQ(v string) predicate.Router {
-	return predicate.Router(sql.FieldNEQ(FieldUsername, v))
+// RnameNEQ applies the NEQ predicate on the "rname" field.
+func RnameNEQ(v string) predicate.Router {
+	return predicate.Router(sql.FieldNEQ(FieldRname, v))
 }
 
-// UsernameIn applies the In predicate on the "username" field.
-func UsernameIn(vs ...string) predicate.Router {
-	return predicate.Router(sql.FieldIn(FieldUsername, vs...))
+// RnameIn applies the In predicate on the "rname" field.
+func RnameIn(vs ...string) predicate.Router {
+	return predicate.Router(sql.FieldIn(FieldRname, vs...))
 }
 
-// UsernameNotIn applies the NotIn predicate on the "username" field.
-func UsernameNotIn(vs ...string) predicate.Router {
-	return predicate.Router(sql.FieldNotIn(FieldUsername, vs...))
+// RnameNotIn applies the NotIn predicate on the "rname" field.
+func RnameNotIn(vs ...string) predicate.Router {
+	return predicate.Router(sql.FieldNotIn(FieldRname, vs...))
 }
 
-// UsernameGT applies the GT predicate on the "username" field.
-func UsernameGT(v string) predicate.Router {
-	return predicate.Router(sql.FieldGT(FieldUsername, v))
+// RnameGT applies the GT predicate on the "rname" field.
+func RnameGT(v string) predicate.Router {
+	return predicate.Router(sql.FieldGT(FieldRname, v))
 }
 
-// UsernameGTE applies the GTE predicate on the "username" field.
-func UsernameGTE(v string) predicate.Router {
-	return predicate.Router(sql.FieldGTE(FieldUsername, v))
+// RnameGTE applies the GTE predicate on the "rname" field.
+func RnameGTE(v string) predicate.Router {
+	return predicate.Router(sql.FieldGTE(FieldRname, v))
 }
 
-// UsernameLT applies the LT predicate on the "username" field.
-func UsernameLT(v string) predicate.Router {
-	return predicate.Router(sql.FieldLT(FieldUsername, v))
+// RnameLT applies the LT predicate on the "rname" field.
+func RnameLT(v string) predicate.Router {
+	return predicate.Router(sql.FieldLT(FieldRname, v))
 }
 
-// UsernameLTE applies the LTE predicate on the "username" field.
-func UsernameLTE(v string) predicate.Router {
-	return predicate.Router(sql.FieldLTE(FieldUsername, v))
+// RnameLTE applies the LTE predicate on the "rname" field.
+func RnameLTE(v string) predicate.Router {
+	return predicate.Router(sql.FieldLTE(FieldRname, v))
 }
 
-// UsernameContains applies the Contains predicate on the "username" field.
-func UsernameContains(v string) predicate.Router {
-	return predicate.Router(sql.FieldContains(FieldUsername, v))
+// RnameContains applies the Contains predicate on the "rname" field.
+func RnameContains(v string) predicate.Router {
+	return predicate.Router(sql.FieldContains(FieldRname, v))
 }
 
-// UsernameHasPrefix applies the HasPrefix predicate on the "username" field.
-func UsernameHasPrefix(v string) predicate.Router {
-	return predicate.Router(sql.FieldHasPrefix(FieldUsername, v))
+// RnameHasPrefix applies the HasPrefix predicate on the "rname" field.
+func RnameHasPrefix(v string) predicate.Router {
+	return predicate.Router(sql.FieldHasPrefix(FieldRname, v))
 }
 
-// UsernameHasSuffix applies the HasSuffix predicate on the "username" field.
-func UsernameHasSuffix(v string) predicate.Router {
-	return predicate.Router(sql.FieldHasSuffix(FieldUsername, v))
+// RnameHasSuffix applies the HasSuffix predicate on the "rname" field.
+func RnameHasSuffix(v string) predicate.Router {
+	return predicate.Router(sql.FieldHasSuffix(FieldRname, v))
 }
 
-// UsernameEqualFold applies the EqualFold predicate on the "username" field.
-func UsernameEqualFold(v string) predicate.Router {
-	return predicate.Router(sql.FieldEqualFold(FieldUsername, v))
+// RnameEqualFold applies the EqualFold predicate on the "rname" field.
+func RnameEqualFold(v string) predicate.Router {
+	return predicate.Router(sql.FieldEqualFold(FieldRname, v))
 }
 
-// UsernameContainsFold applies the ContainsFold predicate on the "username" field.
-func UsernameContainsFold(v string) predicate.Router {
-	return predicate.Router(sql.FieldContainsFold(FieldUsername, v))
+// RnameContainsFold applies the ContainsFold predicate on the "rname" field.
+func RnameContainsFold(v string) predicate.Router {
+	return predicate.Router(sql.FieldContainsFold(FieldRname, v))
 }
 
 // PrivkeyEQ applies the EQ predicate on the "privkey" field.
@@ -173,16 +173,6 @@ func PrivkeyLTE(v []byte) predicate.Router {
 	return predicate.Router(sql.FieldLTE(FieldPrivkey, v))
 }
 
-// PrivkeyIsNil applies the IsNil predicate on the "privkey" field.
-func PrivkeyIsNil() predicate.Router {
-	return predicate.Router(sql.FieldIsNull(FieldPrivkey))
-}
-
-// PrivkeyNotNil applies the NotNil predicate on the "privkey" field.
-func PrivkeyNotNil() predicate.Router {
-	return predicate.Router(sql.FieldNotNull(FieldPrivkey))
-}
-
 // CertEQ applies the EQ predicate on the "cert" field.
 func CertEQ(v []byte) predicate.Router {
 	return predicate.Router(sql.FieldEQ(FieldCert, v))
@@ -223,16 +213,6 @@ func CertLTE(v []byte) predicate.Router {
 	return predicate.Router(sql.FieldLTE(FieldCert, v))
 }
 
-// CertIsNil applies the IsNil predicate on the "cert" field.
-func CertIsNil() predicate.Router {
-	return predicate.Router(sql.FieldIsNull(FieldCert))
-}
-
-// CertNotNil applies the NotNil predicate on the "cert" field.
-func CertNotNil() predicate.Router {
-	return predicate.Router(sql.FieldNotNull(FieldCert))
-}
-
 // CommandsIsNil applies the IsNil predicate on the "commands" field.
 func CommandsIsNil() predicate.Router {
 	return predicate.Router(sql.FieldIsNull(FieldCommands))
@@ -241,6 +221,16 @@ func CommandsIsNil() predicate.Router {
 // CommandsNotNil applies the NotNil predicate on the "commands" field.
 func CommandsNotNil() predicate.Router {
 	return predicate.Router(sql.FieldNotNull(FieldCommands))
+}
+
+// InterfacesIsNil applies the IsNil predicate on the "interfaces" field.
+func InterfacesIsNil() predicate.Router {
+	return predicate.Router(sql.FieldIsNull(FieldInterfaces))
+}
+
+// InterfacesNotNil applies the NotNil predicate on the "interfaces" field.
+func InterfacesNotNil() predicate.Router {
+	return predicate.Router(sql.FieldNotNull(FieldInterfaces))
 }
 
 // HasRodents applies the HasEdge predicate on the "rodents" edge.

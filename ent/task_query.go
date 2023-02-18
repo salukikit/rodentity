@@ -371,12 +371,12 @@ func (tq *TaskQuery) WithLoot(opts ...func(*LootQuery)) *TaskQuery {
 // Example:
 //
 //	var v []struct {
-//		Xid string `json:"xid,omitempty"`
+//		Type string `json:"type,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Task.Query().
-//		GroupBy(task.FieldXid).
+//		GroupBy(task.FieldType).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (tq *TaskQuery) GroupBy(field string, fields ...string) *TaskGroupBy {
@@ -394,11 +394,11 @@ func (tq *TaskQuery) GroupBy(field string, fields ...string) *TaskGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Xid string `json:"xid,omitempty"`
+//		Type string `json:"type,omitempty"`
 //	}
 //
 //	client.Task.Query().
-//		Select(task.FieldXid).
+//		Select(task.FieldType).
 //		Scan(ctx, &v)
 func (tq *TaskQuery) Select(fields ...string) *TaskSelect {
 	tq.ctx.Fields = append(tq.ctx.Fields, fields...)

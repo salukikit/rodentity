@@ -55,11 +55,6 @@ func IDLTE(id int) predicate.Task {
 	return predicate.Task(sql.FieldLTE(FieldID, id))
 }
 
-// Xid applies equality check predicate on the "xid" field. It's identical to XidEQ.
-func Xid(v string) predicate.Task {
-	return predicate.Task(sql.FieldEQ(FieldXid, v))
-}
-
 // Type applies equality check predicate on the "type" field. It's identical to TypeEQ.
 func Type(v string) predicate.Task {
 	return predicate.Task(sql.FieldEQ(FieldType, v))
@@ -93,71 +88,6 @@ func Requestedat(v time.Time) predicate.Task {
 // Completedat applies equality check predicate on the "completedat" field. It's identical to CompletedatEQ.
 func Completedat(v time.Time) predicate.Task {
 	return predicate.Task(sql.FieldEQ(FieldCompletedat, v))
-}
-
-// XidEQ applies the EQ predicate on the "xid" field.
-func XidEQ(v string) predicate.Task {
-	return predicate.Task(sql.FieldEQ(FieldXid, v))
-}
-
-// XidNEQ applies the NEQ predicate on the "xid" field.
-func XidNEQ(v string) predicate.Task {
-	return predicate.Task(sql.FieldNEQ(FieldXid, v))
-}
-
-// XidIn applies the In predicate on the "xid" field.
-func XidIn(vs ...string) predicate.Task {
-	return predicate.Task(sql.FieldIn(FieldXid, vs...))
-}
-
-// XidNotIn applies the NotIn predicate on the "xid" field.
-func XidNotIn(vs ...string) predicate.Task {
-	return predicate.Task(sql.FieldNotIn(FieldXid, vs...))
-}
-
-// XidGT applies the GT predicate on the "xid" field.
-func XidGT(v string) predicate.Task {
-	return predicate.Task(sql.FieldGT(FieldXid, v))
-}
-
-// XidGTE applies the GTE predicate on the "xid" field.
-func XidGTE(v string) predicate.Task {
-	return predicate.Task(sql.FieldGTE(FieldXid, v))
-}
-
-// XidLT applies the LT predicate on the "xid" field.
-func XidLT(v string) predicate.Task {
-	return predicate.Task(sql.FieldLT(FieldXid, v))
-}
-
-// XidLTE applies the LTE predicate on the "xid" field.
-func XidLTE(v string) predicate.Task {
-	return predicate.Task(sql.FieldLTE(FieldXid, v))
-}
-
-// XidContains applies the Contains predicate on the "xid" field.
-func XidContains(v string) predicate.Task {
-	return predicate.Task(sql.FieldContains(FieldXid, v))
-}
-
-// XidHasPrefix applies the HasPrefix predicate on the "xid" field.
-func XidHasPrefix(v string) predicate.Task {
-	return predicate.Task(sql.FieldHasPrefix(FieldXid, v))
-}
-
-// XidHasSuffix applies the HasSuffix predicate on the "xid" field.
-func XidHasSuffix(v string) predicate.Task {
-	return predicate.Task(sql.FieldHasSuffix(FieldXid, v))
-}
-
-// XidEqualFold applies the EqualFold predicate on the "xid" field.
-func XidEqualFold(v string) predicate.Task {
-	return predicate.Task(sql.FieldEqualFold(FieldXid, v))
-}
-
-// XidContainsFold applies the ContainsFold predicate on the "xid" field.
-func XidContainsFold(v string) predicate.Task {
-	return predicate.Task(sql.FieldContainsFold(FieldXid, v))
 }
 
 // TypeEQ applies the EQ predicate on the "type" field.

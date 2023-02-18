@@ -32,12 +32,6 @@ func (tu *TaskUpdate) Where(ps ...predicate.Task) *TaskUpdate {
 	return tu
 }
 
-// SetXid sets the "xid" field.
-func (tu *TaskUpdate) SetXid(s string) *TaskUpdate {
-	tu.mutation.SetXid(s)
-	return tu
-}
-
 // SetType sets the "type" field.
 func (tu *TaskUpdate) SetType(s string) *TaskUpdate {
 	tu.mutation.SetType(s)
@@ -293,9 +287,6 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := tu.mutation.Xid(); ok {
-		_spec.SetField(task.FieldXid, field.TypeString, value)
-	}
 	if value, ok := tu.mutation.GetType(); ok {
 		_spec.SetField(task.FieldType, field.TypeString, value)
 	}
@@ -490,12 +481,6 @@ type TaskUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TaskMutation
-}
-
-// SetXid sets the "xid" field.
-func (tuo *TaskUpdateOne) SetXid(s string) *TaskUpdateOne {
-	tuo.mutation.SetXid(s)
-	return tuo
 }
 
 // SetType sets the "type" field.
@@ -782,9 +767,6 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := tuo.mutation.Xid(); ok {
-		_spec.SetField(task.FieldXid, field.TypeString, value)
 	}
 	if value, ok := tuo.mutation.GetType(); ok {
 		_spec.SetField(task.FieldType, field.TypeString, value)

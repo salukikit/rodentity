@@ -54,12 +54,6 @@ func (ru *RodentUpdate) SetNillableType(s *string) *RodentUpdate {
 	return ru
 }
 
-// SetCodename sets the "codename" field.
-func (ru *RodentUpdate) SetCodename(s string) *RodentUpdate {
-	ru.mutation.SetCodename(s)
-	return ru
-}
-
 // SetKey sets the "key" field.
 func (ru *RodentUpdate) SetKey(s string) *RodentUpdate {
 	ru.mutation.SetKey(s)
@@ -416,9 +410,6 @@ func (ru *RodentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := ru.mutation.GetType(); ok {
 		_spec.SetField(rodent.FieldType, field.TypeString, value)
 	}
-	if value, ok := ru.mutation.Codename(); ok {
-		_spec.SetField(rodent.FieldCodename, field.TypeString, value)
-	}
 	if value, ok := ru.mutation.Key(); ok {
 		_spec.SetField(rodent.FieldKey, field.TypeString, value)
 	}
@@ -762,12 +753,6 @@ func (ruo *RodentUpdateOne) SetNillableType(s *string) *RodentUpdateOne {
 	if s != nil {
 		ruo.SetType(*s)
 	}
-	return ruo
-}
-
-// SetCodename sets the "codename" field.
-func (ruo *RodentUpdateOne) SetCodename(s string) *RodentUpdateOne {
-	ruo.mutation.SetCodename(s)
 	return ruo
 }
 
@@ -1156,9 +1141,6 @@ func (ruo *RodentUpdateOne) sqlSave(ctx context.Context) (_node *Rodent, err err
 	}
 	if value, ok := ruo.mutation.GetType(); ok {
 		_spec.SetField(rodent.FieldType, field.TypeString, value)
-	}
-	if value, ok := ruo.mutation.Codename(); ok {
-		_spec.SetField(rodent.FieldCodename, field.TypeString, value)
 	}
 	if value, ok := ruo.mutation.Key(); ok {
 		_spec.SetField(rodent.FieldKey, field.TypeString, value)

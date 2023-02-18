@@ -142,7 +142,6 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "xid", Type: field.TypeString},
 		{Name: "type", Type: field.TypeString, Default: "FancyRat"},
-		{Name: "codename", Type: field.TypeString},
 		{Name: "key", Type: field.TypeString},
 		{Name: "usercontext", Type: field.TypeString, Nullable: true},
 		{Name: "comms", Type: field.TypeString, Nullable: true},
@@ -164,19 +163,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "rodents_devices_rodents",
-				Columns:    []*schema.Column{RodentsColumns[13]},
+				Columns:    []*schema.Column{RodentsColumns[12]},
 				RefColumns: []*schema.Column{DevicesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "rodents_projects_rodents",
-				Columns:    []*schema.Column{RodentsColumns[14]},
+				Columns:    []*schema.Column{RodentsColumns[13]},
 				RefColumns: []*schema.Column{ProjectsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "rodents_users_rodents",
-				Columns:    []*schema.Column{RodentsColumns[15]},
+				Columns:    []*schema.Column{RodentsColumns[14]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -185,10 +184,11 @@ var (
 	// RoutersColumns holds the columns for the "routers" table.
 	RoutersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "username", Type: field.TypeString},
-		{Name: "privkey", Type: field.TypeBytes, Nullable: true},
-		{Name: "cert", Type: field.TypeBytes, Nullable: true},
+		{Name: "rname", Type: field.TypeString},
+		{Name: "privkey", Type: field.TypeBytes},
+		{Name: "cert", Type: field.TypeBytes},
 		{Name: "commands", Type: field.TypeJSON, Nullable: true},
+		{Name: "interfaces", Type: field.TypeJSON, Nullable: true},
 		{Name: "project_routers", Type: field.TypeInt, Nullable: true},
 	}
 	// RoutersTable holds the schema information for the "routers" table.
@@ -199,7 +199,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "routers_projects_routers",
-				Columns:    []*schema.Column{RoutersColumns[5]},
+				Columns:    []*schema.Column{RoutersColumns[6]},
 				RefColumns: []*schema.Column{ProjectsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -244,7 +244,6 @@ var (
 	// TasksColumns holds the columns for the "tasks" table.
 	TasksColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "xid", Type: field.TypeString},
 		{Name: "type", Type: field.TypeString, Default: "cmd"},
 		{Name: "args", Type: field.TypeJSON, Nullable: true},
 		{Name: "data", Type: field.TypeBytes, Nullable: true},
@@ -265,13 +264,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "tasks_operators_tasks",
-				Columns:    []*schema.Column{TasksColumns[11]},
+				Columns:    []*schema.Column{TasksColumns[10]},
 				RefColumns: []*schema.Column{OperatorsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "tasks_rodents_tasks",
-				Columns:    []*schema.Column{TasksColumns[12]},
+				Columns:    []*schema.Column{TasksColumns[11]},
 				RefColumns: []*schema.Column{RodentsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

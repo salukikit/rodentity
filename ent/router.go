@@ -17,14 +17,16 @@ type Router struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// Username holds the value of the "username" field.
-	Username string `json:"username,omitempty"`
+	// Rname holds the value of the "rname" field.
+	Rname string `json:"rname,omitempty"`
 	// Privkey holds the value of the "privkey" field.
 	Privkey []byte `json:"privkey,omitempty"`
 	// Cert holds the value of the "cert" field.
 	Cert []byte `json:"cert,omitempty"`
 	// Commands holds the value of the "commands" field.
 	Commands []string `json:"commands,omitempty"`
+	// Interfaces holds the value of the "interfaces" field.
+	Interfaces []string `json:"interfaces,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RouterQuery when eager-loading is set.
 	Edges           RouterEdges `json:"edges"`
@@ -69,11 +71,11 @@ func (*Router) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case router.FieldPrivkey, router.FieldCert, router.FieldCommands:
+		case router.FieldPrivkey, router.FieldCert, router.FieldCommands, router.FieldInterfaces:
 			values[i] = new([]byte)
 		case router.FieldID:
 			values[i] = new(sql.NullInt64)
-		case router.FieldUsername:
+		case router.FieldRname:
 			values[i] = new(sql.NullString)
 		case router.ForeignKeys[0]: // project_routers
 			values[i] = new(sql.NullInt64)
@@ -98,11 +100,11 @@ func (r *Router) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			r.ID = int(value.Int64)
-		case router.FieldUsername:
+		case router.FieldRname:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field username", values[i])
+				return fmt.Errorf("unexpected type %T for field rname", values[i])
 			} else if value.Valid {
-				r.Username = value.String
+				r.Rname = value.String
 			}
 		case router.FieldPrivkey:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -122,6 +124,14 @@ func (r *Router) assignValues(columns []string, values []any) error {
 			} else if value != nil && len(*value) > 0 {
 				if err := json.Unmarshal(*value, &r.Commands); err != nil {
 					return fmt.Errorf("unmarshal field commands: %w", err)
+				}
+			}
+		case router.FieldInterfaces:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field interfaces", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &r.Interfaces); err != nil {
+					return fmt.Errorf("unmarshal field interfaces: %w", err)
 				}
 			}
 		case router.ForeignKeys[0]:
@@ -169,8 +179,8 @@ func (r *Router) String() string {
 	var builder strings.Builder
 	builder.WriteString("Router(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", r.ID))
-	builder.WriteString("username=")
-	builder.WriteString(r.Username)
+	builder.WriteString("rname=")
+	builder.WriteString(r.Rname)
 	builder.WriteString(", ")
 	builder.WriteString("privkey=")
 	builder.WriteString(fmt.Sprintf("%v", r.Privkey))
@@ -180,6 +190,9 @@ func (r *Router) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("commands=")
 	builder.WriteString(fmt.Sprintf("%v", r.Commands))
+	builder.WriteString(", ")
+	builder.WriteString("interfaces=")
+	builder.WriteString(fmt.Sprintf("%v", r.Interfaces))
 	builder.WriteByte(')')
 	return builder.String()
 }

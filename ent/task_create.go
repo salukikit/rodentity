@@ -23,12 +23,6 @@ type TaskCreate struct {
 	hooks    []Hook
 }
 
-// SetXid sets the "xid" field.
-func (tc *TaskCreate) SetXid(s string) *TaskCreate {
-	tc.mutation.SetXid(s)
-	return tc
-}
-
 // SetType sets the "type" field.
 func (tc *TaskCreate) SetType(s string) *TaskCreate {
 	tc.mutation.SetType(s)
@@ -219,9 +213,6 @@ func (tc *TaskCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (tc *TaskCreate) check() error {
-	if _, ok := tc.mutation.Xid(); !ok {
-		return &ValidationError{Name: "xid", err: errors.New(`ent: missing required field "Task.xid"`)}
-	}
 	if _, ok := tc.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Task.type"`)}
 	}
@@ -260,10 +251,6 @@ func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 		_node = &Task{config: tc.config}
 		_spec = sqlgraph.NewCreateSpec(task.Table, sqlgraph.NewFieldSpec(task.FieldID, field.TypeInt))
 	)
-	if value, ok := tc.mutation.Xid(); ok {
-		_spec.SetField(task.FieldXid, field.TypeString, value)
-		_node.Xid = value
-	}
 	if value, ok := tc.mutation.GetType(); ok {
 		_spec.SetField(task.FieldType, field.TypeString, value)
 		_node.Type = value

@@ -46,12 +46,6 @@ func (rc *RodentCreate) SetNillableType(s *string) *RodentCreate {
 	return rc
 }
 
-// SetCodename sets the "codename" field.
-func (rc *RodentCreate) SetCodename(s string) *RodentCreate {
-	rc.mutation.SetCodename(s)
-	return rc
-}
-
 // SetKey sets the "key" field.
 func (rc *RodentCreate) SetKey(s string) *RodentCreate {
 	rc.mutation.SetKey(s)
@@ -313,9 +307,6 @@ func (rc *RodentCreate) check() error {
 	if _, ok := rc.mutation.GetType(); !ok {
 		return &ValidationError{Name: "type", err: errors.New(`ent: missing required field "Rodent.type"`)}
 	}
-	if _, ok := rc.mutation.Codename(); !ok {
-		return &ValidationError{Name: "codename", err: errors.New(`ent: missing required field "Rodent.codename"`)}
-	}
 	if _, ok := rc.mutation.Key(); !ok {
 		return &ValidationError{Name: "key", err: errors.New(`ent: missing required field "Rodent.key"`)}
 	}
@@ -364,10 +355,6 @@ func (rc *RodentCreate) createSpec() (*Rodent, *sqlgraph.CreateSpec) {
 	if value, ok := rc.mutation.GetType(); ok {
 		_spec.SetField(rodent.FieldType, field.TypeString, value)
 		_node.Type = value
-	}
-	if value, ok := rc.mutation.Codename(); ok {
-		_spec.SetField(rodent.FieldCodename, field.TypeString, value)
-		_node.Codename = value
 	}
 	if value, ok := rc.mutation.Key(); ok {
 		_spec.SetField(rodent.FieldKey, field.TypeString, value)

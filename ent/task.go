@@ -19,8 +19,6 @@ type Task struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// Xid holds the value of the "xid" field.
-	Xid string `json:"xid,omitempty"`
 	// Type holds the value of the "type" field.
 	Type string `json:"type,omitempty"`
 	// Args holds the value of the "args" field.
@@ -105,7 +103,7 @@ func (*Task) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case task.FieldID:
 			values[i] = new(sql.NullInt64)
-		case task.FieldXid, task.FieldType:
+		case task.FieldType:
 			values[i] = new(sql.NullString)
 		case task.FieldRequestedat, task.FieldCompletedat:
 			values[i] = new(sql.NullTime)
@@ -134,12 +132,6 @@ func (t *Task) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			t.ID = int(value.Int64)
-		case task.FieldXid:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field xid", values[i])
-			} else if value.Valid {
-				t.Xid = value.String
-			}
 		case task.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
@@ -255,9 +247,6 @@ func (t *Task) String() string {
 	var builder strings.Builder
 	builder.WriteString("Task(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", t.ID))
-	builder.WriteString("xid=")
-	builder.WriteString(t.Xid)
-	builder.WriteString(", ")
 	builder.WriteString("type=")
 	builder.WriteString(t.Type)
 	builder.WriteString(", ")

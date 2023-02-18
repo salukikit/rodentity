@@ -7,14 +7,16 @@ const (
 	Label = "router"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldUsername holds the string denoting the username field in the database.
-	FieldUsername = "username"
+	// FieldRname holds the string denoting the rname field in the database.
+	FieldRname = "rname"
 	// FieldPrivkey holds the string denoting the privkey field in the database.
 	FieldPrivkey = "privkey"
 	// FieldCert holds the string denoting the cert field in the database.
 	FieldCert = "cert"
 	// FieldCommands holds the string denoting the commands field in the database.
 	FieldCommands = "commands"
+	// FieldInterfaces holds the string denoting the interfaces field in the database.
+	FieldInterfaces = "interfaces"
 	// EdgeRodents holds the string denoting the rodents edge name in mutations.
 	EdgeRodents = "rodents"
 	// EdgeProject holds the string denoting the project edge name in mutations.
@@ -38,10 +40,11 @@ const (
 // Columns holds all SQL columns for router fields.
 var Columns = []string{
 	FieldID,
-	FieldUsername,
+	FieldRname,
 	FieldPrivkey,
 	FieldCert,
 	FieldCommands,
+	FieldInterfaces,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "routers"

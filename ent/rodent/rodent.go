@@ -11,8 +11,6 @@ const (
 	FieldXid = "xid"
 	// FieldType holds the string denoting the type field in the database.
 	FieldType = "type"
-	// FieldCodename holds the string denoting the codename field in the database.
-	FieldCodename = "codename"
 	// FieldKey holds the string denoting the key field in the database.
 	FieldKey = "key"
 	// FieldUsercontext holds the string denoting the usercontext field in the database.
@@ -92,7 +90,6 @@ var Columns = []string{
 	FieldID,
 	FieldXid,
 	FieldType,
-	FieldCodename,
 	FieldKey,
 	FieldUsercontext,
 	FieldComms,

@@ -65,11 +65,6 @@ func Type(v string) predicate.Rodent {
 	return predicate.Rodent(sql.FieldEQ(FieldType, v))
 }
 
-// Codename applies equality check predicate on the "codename" field. It's identical to CodenameEQ.
-func Codename(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldEQ(FieldCodename, v))
-}
-
 // Key applies equality check predicate on the "key" field. It's identical to KeyEQ.
 func Key(v string) predicate.Rodent {
 	return predicate.Rodent(sql.FieldEQ(FieldKey, v))
@@ -243,71 +238,6 @@ func TypeEqualFold(v string) predicate.Rodent {
 // TypeContainsFold applies the ContainsFold predicate on the "type" field.
 func TypeContainsFold(v string) predicate.Rodent {
 	return predicate.Rodent(sql.FieldContainsFold(FieldType, v))
-}
-
-// CodenameEQ applies the EQ predicate on the "codename" field.
-func CodenameEQ(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldEQ(FieldCodename, v))
-}
-
-// CodenameNEQ applies the NEQ predicate on the "codename" field.
-func CodenameNEQ(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldNEQ(FieldCodename, v))
-}
-
-// CodenameIn applies the In predicate on the "codename" field.
-func CodenameIn(vs ...string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldIn(FieldCodename, vs...))
-}
-
-// CodenameNotIn applies the NotIn predicate on the "codename" field.
-func CodenameNotIn(vs ...string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldNotIn(FieldCodename, vs...))
-}
-
-// CodenameGT applies the GT predicate on the "codename" field.
-func CodenameGT(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldGT(FieldCodename, v))
-}
-
-// CodenameGTE applies the GTE predicate on the "codename" field.
-func CodenameGTE(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldGTE(FieldCodename, v))
-}
-
-// CodenameLT applies the LT predicate on the "codename" field.
-func CodenameLT(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldLT(FieldCodename, v))
-}
-
-// CodenameLTE applies the LTE predicate on the "codename" field.
-func CodenameLTE(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldLTE(FieldCodename, v))
-}
-
-// CodenameContains applies the Contains predicate on the "codename" field.
-func CodenameContains(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldContains(FieldCodename, v))
-}
-
-// CodenameHasPrefix applies the HasPrefix predicate on the "codename" field.
-func CodenameHasPrefix(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldHasPrefix(FieldCodename, v))
-}
-
-// CodenameHasSuffix applies the HasSuffix predicate on the "codename" field.
-func CodenameHasSuffix(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldHasSuffix(FieldCodename, v))
-}
-
-// CodenameEqualFold applies the EqualFold predicate on the "codename" field.
-func CodenameEqualFold(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldEqualFold(FieldCodename, v))
-}
-
-// CodenameContainsFold applies the ContainsFold predicate on the "codename" field.
-func CodenameContainsFold(v string) predicate.Rodent {
-	return predicate.Rodent(sql.FieldContainsFold(FieldCodename, v))
 }
 
 // KeyEQ applies the EQ predicate on the "key" field.

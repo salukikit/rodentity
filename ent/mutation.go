@@ -4970,7 +4970,6 @@ type RodentMutation struct {
 	id              *int
 	xid             *string
 	_type           *string
-	codename        *string
 	key             *string
 	usercontext     *string
 	comms           *string
@@ -5169,42 +5168,6 @@ func (m *RodentMutation) OldType(ctx context.Context) (v string, err error) {
 // ResetType resets all changes to the "type" field.
 func (m *RodentMutation) ResetType() {
 	m._type = nil
-}
-
-// SetCodename sets the "codename" field.
-func (m *RodentMutation) SetCodename(s string) {
-	m.codename = &s
-}
-
-// Codename returns the value of the "codename" field in the mutation.
-func (m *RodentMutation) Codename() (r string, exists bool) {
-	v := m.codename
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldCodename returns the old "codename" field's value of the Rodent entity.
-// If the Rodent object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RodentMutation) OldCodename(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldCodename is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldCodename requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldCodename: %w", err)
-	}
-	return oldValue.Codename, nil
-}
-
-// ResetCodename resets all changes to the "codename" field.
-func (m *RodentMutation) ResetCodename() {
-	m.codename = nil
 }
 
 // SetKey sets the "key" field.
@@ -5896,15 +5859,12 @@ func (m *RodentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RodentMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 11)
 	if m.xid != nil {
 		fields = append(fields, rodent.FieldXid)
 	}
 	if m._type != nil {
 		fields = append(fields, rodent.FieldType)
-	}
-	if m.codename != nil {
-		fields = append(fields, rodent.FieldCodename)
 	}
 	if m.key != nil {
 		fields = append(fields, rodent.FieldKey)
@@ -5945,8 +5905,6 @@ func (m *RodentMutation) Field(name string) (ent.Value, bool) {
 		return m.Xid()
 	case rodent.FieldType:
 		return m.GetType()
-	case rodent.FieldCodename:
-		return m.Codename()
 	case rodent.FieldKey:
 		return m.Key()
 	case rodent.FieldUsercontext:
@@ -5978,8 +5936,6 @@ func (m *RodentMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldXid(ctx)
 	case rodent.FieldType:
 		return m.OldType(ctx)
-	case rodent.FieldCodename:
-		return m.OldCodename(ctx)
 	case rodent.FieldKey:
 		return m.OldKey(ctx)
 	case rodent.FieldUsercontext:
@@ -6020,13 +5976,6 @@ func (m *RodentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetType(v)
-		return nil
-	case rodent.FieldCodename:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetCodename(v)
 		return nil
 	case rodent.FieldKey:
 		v, ok := value.(string)
@@ -6172,9 +6121,6 @@ func (m *RodentMutation) ResetField(name string) error {
 		return nil
 	case rodent.FieldType:
 		m.ResetType()
-		return nil
-	case rodent.FieldCodename:
-		m.ResetCodename()
 		return nil
 	case rodent.FieldKey:
 		m.ResetKey()
@@ -6400,23 +6346,25 @@ func (m *RodentMutation) ResetEdge(name string) error {
 // RouterMutation represents an operation that mutates the Router nodes in the graph.
 type RouterMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *int
-	username       *string
-	privkey        *[]byte
-	cert           *[]byte
-	commands       *[]string
-	appendcommands []string
-	clearedFields  map[string]struct{}
-	rodents        map[int]struct{}
-	removedrodents map[int]struct{}
-	clearedrodents bool
-	project        *int
-	clearedproject bool
-	done           bool
-	oldValue       func(context.Context) (*Router, error)
-	predicates     []predicate.Router
+	op               Op
+	typ              string
+	id               *int
+	rname            *string
+	privkey          *[]byte
+	cert             *[]byte
+	commands         *[]string
+	appendcommands   []string
+	interfaces       *[]string
+	appendinterfaces []string
+	clearedFields    map[string]struct{}
+	rodents          map[int]struct{}
+	removedrodents   map[int]struct{}
+	clearedrodents   bool
+	project          *int
+	clearedproject   bool
+	done             bool
+	oldValue         func(context.Context) (*Router, error)
+	predicates       []predicate.Router
 }
 
 var _ ent.Mutation = (*RouterMutation)(nil)
@@ -6517,40 +6465,40 @@ func (m *RouterMutation) IDs(ctx context.Context) ([]int, error) {
 	}
 }
 
-// SetUsername sets the "username" field.
-func (m *RouterMutation) SetUsername(s string) {
-	m.username = &s
+// SetRname sets the "rname" field.
+func (m *RouterMutation) SetRname(s string) {
+	m.rname = &s
 }
 
-// Username returns the value of the "username" field in the mutation.
-func (m *RouterMutation) Username() (r string, exists bool) {
-	v := m.username
+// Rname returns the value of the "rname" field in the mutation.
+func (m *RouterMutation) Rname() (r string, exists bool) {
+	v := m.rname
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUsername returns the old "username" field's value of the Router entity.
+// OldRname returns the old "rname" field's value of the Router entity.
 // If the Router object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RouterMutation) OldUsername(ctx context.Context) (v string, err error) {
+func (m *RouterMutation) OldRname(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUsername is only allowed on UpdateOne operations")
+		return v, errors.New("OldRname is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUsername requires an ID field in the mutation")
+		return v, errors.New("OldRname requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUsername: %w", err)
+		return v, fmt.Errorf("querying old value for OldRname: %w", err)
 	}
-	return oldValue.Username, nil
+	return oldValue.Rname, nil
 }
 
-// ResetUsername resets all changes to the "username" field.
-func (m *RouterMutation) ResetUsername() {
-	m.username = nil
+// ResetRname resets all changes to the "rname" field.
+func (m *RouterMutation) ResetRname() {
+	m.rname = nil
 }
 
 // SetPrivkey sets the "privkey" field.
@@ -6584,22 +6532,9 @@ func (m *RouterMutation) OldPrivkey(ctx context.Context) (v []byte, err error) {
 	return oldValue.Privkey, nil
 }
 
-// ClearPrivkey clears the value of the "privkey" field.
-func (m *RouterMutation) ClearPrivkey() {
-	m.privkey = nil
-	m.clearedFields[router.FieldPrivkey] = struct{}{}
-}
-
-// PrivkeyCleared returns if the "privkey" field was cleared in this mutation.
-func (m *RouterMutation) PrivkeyCleared() bool {
-	_, ok := m.clearedFields[router.FieldPrivkey]
-	return ok
-}
-
 // ResetPrivkey resets all changes to the "privkey" field.
 func (m *RouterMutation) ResetPrivkey() {
 	m.privkey = nil
-	delete(m.clearedFields, router.FieldPrivkey)
 }
 
 // SetCert sets the "cert" field.
@@ -6633,22 +6568,9 @@ func (m *RouterMutation) OldCert(ctx context.Context) (v []byte, err error) {
 	return oldValue.Cert, nil
 }
 
-// ClearCert clears the value of the "cert" field.
-func (m *RouterMutation) ClearCert() {
-	m.cert = nil
-	m.clearedFields[router.FieldCert] = struct{}{}
-}
-
-// CertCleared returns if the "cert" field was cleared in this mutation.
-func (m *RouterMutation) CertCleared() bool {
-	_, ok := m.clearedFields[router.FieldCert]
-	return ok
-}
-
 // ResetCert resets all changes to the "cert" field.
 func (m *RouterMutation) ResetCert() {
 	m.cert = nil
-	delete(m.clearedFields, router.FieldCert)
 }
 
 // SetCommands sets the "commands" field.
@@ -6714,6 +6636,71 @@ func (m *RouterMutation) ResetCommands() {
 	m.commands = nil
 	m.appendcommands = nil
 	delete(m.clearedFields, router.FieldCommands)
+}
+
+// SetInterfaces sets the "interfaces" field.
+func (m *RouterMutation) SetInterfaces(s []string) {
+	m.interfaces = &s
+	m.appendinterfaces = nil
+}
+
+// Interfaces returns the value of the "interfaces" field in the mutation.
+func (m *RouterMutation) Interfaces() (r []string, exists bool) {
+	v := m.interfaces
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInterfaces returns the old "interfaces" field's value of the Router entity.
+// If the Router object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RouterMutation) OldInterfaces(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInterfaces is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInterfaces requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInterfaces: %w", err)
+	}
+	return oldValue.Interfaces, nil
+}
+
+// AppendInterfaces adds s to the "interfaces" field.
+func (m *RouterMutation) AppendInterfaces(s []string) {
+	m.appendinterfaces = append(m.appendinterfaces, s...)
+}
+
+// AppendedInterfaces returns the list of values that were appended to the "interfaces" field in this mutation.
+func (m *RouterMutation) AppendedInterfaces() ([]string, bool) {
+	if len(m.appendinterfaces) == 0 {
+		return nil, false
+	}
+	return m.appendinterfaces, true
+}
+
+// ClearInterfaces clears the value of the "interfaces" field.
+func (m *RouterMutation) ClearInterfaces() {
+	m.interfaces = nil
+	m.appendinterfaces = nil
+	m.clearedFields[router.FieldInterfaces] = struct{}{}
+}
+
+// InterfacesCleared returns if the "interfaces" field was cleared in this mutation.
+func (m *RouterMutation) InterfacesCleared() bool {
+	_, ok := m.clearedFields[router.FieldInterfaces]
+	return ok
+}
+
+// ResetInterfaces resets all changes to the "interfaces" field.
+func (m *RouterMutation) ResetInterfaces() {
+	m.interfaces = nil
+	m.appendinterfaces = nil
+	delete(m.clearedFields, router.FieldInterfaces)
 }
 
 // AddRodentIDs adds the "rodents" edge to the Rodent entity by ids.
@@ -6843,9 +6830,9 @@ func (m *RouterMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RouterMutation) Fields() []string {
-	fields := make([]string, 0, 4)
-	if m.username != nil {
-		fields = append(fields, router.FieldUsername)
+	fields := make([]string, 0, 5)
+	if m.rname != nil {
+		fields = append(fields, router.FieldRname)
 	}
 	if m.privkey != nil {
 		fields = append(fields, router.FieldPrivkey)
@@ -6856,6 +6843,9 @@ func (m *RouterMutation) Fields() []string {
 	if m.commands != nil {
 		fields = append(fields, router.FieldCommands)
 	}
+	if m.interfaces != nil {
+		fields = append(fields, router.FieldInterfaces)
+	}
 	return fields
 }
 
@@ -6864,14 +6854,16 @@ func (m *RouterMutation) Fields() []string {
 // schema.
 func (m *RouterMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case router.FieldUsername:
-		return m.Username()
+	case router.FieldRname:
+		return m.Rname()
 	case router.FieldPrivkey:
 		return m.Privkey()
 	case router.FieldCert:
 		return m.Cert()
 	case router.FieldCommands:
 		return m.Commands()
+	case router.FieldInterfaces:
+		return m.Interfaces()
 	}
 	return nil, false
 }
@@ -6881,14 +6873,16 @@ func (m *RouterMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *RouterMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case router.FieldUsername:
-		return m.OldUsername(ctx)
+	case router.FieldRname:
+		return m.OldRname(ctx)
 	case router.FieldPrivkey:
 		return m.OldPrivkey(ctx)
 	case router.FieldCert:
 		return m.OldCert(ctx)
 	case router.FieldCommands:
 		return m.OldCommands(ctx)
+	case router.FieldInterfaces:
+		return m.OldInterfaces(ctx)
 	}
 	return nil, fmt.Errorf("unknown Router field %s", name)
 }
@@ -6898,12 +6892,12 @@ func (m *RouterMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *RouterMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case router.FieldUsername:
+	case router.FieldRname:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetUsername(v)
+		m.SetRname(v)
 		return nil
 	case router.FieldPrivkey:
 		v, ok := value.([]byte)
@@ -6925,6 +6919,13 @@ func (m *RouterMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCommands(v)
+		return nil
+	case router.FieldInterfaces:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInterfaces(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Router field %s", name)
@@ -6956,14 +6957,11 @@ func (m *RouterMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *RouterMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(router.FieldPrivkey) {
-		fields = append(fields, router.FieldPrivkey)
-	}
-	if m.FieldCleared(router.FieldCert) {
-		fields = append(fields, router.FieldCert)
-	}
 	if m.FieldCleared(router.FieldCommands) {
 		fields = append(fields, router.FieldCommands)
+	}
+	if m.FieldCleared(router.FieldInterfaces) {
+		fields = append(fields, router.FieldInterfaces)
 	}
 	return fields
 }
@@ -6979,14 +6977,11 @@ func (m *RouterMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *RouterMutation) ClearField(name string) error {
 	switch name {
-	case router.FieldPrivkey:
-		m.ClearPrivkey()
-		return nil
-	case router.FieldCert:
-		m.ClearCert()
-		return nil
 	case router.FieldCommands:
 		m.ClearCommands()
+		return nil
+	case router.FieldInterfaces:
+		m.ClearInterfaces()
 		return nil
 	}
 	return fmt.Errorf("unknown Router nullable field %s", name)
@@ -6996,8 +6991,8 @@ func (m *RouterMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *RouterMutation) ResetField(name string) error {
 	switch name {
-	case router.FieldUsername:
-		m.ResetUsername()
+	case router.FieldRname:
+		m.ResetRname()
 		return nil
 	case router.FieldPrivkey:
 		m.ResetPrivkey()
@@ -7007,6 +7002,9 @@ func (m *RouterMutation) ResetField(name string) error {
 		return nil
 	case router.FieldCommands:
 		m.ResetCommands()
+		return nil
+	case router.FieldInterfaces:
+		m.ResetInterfaces()
 		return nil
 	}
 	return fmt.Errorf("unknown Router field %s", name)
@@ -8424,7 +8422,6 @@ type TaskMutation struct {
 	op              Op
 	typ             string
 	id              *int
-	xid             *string
 	_type           *string
 	args            *[]string
 	appendargs      []string
@@ -8545,42 +8542,6 @@ func (m *TaskMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetXid sets the "xid" field.
-func (m *TaskMutation) SetXid(s string) {
-	m.xid = &s
-}
-
-// Xid returns the value of the "xid" field in the mutation.
-func (m *TaskMutation) Xid() (r string, exists bool) {
-	v := m.xid
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldXid returns the old "xid" field's value of the Task entity.
-// If the Task object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TaskMutation) OldXid(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldXid is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldXid requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldXid: %w", err)
-	}
-	return oldValue.Xid, nil
-}
-
-// ResetXid resets all changes to the "xid" field.
-func (m *TaskMutation) ResetXid() {
-	m.xid = nil
 }
 
 // SetType sets the "type" field.
@@ -9170,10 +9131,7 @@ func (m *TaskMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TaskMutation) Fields() []string {
-	fields := make([]string, 0, 10)
-	if m.xid != nil {
-		fields = append(fields, task.FieldXid)
-	}
+	fields := make([]string, 0, 9)
 	if m._type != nil {
 		fields = append(fields, task.FieldType)
 	}
@@ -9209,8 +9167,6 @@ func (m *TaskMutation) Fields() []string {
 // schema.
 func (m *TaskMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case task.FieldXid:
-		return m.Xid()
 	case task.FieldType:
 		return m.GetType()
 	case task.FieldArgs:
@@ -9238,8 +9194,6 @@ func (m *TaskMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *TaskMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case task.FieldXid:
-		return m.OldXid(ctx)
 	case task.FieldType:
 		return m.OldType(ctx)
 	case task.FieldArgs:
@@ -9267,13 +9221,6 @@ func (m *TaskMutation) OldField(ctx context.Context, name string) (ent.Value, er
 // type.
 func (m *TaskMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case task.FieldXid:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetXid(v)
-		return nil
 	case task.FieldType:
 		v, ok := value.(string)
 		if !ok {
@@ -9419,9 +9366,6 @@ func (m *TaskMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *TaskMutation) ResetField(name string) error {
 	switch name {
-	case task.FieldXid:
-		m.ResetXid()
-		return nil
 	case task.FieldType:
 		m.ResetType()
 		return nil
